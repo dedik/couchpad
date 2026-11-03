@@ -12,7 +12,7 @@ wygląd.
 
 | Plik | Co zawiera |
 | --- | --- |
-| `index.html` | makieta: cztery ekrany, pełna symulacja stanów |
+| `index.html` | makieta: wszystkie ekrany i podstrony pilota, pełna symulacja stanów |
 | `system.html` | system projektowy: tokeny, komponenty, stany, mapowanie na LVGL |
 | `pulpit.css` | jedyne źródło stylu; obie strony korzystają z tego samego pliku |
 | `pixel-icons.js` | ikony zakładek w pixel art, wspólne dla obu stron |
@@ -67,40 +67,38 @@ w pionie. Dotknięcie nie przestawia wartości w miejsce palca.
 
 ## Ekran Apple TV
 
-Zbudowany wyłącznie z komponentów systemu, z trzema nowymi:
+Układ jak na pilocie (`screen_appletv.cpp`): trzy skróty aplikacji (Infuse, YouTube, WP Pilot)
+w rozmiarze skrótów kanałów TV, pod nimi **gładzik — koło o średnicy 400 px**, a na dole trzy
+akcje `Menu | Home | Tekst`.
 
-- **Gładzik** zamiast krzyżaka, bo tak działa prawdziwy pilot Apple TV. Jest **kołem o średnicy
-  240 px**, wyśrodkowanym tak jak krzyżak na ekranie TV — ta sama sylwetka dla tej samej roli.
-  Kształt wynika z gestu: pas szeroki na cały ekran dawał proporcję 2,7 : 1, czyli trzy razy mniej
-  drogi dla przesunięcia w pionie niż w poziomie. Koło daje obu kierunkom tyle samo miejsca, a
-  strefę wyznacza odległość od środka i kąt, nie prostokąty. Powierzchnia jest jednolita: nie ma na
-  niej wypełnionego przycisku, bo akcent w tym systemie oznacza stan, a nie akcję — a kolorowy blok
-  na środku pola do przesuwania palcem przeczy samemu gestowi. Podświetla się dopiero to, co
-  właśnie naciskasz. `Menu` i `Home` stoją po bokach koła, zamiast zajmować osobny wiersz.
-- **Karuzela nowości** z plakatami 100 × 150, przewijana poziomo z zatrzymywaniem na pozycji.
-  Nad nią przełącznik `Nowe filmy | Nowe seriale`. Dwie osobne karuzele zajęłyby ok. 360 px z 588
-  dostępnych, a schowanie ich za przyciskiem odebrałoby ekranowi to, co w nim najlepiej wygląda.
-  Tytuł leży na plakacie pod przyciemnieniem, więc nie zabiera wysokości. Dotknięcie otwiera okno
-  szczegółów z opisem i przyciskiem odtwarzania.
-- **Okno szczegółów** — pierwszy komponent nakładkowy w systemie, oparty na tym samym przyciemnieniu
-  tła co ekran wybudzania.
+- **Gładzik** zamiast krzyżaka, bo tak działa prawdziwy pilot Apple TV. Koło daje obu kierunkom
+  tyle samo drogi, a strefę wyznacza odległość od środka i kąt, nie prostokąty. Powierzchnia jest
+  jednolita: akcent w tym systemie oznacza stan, a nie akcję, więc podświetla się dopiero to, co
+  właśnie naciskasz. Przeciągnięcie przewija krok po kroku, stuknięcie w strefę to jeden klawisz.
+- **Tekst** otwiera klawiaturę ekranową (`widgets_editor.cpp`): pole tekstu, `Anuluj | Zapisz`,
+  zestawy `abc · ąę · 123 · #+=`, przełącznik `Na żywo` i układ — alfabetyczna siatka 6 kolumn
+  jak na Apple TV albo QWERTY. Ta sama klawiatura służy polom ustawień (nazwa pokoju, hasło Wi-Fi,
+  pola MQTT).
 
-Skróty aplikacji (Infuse, YouTube, WP Pilot) działają jak skróty kanałów na ekranie TV: na razie
-wizualnie, docelowo uruchamiają aplikację przez bridge.
+Karuzela nowości z plakatami z Emby była w pierwszej wersji makiety; do firmware nie weszła
+i zniknęła też stąd — makieta pokazuje to, co jest na pilocie.
 
-### Biblioteka i plakaty
+## Zgodność z firmware
 
-Metadane pozycji idą osobnym tematem MQTT, a **plakaty pobiera się po HTTP** — snapshot stanu jest
-retained i nie wolno go obciążać listą filmów. Emby skaluje obraz po swojej stronie (`maxWidth`),
-więc pilot pobiera od razu docelowe 106 × 160: ok. 10 KB jako JPEG, ok. 36 KB po dekompresji.
-Pobieranie i dekodowanie wykonuje zadanie robocze, nigdy zadanie UI.
+Od 2026-11-03 makieta odwzorowuje pilota ekran po ekranie, a nie odwrotnie:
 
-**To wymaga osobnego ADR-u**, bo rozszczepia regułę z ADR 0005. Stan urządzeń musi być świeży po
-każdym wybudzeniu. Biblioteka jest treścią, nie stanem — wolno ją trzymać w pamięci podręcznej i
-pokazać od razu po wybudzeniu, bez czekania na sieć. Bez zapisania tej różnicy ktoś potraktuje
-jedno jak drugie.
+- **TV:** źródło i tryb obrazu jako dwa segmenty w jednym rzędzie, każdy otwiera listę wyboru;
+  pięć kafelków 80 × 80 — cztery skróty kanałów i lista wszystkich kanałów; krzyżak z kołyskami
+  `VOL` i `P` po bokach; `Cofnij | Menu TV`.
+- **Listy wyboru** (źródło i obraz TV, wejście i efekt Z906, nawiew i żaluzje klimy, kanały) to
+  pełne strony z wierszem na opcję i dopiskiem „aktywne”. Zamykają się od razu po wyborze, a
+  oczekiwanie widać na kontrolce, która je otworzyła.
+- **Więcej:** Wi-Fi, MQTT, Ekran, Dźwięk, Pokój i czas, Klawiatura i gładzik, Diagnostyka,
+  O urządzeniu — każda z podstroną o tej samej treści co na pilocie. Restart, ustawienia
+  fabryczne i zapomnienie sieci pytają o potwierdzenie.
+- **Ikony nagłówków i scen** odpowiadają symbolom LVGL z firmware.
 
-Klucz API do Emby nie trafia do repozytorium — idzie do konfiguracji urządzenia w NVS.
+Dane w podstronach (sieci, broker, adres IP) są przykładowe — prawdziwe leżą wyłącznie w NVS pilota.
 
 ## Ekran startowy
 
@@ -269,7 +267,8 @@ Bez zmiany pozostają: kontrakt MQTT, model danych, zasada świeżego stanu po w
 Logotypy Infuse i YouTube pochodzą z biblioteki Simple Icons. `assets/wppilot.svg` to biały napis
 z nagłówka pilot.wp.pl (symbol `#logo`, pobrany 2026-11-03) — na kafelku stoi jak napisy TVP.
 
-**Plakaty makieta naprawdę pobiera po HTTP**, z serwisu losowych zdjęć `picsum.photos`, w docelowym
+Karuzela plakatów została już tylko w galerii komponentów (`system.html`). Pierwsza wersja makiety
+**pobierała plakaty naprawdę po HTTP**, z serwisu losowych zdjęć `picsum.photos`, w docelowym
 rozmiarze 200 × 300. To nie są okładki tych tytułów, tylko przypadkowe fotografie — chodzi o to, by
 ocenić wygląd karuzeli i zarazem przećwiczyć prawdziwą ścieżkę: szkielet w trakcie pobierania,
 podmianę po odebraniu obrazu i zapas lokalny przy błędzie. Jeden plakat waży stamtąd ok. 8 KB, czyli
