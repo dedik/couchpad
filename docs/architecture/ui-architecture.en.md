@@ -79,7 +79,7 @@ and transport clients queue only the state of their own device (`Z906Event` carr
 
 | File | Contents |
 | --- | --- |
-| `include/ui/theme.hpp`, `theme.cpp` | tokens from `pulpit.css`: colours, radii, spacing, shell dimensions, fonts, shared styles. Screens do not define their own colours. |
+| `include/ui/theme.hpp`, `theme.cpp` | tokens from `pulpit.css`: colours, radii, spacing, shell dimensions, fonts, shared styles. Two palettes (dark, light) with the same roles; `theme::apply()` switches them at runtime by swapping role colours in the shared styles and in every object's local styles. Screens do not define their own colours — a colour outside the palette will not follow the theme. |
 | `include/ui/widgets.hpp` | the whole component catalogue — start with this file |
 | `widgets.cpp` | section, `make_fill`, `make_cap`, `Segmented`, `Tiles`, actions, `ListRow`, `Readout`, `Banner` + `set_unavailable`, power button, `Page`, `ask_confirm` |
 | `widgets_controls.cpp` | continuous values: `Dial` (volume), `Thermostat` (temperature), `Level` (Z906 channels) |
@@ -130,6 +130,17 @@ it holds task stacks, FreeRTOS queues and every allocation up to 4 kB
   `esp_mqtt_client_init` or `enqueue`;
 - a task stack in PSRAM (`xTaskCreatePinnedToCoreWithCaps`) only when the task does not
   touch flash (NVS, OTA).
+
+### Light and dark theme
+
+Setting *More → Display → Style*: dark (default), light or "by hours" — dark inside the
+chosen window (default 18–8), light outside it (`Pref::ThemeMode`, `Pref::ThemeHours`,
+`effective_theme()` in `screen_device.cpp`). `on_tick` checks the theme once a second, also
+while asleep. Until the remote knows the time, "by hours" stays dark. A new colour goes into
+both palettes in `theme.cpp` (and into the mockup's `pulpit.css`); no two roles of one palette may
+share a value. The only deliberate colour outside the palette is `theme::logo_plate()` — a dark
+plate under logos, because TVP and WP Pilot are white. Decision and rejected options:
+[ADR 0012](adr/0012-light-and-dark-theme.en.md).
 
 ### Fonts and icons
 

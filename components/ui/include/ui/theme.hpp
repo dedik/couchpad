@@ -12,20 +12,52 @@ namespace ui::theme {
 // Powierzchnie niosą hierarchię, akcent niesie stan aktywny. Kolor semantyczny
 // pojawia się tylko tam, gdzie ma znaczenie: czerwony to wyciszenie i błąd,
 // zielony to potwierdzona dostępność.
-inline lv_color_t bg() { return lv_color_hex(0x0a0b0e); }
-inline lv_color_t surface() { return lv_color_hex(0x14161b); }
-inline lv_color_t surface2() { return lv_color_hex(0x1c1f26); }
-inline lv_color_t surface3() { return lv_color_hex(0x282c35); }
-inline lv_color_t line() { return lv_color_hex(0x30353f); }
+//
+// Dwie palety o tych samych rolach: ciemna (z makiety) i jasna. Bieżącą wybiera
+// `apply()`; funkcje poniżej zawsze zwracają kolor z bieżącej. W jasnej palecie
+// surface3 jest ciemniejsza od surface2 — tak jak w ciemnej „mocniejsza” od tła grupy.
+enum class Mode : uint8_t { Dark, Light };
 
-inline lv_color_t text() { return lv_color_hex(0xf3f5f9); }
-inline lv_color_t dim() { return lv_color_hex(0x98a0ae); }
-inline lv_color_t faint() { return lv_color_hex(0x626a78); }
+struct Palette {
+    lv_color_t bg;
+    lv_color_t surface;
+    lv_color_t surface2;
+    lv_color_t surface3;
+    lv_color_t line;
+    lv_color_t text;
+    lv_color_t dim;
+    lv_color_t faint;
+    lv_color_t accent;
+    lv_color_t accent_pressed;  // OK krzyżaka w chwili dotyku
+    lv_color_t accent_ink;
+    lv_color_t ok;
+    lv_color_t danger;
+};
 
-inline lv_color_t accent() { return lv_color_hex(0xf2a93b); }
-inline lv_color_t accent_ink() { return lv_color_hex(0x17120a); }
-inline lv_color_t ok() { return lv_color_hex(0x56d6a0); }
-inline lv_color_t danger() { return lv_color_hex(0xff5f5f); }
+const Palette& palette();
+Mode mode();
+
+inline lv_color_t bg() { return palette().bg; }
+inline lv_color_t surface() { return palette().surface; }
+inline lv_color_t surface2() { return palette().surface2; }
+inline lv_color_t surface3() { return palette().surface3; }
+inline lv_color_t line() { return palette().line; }
+
+inline lv_color_t text() { return palette().text; }
+inline lv_color_t dim() { return palette().dim; }
+inline lv_color_t faint() { return palette().faint; }
+
+inline lv_color_t accent() { return palette().accent; }
+inline lv_color_t accent_pressed() { return palette().accent_pressed; }
+inline lv_color_t accent_ink() { return palette().accent_ink; }
+inline lv_color_t ok() { return palette().ok; }
+inline lv_color_t danger() { return palette().danger; }
+
+// Płytka pod logotypami kanałów i aplikacji. Celowo poza paletą i taka sama w obu
+// stylach: część logotypów (TVP, WP Pilot) jest biała i znika na jasnym kafelku.
+// W ciemnym stylu płytka prawie nie różni się od surface, więc nic się nie zmienia.
+// Wartość nie może się pokryć z żadną rolą obu palet, inaczej `apply()` ją przemaluje.
+inline lv_color_t logo_plate() { return lv_color_hex(0x16181d); }
 
 // Miękkie tła z makiety to ten sam kolor z krycia 14% i 13%.
 inline constexpr lv_opa_t kAccentSoftOpa = 36;
@@ -112,6 +144,13 @@ struct Styles {
 
 // Tworzy style raz. Kolejne wywołania nic nie robią.
 void init();
+
+// Przełącza paletę bez przebudowy ekranów: każdy kolor z bieżącej palety
+// we wspólnych stylach i w stylach lokalnych wszystkich obiektów zamienia na kolor
+// tej samej roli z nowej palety, po czym odświeża ekran. Kolory ustawiane przy
+// rysowaniu biorą się z `palette()`, więc same trafiają w nowy styl.
+// Wołać tylko z zadania UI.
+void apply(Mode mode);
 const Styles& styles();
 
 // Powtarzalne ustawienia, których nie opłaca się trzymać jako osobny styl.

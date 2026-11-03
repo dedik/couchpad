@@ -23,6 +23,10 @@
   --ok: #56d6a0;
   --danger: #ff5f5f;
   --danger-soft: rgba(255, 95, 95, .13);
+  --danger-line: rgba(255, 95, 95, .35);
+  --ok-soft: rgba(86, 214, 160, .15);
+  --ok-line: rgba(86, 214, 160, .45);
+  --accent-down: #f4b25a;   /* OK krzyżaka w chwili dotyku */
 
   /* Promienie */
   --r1: 10px; --r2: 14px; --r3: 18px; --r4: 24px; --rf: 999px;
@@ -52,6 +56,30 @@
 
   /* Najmniejszy dopuszczalny cel dotyku: 68 px ≈ 8 mm na tym panelu */
   --touch: 68px;
+}
+
+/* Styl jasny: te same role, wartości jeden do jednego z kLight w components/ui/theme.cpp.
+   Akcent, zieleń i czerwień są ciemniejsze, bo leżą na bieli; surface-3 jest ciemniejsza
+   od surface-2, tak jak w ciemnym „mocniejsza” od tła grupy. Ramka urządzenia zostaje. */
+[data-theme="light"] {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --surface-2: #e4e7ec;
+  --surface-3: #cfd4dc;
+  --line: #d9dde4;
+  --text: #15171c;
+  --dim: #586070;
+  --faint: #878f9d;
+  --accent: #e08a12;
+  --accent-ink: #1a1206;
+  --accent-soft: rgba(224, 138, 18, .14);
+  --accent-down: #b86f0a;
+  --ok: #1c9a68;
+  --danger: #e03a3a;
+  --danger-soft: rgba(224, 58, 58, .13);
+  --danger-line: rgba(224, 58, 58, .35);
+  --ok-soft: rgba(28, 154, 104, .15);
+  --ok-line: rgba(28, 154, 104, .45);
 }
 
 * { box-sizing: border-box; }
@@ -129,6 +157,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .tile img { width: 100%; object-fit: contain; }
 .tile img.logo-mark { height: 38px; }
 .tile img.logo-word { height: 22px; }
+/* Płytka pod logotypami: stała w obu stylach (theme::logo_plate), bo TVP i WP Pilot są białe */
+.tile:has(> img.logo-mark, > img.logo-word) { background: #16181d; }
 .tile.is-tall { height: 120px; }
 .tile.is-sel { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
 .tile.is-sel i { color: var(--accent); }
@@ -149,7 +179,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .pad-key.right { right: 2px; top: 88px; }
 .pad-ok { position: absolute; left: 72px; top: 72px; width: 112px; height: 112px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: var(--t-md); font-weight: 700; letter-spacing: .08em; display: grid; place-items: center; }
 .pad-key.is-down { color: var(--accent); background: var(--surface-2); }
-.pad-ok.is-down { background: color-mix(in srgb, var(--accent) 80%, #fff); }
+.pad-ok.is-down { background: var(--accent-down); }
 
 /* ---------- Tarcza wartości (obrót palcem) ---------- */
 .dial-zone { position: relative; display: grid; place-items: center; }
@@ -172,7 +202,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .decode-pill { height: 36px; padding: 0 var(--s3); border-radius: var(--rf); background: var(--surface); border: 1px solid var(--line); color: var(--faint); font-size: var(--t-sm); font-weight: 500; display: inline-flex; align-items: center; gap: var(--s2); }
 .decode-pill[hidden] { display: none; }
 .decode-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
-.decode-pill.is-on { color: var(--ok); border-color: rgba(86, 214, 160, .45); }
+.decode-pill.is-on { color: var(--ok); border-color: var(--ok-line); }
 .decode-pill.is-on i { background: var(--ok); }
 .dial-side { position: absolute; top: 76px; left: 50%; transform: translateX(-50%); width: 52px; height: 52px; border-radius: var(--rf); background: var(--surface-2); border: 1px solid var(--line); color: var(--dim); display: grid; place-items: center; }
 .dial-side i { width: 24px; height: 24px; }
@@ -201,13 +231,13 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .readout b { font-weight: 500; color: var(--dim); display: inline-flex; align-items: center; gap: var(--s2); }
 .readout b::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
 .readout b.is-on { color: var(--ok); }
-.readout b.is-on::before { background: var(--ok); box-shadow: 0 0 0 4px rgba(86, 214, 160, .15); }
+.readout b.is-on::before { background: var(--ok); box-shadow: 0 0 0 4px var(--ok-soft); }
 
 /* ---------- Karta braku stanu ----------
    Leży poza układem, więc jej pojawienie się nie przesuwa żadnej kontrolki. */
 .banner { position: absolute; left: var(--gutter); right: var(--gutter); top: 50%; transform: translateY(-50%); z-index: 5; margin: 0;
   display: grid; justify-items: center; gap: var(--s3); padding: var(--s6) var(--s5); text-align: center;
-  border-radius: var(--r4); background: var(--surface); border: 1px solid rgba(255, 95, 95, .35); color: var(--text);
+  border-radius: var(--r4); background: var(--surface); border: 1px solid var(--danger-line); color: var(--text);
   font-size: var(--t-sm); line-height: 1.45; box-shadow: 0 18px 44px rgba(0, 0, 0, .55); }
 .banner i { width: 26px; height: 26px; color: var(--danger); }
 .banner[hidden] { display: none; }
@@ -322,7 +352,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .device-tile.is-on .device-mark { background: var(--accent-soft); color: var(--accent); }
 .device-tile.is-on .device-temp { color: var(--text); }
 .device-tile.is-on .device-mode { color: var(--accent); }
-.device-tile.is-stale { border-color: rgba(255, 95, 95, .35); }
+.device-tile.is-stale { border-color: var(--danger-line); }
 .device-tile.is-stale .device-mark { background: var(--danger-soft); color: var(--danger); }
 .device-tile:active { background: var(--surface-2); }
 
@@ -428,7 +458,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .start-foot { height: 56px; flex: none; margin-top: var(--s3); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); font-size: var(--t-sm); color: var(--faint); }
 .start-link { display: inline-flex; align-items: center; gap: var(--s2); }
 .start-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); animation: pulse-fade .9s ease-in-out infinite; }
-.start-foot.is-ready .start-dot { background: var(--ok); animation: none; box-shadow: 0 0 0 4px rgba(86, 214, 160, .15); }
+.start-foot.is-ready .start-dot { background: var(--ok); animation: none; box-shadow: 0 0 0 4px var(--ok-soft); }
 .start-foot.is-ready { color: var(--dim); }
 .start-foot.is-error .start-dot { background: var(--danger); animation: none; }
 .start-retry { height: 48px; padding: 0 var(--s4); border-radius: var(--r2); background: var(--accent); color: var(--accent-ink); font-weight: 700; display: inline-flex; align-items: center; gap: var(--s2); }
@@ -441,6 +471,12 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .lab-panel .cap { margin-bottom: var(--s1); }
 .lab-panel button { min-height: 44px; padding: 0 var(--s3); border-radius: var(--r2); background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: var(--t-sm); text-align: left; }
 .lab-panel button[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.theme-hours[hidden] { display: none; }
+.lab-panel .lab-sep { margin-top: var(--s4); }
+.lab-hour { display: grid; gap: var(--s2); font-size: var(--t-sm); color: var(--dim); }
+.lab-hour input { width: 100%; accent-color: var(--accent); }
+.lab-hour b { color: var(--text); font-weight: 500; }
+.screen { color: var(--text); transition: background-color .25s; }
 .lab-note { margin: var(--s2) 0 0; font-size: 12px; line-height: 1.5; color: var(--faint); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }

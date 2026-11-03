@@ -79,7 +79,7 @@ a klienci transportu wysyłają w kolejce tylko stan swojego urządzenia (`Z906E
 
 | Plik | Zawartość |
 | --- | --- |
-| `include/ui/theme.hpp`, `theme.cpp` | tokeny z `pulpit.css`: kolory, promienie, odstępy, wymiary powłoki, fonty, wspólne style. Ekrany nie definiują własnych kolorów. |
+| `include/ui/theme.hpp`, `theme.cpp` | tokeny z `pulpit.css`: kolory, promienie, odstępy, wymiary powłoki, fonty, wspólne style. Dwie palety (ciemna, jasna) o tych samych rolach; `theme::apply()` przełącza je w locie, zamieniając kolory ról w stylach wspólnych i lokalnych wszystkich obiektów. Ekrany nie definiują własnych kolorów — kolor spoza palety nie zmieni się ze stylem. |
 | `include/ui/widgets.hpp` | cały katalog komponentów — zacznij od tego pliku |
 | `widgets.cpp` | sekcja, `make_fill`, `make_cap`, `Segmented`, `Tiles`, akcje, `ListRow`, `Readout`, `Banner` + `set_unavailable`, przycisk zasilania, `Page`, `ask_confirm` |
 | `widgets_controls.cpp` | wartości ciągłe: `Dial` (głośność), `Thermostat` (temperatura), `Level` (kanały Z906) |
@@ -130,6 +130,17 @@ trzymają ją stosy zadań, kolejki FreeRTOS i każda alokacja do 4 kB
   `esp_mqtt_client_init` ani `enqueue`;
 - stos zadania w PSRAM (`xTaskCreatePinnedToCoreWithCaps`) tylko wtedy, gdy zadanie nie
   dotyka flasha (NVS, OTA).
+
+### Styl jasny i ciemny
+
+Ustawienie *Więcej → Ekran → Styl*: ciemny (domyślny), jasny albo „wg godzin” — ciemny
+w wybranym oknie (domyślnie 18–8), jasny poza nim (`Pref::ThemeMode`, `Pref::ThemeHours`,
+`effective_theme()` w `screen_device.cpp`). `on_tick` sprawdza styl co sekundę, także
+w uśpieniu. Zanim pilot zna godzinę, „wg godzin” daje ciemny. Nowy kolor dokłada się
+do obu palet w `theme.cpp` (i do `pulpit.css` makiety); żadne dwie role jednej palety nie mogą
+mieć tej samej wartości. Jedyny celowy kolor spoza palety to `theme::logo_plate()` — ciemna
+płytka pod logotypami, bo TVP i WP Pilot są białe. Decyzja i odrzucone warianty:
+[ADR 0012](adr/0012-light-and-dark-theme.md).
 
 ### Fonty i ikony
 

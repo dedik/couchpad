@@ -192,6 +192,9 @@ struct MoreScreen {
 // ---------- Podstrony ustawień pilota ----------
 struct DeviceScreens {
     widgets::Page display;
+    widgets::Segmented theme;
+    lv_obj_t* theme_hours_cap = nullptr;  // widoczne tylko w trybie „wg godzin”
+    widgets::Segmented theme_hours;
     widgets::Segmented brightness;
     widgets::Segmented timeout;
     widgets::Segmented dim;
@@ -379,6 +382,8 @@ void open_input_page(Context& context);
 void open_diagnostics_page(Context& context);
 // Jasność, jaką ekran ma mieć teraz: z ustawień, w nocy obniżona (tryb nocny).
 uint8_t effective_brightness();
+// Styl, jaki interfejs ma mieć teraz: z ustawień, w trybie „wg godzin” zależny od pory.
+theme::Mode effective_theme();
 // Strefa czasowa z ustawień — wołać przed pierwszą synchronizacją czasu.
 void apply_timezone();
 // Czas wygaszania z ustawień w milisekundach; 0 = nigdy.

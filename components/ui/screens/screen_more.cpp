@@ -31,7 +31,7 @@ void build_more(Context& context, lv_obj_t* parent) {
     screen.mqtt = widgets::make_list_row(screen.section, LV_SYMBOL_LOOP, "MQTT",
                                          "broker i kontroler Z906", "", &on_open_mqtt, &context);
     screen.brightness = widgets::make_list_row(screen.section, LV_SYMBOL_EYE_OPEN, "Ekran",
-                                               "jasność i wygaszanie", "", &on_open_display,
+                                               "styl, jasność, wygaszanie", "", &on_open_display,
                                                &context);
     screen.sleep = widgets::make_list_row(screen.section, LV_SYMBOL_VOLUME_MAX, "Dźwięk",
                                           "limit głośności Z906", "", &on_open_sound, &context);
@@ -71,18 +71,20 @@ void render_more(Context& context) {
     lv_obj_set_style_text_color(screen.wifi.value, connected ? theme::ok() : theme::dim(),
                                 LV_PART_MAIN);
 
-    char value[24];
+    char value[40];
+    // Styl bez godzin: „auto” mieści się obok podpisu, okno widać na podstronie.
+    const char* const style_names[] = {"ciemny", "jasny", "auto"};
+    const uint8_t style = storage::get(storage::Pref::ThemeMode);
+    const char* style_name = style_names[style < 3 ? style : 0];
+    const unsigned bright = storage::get(storage::Pref::Brightness);
     const uint32_t timeout = screen_timeout_ms();
     if (timeout == 0) {
-        std::snprintf(value, sizeof(value), "%u%% · zawsze",
-                      static_cast<unsigned>(storage::get(storage::Pref::Brightness)));
+        std::snprintf(value, sizeof(value), "%s · %u%% · zawsze", style_name, bright);
     } else if (timeout < 60000) {
-        std::snprintf(value, sizeof(value), "%u%% · %u s",
-                      static_cast<unsigned>(storage::get(storage::Pref::Brightness)),
+        std::snprintf(value, sizeof(value), "%s · %u%% · %u s", style_name, bright,
                       static_cast<unsigned>(timeout / 1000));
     } else {
-        std::snprintf(value, sizeof(value), "%u%% · %u min",
-                      static_cast<unsigned>(storage::get(storage::Pref::Brightness)),
+        std::snprintf(value, sizeof(value), "%s · %u%% · %u min", style_name, bright,
                       static_cast<unsigned>(timeout / 60000));
     }
     lv_label_set_text(screen.brightness.value, value);

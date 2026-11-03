@@ -482,6 +482,26 @@ Later that day the TV channel shortcuts and the Apple TV app tiles were reduced 
 80 × 80 square: with logos up to 38 px, a height of 100 px looked unnatural. The freed 20 px goes to
 the D-pad (TV) and the spacing around the trackpad (Apple TV).
 
+## Light and dark theme — 2026-11-03
+
+[ADR 0012](../architecture/adr/0012-light-and-dark-theme.en.md). Two palettes with the same
+13 roles (`kDark`, `kLight` in `theme.cpp`); `theme::apply()` repaints the shared and local styles of
+every object at runtime, without rebuilding screens. Setting *More → Display → Style*: dark
+(default) / light / by hours (17–7, 18–8 default, 19–7, 21–7), NVS `theme`, `theme_hrs`. `on_tick`
+checks the style once a second, also while asleep; without a known time "by hours" gives dark. The
+"Display" row in the settings shows the style (`ciemny`/`jasny`/`auto`).
+
+- The mockup came first (`docs/ux/mockup-pulpit`, "Style" panel and a fake-hour slider), then the
+  firmware.
+- White logos (TVP1, TVP2, WP Pilot) disappeared on light tiles — image tiles got a fixed plate
+  `theme::logo_plate()` (`0x16181d`), outside the palette.
+- Pitfall: `apply()` recognises a role by colour value. Two roles with the same colour, or a fixed
+  colour equal to a role of either palette, will be repainted wrongly.
+- Flashed and checked on the device in both styles; screenshots in `docs/screenshots/` (dark) and
+  `docs/screenshots/light/`. The remote was left in the dark style.
+- `tools/remote.py tour` had captured the start screen six times since ADR 0010 (it covers the tabs);
+  it now taps the TV tile after the start shot, which only closes the start screen.
+
 ## Remote log over MQTT (during development)
 
 `CONFIG_PILOT_REMOTE_LOG` ("Pilot" menu, enabled by default) copies every ESP_LOG line
@@ -515,9 +535,10 @@ uvx --with pyserial --with pillow python tools/remote.py shot screen.png
 uvx --with pyserial --with pillow python tools/remote.py tour docs/screenshots/
 ```
 
-About 2.5 s per screenshot, without restarting the remote. `tour` touches only the tab bar — remote
+About 2.5 s per screenshot, without restarting the remote. `tour` touches only the tab bar and the TV tile on the start screen — remote
 touch on a control really does control the home. The settings screen shows the Wi-Fi network name: before
-publishing a screenshot it must be masked.
+publishing a screenshot it must be masked. Documentation screenshots are taken in both styles
+(`docs/screenshots/` and `docs/screenshots/light/`, plus `overview.png` and `overview-light.png`).
 
 Pitfall: macOS raises DTR and RTS when the port is opened, and USB-Serial-JTAG resets the chip on
 RTS=1 and DTR=0 — RTS must be lowered before DTR (the script does this). A plain port open

@@ -66,6 +66,8 @@ enum class Pref : uint8_t {
     TimeZone,        // indeks strefy czasowej (ui), domyślnie 0 = Polska
     TrackpadStep,    // piksele ruchu na jeden krok gładzika, domyślnie 26
     KeyboardAutoOpen,// klawiatura wysuwa się sama, gdy Apple TV pokaże pole tekstowe; domyślnie tak
+    ThemeMode,       // styl interfejsu (ui: ciemny, jasny, wg godzin), domyślnie 0 = ciemny
+    ThemeHours,      // indeks godzin stylu ciemnego w trybie „wg godzin” (ui), domyślnie 18–8
     Count,
 };
 

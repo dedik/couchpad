@@ -193,6 +193,21 @@ For the firmware this is actually a simplification: a 48 × 48 grid becomes an i
 1× in the tab bar, scaled 2× with nearest-neighbour on the start-screen tiles, without
 antialiasing — cheaper than an icon font.
 
+## Light and dark theme
+
+The mockup has both styles of the remote ([ADR 0012](../../architecture/adr/0012-light-and-dark-theme.en.md)).
+The light one is the `[data-theme="light"]` block in `pulpit.css`: the same tokens, with values
+matching `kLight` in `components/ui/theme.cpp` one to one. Two ways to look at it:
+
+- **More → Display** — a sub-page as in the firmware: style `dark / light / by hours`, dark window
+  (17–7, 18–8, 19–7, 21–7), brightness and screen timeout;
+- **the simulation panel** — Dark / Light / By hours shortcuts and a "fake hour" slider that also
+  moves the start screen clock, so "by hours" can be checked without waiting for the evening.
+
+The device bezel stays dark — it is the case, not the screen. Logo tiles have a fixed dark plate in
+both styles (`theme::logo_plate()`), because the TVP and WP Pilot logos are white. A new colour goes
+into both token blocks at once.
+
 ## Typeface
 
 **Ubuntu**, in three weights: 400, 500 and 700. The design uses no other weight, so neither the

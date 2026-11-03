@@ -193,6 +193,22 @@ Dla firmware to zresztą ułatwienie: siatka 48 × 48 staje się obrazem indekso
 w skali 1 ×, na kafelku ekranu startowego powiększonym dwukrotnie metodą najbliższego sąsiada,
 bez antyaliasingu — taniej niż font ikon.
 
+## Styl jasny i ciemny
+
+Makieta ma oba style pilota ([ADR 0012](../../architecture/adr/0012-light-and-dark-theme.md)).
+Jasny to blok `[data-theme="light"]` w `pulpit.css`: te same tokeny z wartościami jeden do jednego
+z `kLight` w `components/ui/theme.cpp`. Obejrzeć go można na dwa sposoby:
+
+- **Więcej → Ekran** — podstrona jak w firmware: styl `ciemny / jasny / wg godzin`, okno stylu
+  ciemnego (17–7, 18–8, 19–7, 21–7), jasność i wygaszanie;
+- **panel symulacji** — skróty Ciemny / Jasny / Wg godzin i suwak „Udawana godzina”, który
+  przesuwa też zegar ekranu startowego, więc tryb „wg godzin” da się sprawdzić bez czekania
+  na wieczór.
+
+Ramka urządzenia zostaje ciemna — to obudowa, nie ekran. Kafelki z logotypami mają stałą ciemną
+płytkę w obu stylach (`theme::logo_plate()`), bo logotypy TVP i WP Pilot są białe. Nowy kolor
+dopisuje się do obu bloków tokenów naraz.
+
 ## Krój pisma
 
 **Ubuntu**, w trzech odmianach: 400, 500 i 700. Projekt nie używa żadnej innej grubości, więc ani

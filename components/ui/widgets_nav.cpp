@@ -94,7 +94,7 @@ lv_obj_t* make_dpad(lv_obj_t* parent, KeyHandler on_key, void* context) {
     lv_obj_set_style_radius(ok, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(ok, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(ok, theme::accent(), LV_PART_MAIN);
-    lv_obj_set_style_bg_color(ok, lv_color_lighten(theme::accent(), 40), LV_STATE_PRESSED);
+    lv_obj_set_style_bg_color(ok, theme::accent_pressed(), LV_STATE_PRESSED);
     lv_obj_set_flex_flow(ok, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(ok, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 

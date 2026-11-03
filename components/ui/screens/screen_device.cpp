@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <ctime>
+#include <initializer_list>
 
 #include "esp_app_desc.h"
 #include "esp_heap_caps.h"
@@ -37,6 +38,18 @@ struct NightWindow {
 constexpr NightWindow kNightWindows[] = {{0, 0}, {21, 7}, {22, 7}, {23, 6}};
 const char* const kNightLabels[] = {"wył.", "21–7", "22–7", "23–6"};
 constexpr uint8_t kNightBrightness = 20;
+
+// Styl: indeks Pref::ThemeMode. „Wg godzin” to ciemny w oknie z kThemeHours, jasny poza nim.
+constexpr uint8_t kThemeDark = 0;
+constexpr uint8_t kThemeLight = 1;
+constexpr uint8_t kThemeAuto = 2;
+const char* const kThemeLabels[] = {"ciemny", "jasny", "wg godzin"};
+constexpr NightWindow kThemeHours[] = {{17, 7}, {18, 8}, {19, 7}, {21, 7}};
+const char* const kThemeHoursLabels[] = {"17–7", "18–8", "19–7", "21–7"};
+
+bool hour_in(const NightWindow& window, int hour) {
+    return hour >= window.from || hour < window.to;
+}
 
 // ---------- Pokój i czas ----------
 
@@ -133,6 +146,26 @@ void on_back_input(void* raw) {
 }
 void on_back_diagnostics(void* raw) {
     widgets::show_page(static_cast<Context*>(raw)->device.diagnostics, false);
+}
+
+void on_theme(void* raw, std::size_t index) {
+    auto& context = *static_cast<Context*>(raw);
+    if (index > kThemeAuto) {
+        return;
+    }
+    storage::set(storage::Pref::ThemeMode, static_cast<uint8_t>(index));
+    theme::apply(effective_theme());
+    render(context);
+}
+
+void on_theme_hours(void* raw, std::size_t index) {
+    auto& context = *static_cast<Context*>(raw);
+    if (index >= sizeof(kThemeHours) / sizeof(kThemeHours[0])) {
+        return;
+    }
+    storage::set(storage::Pref::ThemeHours, static_cast<uint8_t>(index));
+    theme::apply(effective_theme());
+    render(context);
 }
 
 void on_night(void* raw, std::size_t index) {
@@ -303,9 +336,26 @@ uint8_t effective_brightness() {
     const std::time_t now = std::time(nullptr);
     std::tm parts = {};
     localtime_r(&now, &parts);
-    const NightWindow& window = kNightWindows[night];
-    const bool at_night = parts.tm_hour >= window.from || parts.tm_hour < window.to;
+    const bool at_night = hour_in(kNightWindows[night], parts.tm_hour);
     return at_night && chosen > kNightBrightness ? kNightBrightness : chosen;
+}
+
+theme::Mode effective_theme() {
+    const uint8_t choice = storage::get(storage::Pref::ThemeMode);
+    if (choice == kThemeLight) {
+        return theme::Mode::Light;
+    }
+    // Bez znanej godziny „wg godzin” zostaje przy ciemnym — tak jak pilot startuje.
+    if (choice != kThemeAuto || !transport::time_known()) {
+        return theme::Mode::Dark;
+    }
+    const uint8_t hours = storage::get(storage::Pref::ThemeHours);
+    const std::size_t count = sizeof(kThemeHours) / sizeof(kThemeHours[0]);
+    const std::time_t now = std::time(nullptr);
+    std::tm parts = {};
+    localtime_r(&now, &parts);
+    return hour_in(kThemeHours[hours < count ? hours : 1], parts.tm_hour) ? theme::Mode::Dark
+                                                                           : theme::Mode::Light;
 }
 
 void apply_timezone() {
@@ -318,6 +368,14 @@ void build_device(Context& context) {
     DeviceScreens& screen = context.device;
 
     screen.display = widgets::make_page("Ekran", &on_back_display, &context);
+    add_section(screen.display.body, "STYL");
+    screen.theme = widgets::make_segmented(screen.display.body, LV_SYMBOL_IMAGE, 3, &on_theme,
+                                           &context);
+    screen.theme.set_labels(kThemeLabels, 3);
+    screen.theme_hours_cap = add_section(screen.display.body, "STYL CIEMNY W GODZINACH");
+    screen.theme_hours = widgets::make_segmented(screen.display.body, LV_SYMBOL_REFRESH, 4,
+                                                 &on_theme_hours, &context);
+    screen.theme_hours.set_labels(kThemeHoursLabels, 4);
     add_section(screen.display.body, "JASNOŚĆ");
     screen.brightness = widgets::make_segmented(screen.display.body, LV_SYMBOL_EYE_OPEN, 5, &on_brightness,
                                                 &context);
@@ -410,6 +468,19 @@ void build_device(Context& context) {
 
 void render_device(Context& context) {
     DeviceScreens& screen = context.device;
+
+    const uint8_t style = storage::get(storage::Pref::ThemeMode);
+    screen.theme.set_selected(style <= kThemeAuto ? style : kThemeDark);
+    const uint8_t hours = storage::get(storage::Pref::ThemeHours);
+    screen.theme_hours.set_selected(hours < 4 ? hours : 1);
+    const bool show_hours = style == kThemeAuto;
+    for (lv_obj_t* obj : {screen.theme_hours_cap, screen.theme_hours.root}) {
+        if (show_hours) {
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
 
     screen.brightness.set_selected(
         index_of(kBrightness, storage::get(storage::Pref::Brightness), 4));

@@ -15,6 +15,7 @@ Context* g_context = nullptr;
 constexpr int kDimPercent = 15;
 constexpr uint32_t kDimLeadMs = 10000;
 int64_t g_brightness_check_ms = 0;
+int64_t g_theme_check_ms = 0;
 
 // ADR 0005: stan sprzed snu nie jest stanem aktualnym. Przez czas snu ktoś mógł
 // sięgnąć po pilota od wzmacniacza albo po aplikację, więc wybudzenie prosi
@@ -75,6 +76,13 @@ void on_tick(lv_timer_t* timer) {
 
     // LVGL sam liczy czas od ostatniego dotyku, więc wystarczy go odpytać.
     // Czas wygaszania pochodzi z ustawień „Ekran” (domyślnie 30 s, 0 = nigdy).
+    // Styl „wg godzin” przełącza się na granicy godziny, także w uśpieniu — wtedy
+    // pilot budzi się już we właściwym. Sprawdzamy raz na sekundę.
+    const int64_t tick_now = core::now_ms();
+    if (tick_now - g_theme_check_ms >= 1000) {
+        g_theme_check_ms = tick_now;
+        theme::apply(effective_theme());
+    }
     if (context->asleep) {
         return;
     }
@@ -135,6 +143,8 @@ void render(Context& context) {
 }
 
 void start(const Services& services) {
+    // Styl przed stylami: przy jasnym z ustawień ekrany od razu powstają jasne.
+    theme::apply(effective_theme());
     theme::init();
     g_context = &core::memory::make_in_psram<Context>();
 

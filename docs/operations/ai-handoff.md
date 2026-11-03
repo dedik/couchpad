@@ -482,6 +482,26 @@ Później tego dnia skróty kanałów TV i kafelki aplikacji Apple TV zeszły do
 80 × 80: przy logo do 38 px wysokie 100 px wyglądało nienaturalnie. Zwolnione 20 px bierze
 krzyżak (TV) i odstęp wokół gładzika (Apple TV).
 
+## Styl jasny i ciemny — 2026-11-03
+
+[ADR 0012](../architecture/adr/0012-light-and-dark-theme.md). Dwie palety o tych samych
+13 rolach (`kDark`, `kLight` w `theme.cpp`); `theme::apply()` przemalowuje style wspólne
+i lokalne wszystkich obiektów w locie, bez przebudowy ekranów. Ustawienie *Więcej → Ekran →
+Styl*: ciemny (domyślny) / jasny / wg godzin (17–7, 18–8 domyślnie, 19–7, 21–7), NVS
+`theme`, `theme_hrs`. `on_tick` sprawdza styl co sekundę, także w uśpieniu; bez znanej godziny
+„wg godzin” daje ciemny. Wiersz „Ekran” w ustawieniach pokazuje styl (`ciemny`/`jasny`/`auto`).
+
+- Najpierw powstała makieta (`docs/ux/mockup-pulpit`, panel „Styl” i suwak udawanej
+  godziny), dopiero potem firmware.
+- Białe logotypy (TVP1, TVP2, WP Pilot) znikały na jasnych kafelkach — kafelki z obrazem
+  dostały stałą płytkę `theme::logo_plate()` (`0x16181d`), poza paletą.
+- Pułapka: `apply()` rozpoznaje rolę po wartości koloru. Dwie role o tym samym kolorze albo
+  stały kolor równy roli którejś palety zostaną przemalowane nie tak.
+- Wgrane i sprawdzone na urządzeniu w obu stylach; zrzuty w `docs/screenshots/` (ciemny)
+  i `docs/screenshots/light/`. Pilot zostawiony w stylu ciemnym.
+- `tools/remote.py tour` od ADR 0010 zrzucał sześć razy ekran startowy (przykrywa zakładki);
+  teraz po zrzucie startu stuka kafelek Telewizor, który tylko zamyka start.
+
 ## Log pilota przez MQTT (na czas rozwoju)
 
 `CONFIG_PILOT_REMOTE_LOG` (menu „Pilot”, domyślnie włączone) kopiuje każdą linię ESP_LOG
@@ -515,9 +535,10 @@ uvx --with pyserial --with pillow python tools/remote.py shot zrzut.png
 uvx --with pyserial --with pillow python tools/remote.py tour docs/screenshots/
 ```
 
-Około 2,5 s na zrzut, bez restartu pilota. `tour` dotyka wyłącznie paska zakładek — zdalny
+Około 2,5 s na zrzut, bez restartu pilota. `tour` dotyka wyłącznie paska zakładek i kafelka Telewizor na ekranie startowym — zdalny
 dotyk w kontrolkę naprawdę steruje domem. Ekran ustawień pokazuje nazwę sieci Wi-Fi: przed
-publikacją zrzutu trzeba ją zamaskować.
+publikacją zrzutu trzeba ją zamaskować. Zrzuty do dokumentacji robi się w obu stylach
+(`docs/screenshots/` i `docs/screenshots/light/`, plus `overview.png` i `overview-light.png`).
 
 Pułapka: macOS podnosi DTR i RTS przy otwarciu portu, a USB-Serial-JTAG resetuje układ przy
 RTS=1 i DTR=0 — RTS trzeba opuścić przed DTR (tak robi skrypt). Zwykłe otwarcie portu

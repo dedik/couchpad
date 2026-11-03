@@ -17,6 +17,18 @@ w około dwie sekundy i reaguje od razu.
 | **Klawiatura Apple TV — QWERTY** | **Klawiatura Apple TV — układ Apple TV** | |
 | ![Klawiatura QWERTY](docs/screenshots/07-keyboard-qwerty.png) | ![Klawiatura w układzie Apple TV](docs/screenshots/08-keyboard-alt.png) | |
 
+### Styl jasny
+
+Ten sam interfejs w jasnym stylu — na stałe albo w dzień, gdy styl zależy od godziny.
+
+![Wszystkie ekrany — styl jasny](docs/screenshots/overview-light.png)
+
+| Klawiatura — QWERTY | Klawiatura — układ Apple TV |
+| --- | --- |
+| ![Klawiatura QWERTY, styl jasny](docs/screenshots/light/07-keyboard-qwerty.png) | ![Klawiatura w układzie Apple TV, styl jasny](docs/screenshots/light/08-keyboard-alt.png) |
+
+Pojedyncze ekrany jasnego stylu leżą w [`docs/screenshots/light/`](docs/screenshots/light/).
+
 ## Co potrafi
 
 - **TV** — stan zasilania, źródło i tryb obrazu, krzyżak, kołyski głośności i kanałów,
@@ -37,7 +49,10 @@ w około dwie sekundy i reaguje od razu.
   wejście i efekt, wskaźnik Decode 5.1.
 - **Dom** — klimatyzacja (tryb, temperatura, nawiew, żaluzje) i sceny.
 - **Ekran startowy** po wybudzeniu — zegar, pogoda i stan każdego urządzenia.
-- **Ustawienia na urządzeniu** — Wi-Fi, broker MQTT, ekran, limit głośności, pokój i strefa
+- **Styl jasny i ciemny** — wybierany w ustawieniach: na stałe albo wg godzin (domyślnie
+  ciemny od 18 do 8). Zmienia się w locie, bez restartu
+  ([ADR 0012](docs/architecture/adr/0012-light-and-dark-theme.md)).
+- **Ustawienia na urządzeniu** — Wi-Fi, broker MQTT, ekran i styl, limit głośności, pokój i strefa
   czasowa, klawiatura i gładzik, diagnostyka. Dane dostępowe wpisuje się na panelu i leżą
   w jego NVS, nigdy w repozytorium.
 
@@ -98,6 +113,7 @@ Otwórz **Ustawienia** (zakładka z kołami zębatymi):
    `multimedia_remote/v1/<identyfikator>`), identyfikator kontrolera Z906 (`z906_<mac>`)
    i prefiks tematów Glasshouse.
 3. **Pokój i czas** — nazwa pokoju w nagłówkach, strefa czasowa.
+4. **Ekran** (opcjonalnie) — styl ciemny, jasny albo wg godzin, jasność, wygaszanie.
 
 Załóż pilotowi osobne konto MQTT.
 
