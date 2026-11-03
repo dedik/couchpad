@@ -1,5 +1,7 @@
 # Bridge po stronie Home Assistanta
 
+[English](README.en.md)
+
 Pilot rozmawia wyłącznie wersjonowanym kontraktem `multimedia_remote/v1` i nie zna encji Z906
 ani wewnętrznych tematów jego kontrolera. Tłumaczeniem zajmuje się pakiet
 [`multimedia_remote.yaml`](multimedia_remote.yaml). Powód tego podziału opisuje

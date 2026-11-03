@@ -140,6 +140,14 @@ inaczej, dostosuj `components/transport/z906_client.cpp`.
 - **Log przez MQTT** (`CONFIG_PILOT_REMOTE_LOG`, domyślnie wyłączony): `tools/pilot_log.py`.
 - **Interaktywna makieta** całego interfejsu: `docs/ux/mockup-pulpit/index.html`.
 
+## TODO
+
+- [ ] **Więcej encji z Home Assistanta** — światła, rolety, sceny, czujniki i inne
+  urządzenia na ekranie Dom, ustawiane po stronie Home Assistanta zamiast na sztywno w kodzie.
+- [ ] **Praca na baterii** — dziś pilot działa tylko z USB. W planach: akumulator i tylna
+  obudowa, głęboki sen między użyciami z wybudzaniem dotykiem, poziom baterii na ekranie
+  i ładowanie przez USB-C.
+
 ## Dokumentacja
 
 [Architektura i ADR](docs/architecture/README.md) ·

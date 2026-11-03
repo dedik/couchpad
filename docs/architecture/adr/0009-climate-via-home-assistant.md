@@ -1,5 +1,7 @@
 # ADR 0009 — Klimatyzacja przez Home Assistanta i kontrakt v1
 
+[English](0009-climate-via-home-assistant.en.md)
+
 - **Data:** 2026-11-03
 - **Status:** przyjęta
 - **Uzupełnia:** [ADR 0002](0002-home-assistant-boundary.md), [ADR 0007](0007-apple-tv-via-home-assistant.md)

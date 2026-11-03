@@ -1,5 +1,7 @@
 # ADR 0006 — Pilot rozmawia z Z906 wprost po MQTT
 
+[English](0006-direct-z906-topics.en.md)
+
 - **Data:** 2026-10-30
 - **Status:** przyjęta
 - **Zmienia:** [ADR 0002](0002-home-assistant-boundary.md) w zakresie dźwięku

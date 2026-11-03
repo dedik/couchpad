@@ -1,5 +1,7 @@
 # ADR 0001: Natywny stos UI
 
+[English](0001-native-stack.en.md)
+
 - **Status:** zaakceptowane
 - **Data:** 2026-10-29
 

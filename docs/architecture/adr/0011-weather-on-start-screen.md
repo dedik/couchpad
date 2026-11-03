@@ -1,5 +1,7 @@
 # ADR 0011 — Pogoda na ekranie startowym
 
+[English](0011-weather-on-start-screen.en.md)
+
 - **Data:** 2026-11-03
 - **Status:** przyjęta
 - **Uzupełnia:** [ADR 0005](0005-fresh-state-after-wake.md), [ADR 0010](0010-start-screen-after-wake.md)

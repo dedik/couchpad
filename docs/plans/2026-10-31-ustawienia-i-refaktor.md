@@ -1,5 +1,7 @@
 # Plan: ekran WIĘCEJ (ustawienia) i refaktor przed kolejnymi funkcjami
 
+[English](2026-10-31-ustawienia-i-refaktor.en.md)
+
 _Szkic z 2026-10-31 do akceptacji. Nic z tego nie jest jeszcze zrobione._
 
 ## Kontekst

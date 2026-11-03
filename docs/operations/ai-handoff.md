@@ -1,5 +1,7 @@
 # Handoff dla kolejnej osoby lub AI
 
+[English](ai-handoff.en.md)
+
 ## Stan na 2026-10-31
 
 Projekt ma dwa **całkowicie niezależne repozytoria Git** w katalogu `../`:

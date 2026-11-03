@@ -1,5 +1,7 @@
 # Pulpit — alternatywny kierunek UI
 
+[English](README.en.md)
+
 Drugi, niezależny projekt interfejsu pilota. **Nie zastępuje** zatwierdzonej specyfikacji z
 [`../tv-and-z906-ui.md`](../tv-and-z906-ui.md) ani makiety w [`../mockup/`](../mockup/) — obie zostają
 bez zmian. To materiał do porównania i decyzji.
@@ -187,8 +189,9 @@ z których dwie dotyczą telewizora, sama ikona nie wystarczy do rozróżnienia.
 
 Ponieważ sprite ma własne kolory, wybranej zakładki nie znaczy już barwa ikony, tylko jej tło.
 
-Dla firmware to zresztą ułatwienie: siatka 24 × 24 staje się obrazem indeksowanym skalowanym
-dwukrotnie metodą najbliższego sąsiada, bez antyaliasingu — taniej niż font ikon.
+Dla firmware to zresztą ułatwienie: siatka 48 × 48 staje się obrazem indeksowanym — w zakładce
+w skali 1 ×, na kafelku ekranu startowego powiększonym dwukrotnie metodą najbliższego sąsiada,
+bez antyaliasingu — taniej niż font ikon.
 
 ## Krój pisma
 
@@ -230,7 +233,7 @@ jest do wzięcia.
 
 ## Różnice wobec zatwierdzonej specyfikacji
 
-Przyjęcie tego kierunku wymaga ADR, bo narusza trzy ustalenia:
+Przyjęcie tego kierunku wymaga ADR, bo narusza cztery ustalenia:
 
 - **Zakładki.** Spec wymaga dwóch równych zakładek `TV | GŁOŚNIKI`. Tu jest pięć.
 - **Apple TV i biblioteka.** Spec ich nie przewiduje. Dochodzą nowe polecenia MQTT (nawigacja,

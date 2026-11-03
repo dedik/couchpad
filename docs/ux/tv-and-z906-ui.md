@@ -1,5 +1,7 @@
 # Specyfikacja UX — TV i Logitech Z906
 
+[English](tv-and-z906-ui.en.md)
+
 ## Status
 
 To jest zatwierdzona specyfikacja projektowa v1 dla natywnej implementacji LVGL. Źródłem prawdy dla danych pozostaje `DeviceSnapshot` z wersjonowanego MQTT; przykładowe wartości w makiecie nie są stanem rzeczywistych urządzeń.

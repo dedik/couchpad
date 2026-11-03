@@ -1,5 +1,7 @@
 # Architektura UI
 
+[English](ui-architecture.en.md)
+
 ## Zasada projektowa
 
 Interfejs ma wyglądać jak produkt konsumencki, nie jak dashboard administratora. Ekran dotykowy jest jedynym głównym wejściem w v1, dlatego akcje częste muszą być duże, jednoznaczne i dostępne bez przewijania.

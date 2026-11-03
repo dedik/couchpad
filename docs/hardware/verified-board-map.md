@@ -1,5 +1,7 @@
 # Zweryfikowana mapa płytki
 
+[English](verified-board-map.en.md)
+
 Wartości potwierdzone **na tym egzemplarzu**, nie przepisane z podobnych modeli. Procedura i
 kryteria pochodzą z [`bring-up.md`](bring-up.md).
 

@@ -1,5 +1,7 @@
 # ADR 0004: Connected standby jako domyślny tryb bezczynności
 
+[English](0004-connected-standby.en.md)
+
 - **Status:** zastąpione przez ADR 0005
 - **Data:** 2026-10-29
 

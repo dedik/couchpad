@@ -28,12 +28,12 @@ The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
   and it keeps stepping through lists as your finger moves (sensitivity in settings).
 - **Hidden Siri Remote gestures** — the same ones as on the original remote: double-tap
   Home for the app switcher, hold Home for Control Center, hold the centre of the clickpad
-  for an icon's context menu ([details](docs/integrations/appletv.md)).
+  for an icon's context menu ([details](docs/integrations/appletv.en.md)).
 - **Apple TV keyboard** — slides up by itself when a text field appears on the Apple TV
   (search, login), types live as you go (Polish characters included) and can also be
   opened with the **Tekst** button. Two layouts: QWERTY or the alphabetical grid known from
   the Apple TV, switchable on the keyboard itself or in settings. It uses Home Assistant's
-  `apple_tv.set_keyboard_text` and the `keyboard_focus` sensor ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.md)).
+  `apple_tv.set_keyboard_text` and the `keyboard_focus` sensor ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.en.md)).
 - **Z906** — volume dial with −/+ steps, centre, subwoofer and rear levels, input and
   effect, Decode 5.1 indicator.
 - **Home** — air conditioner (mode, temperature, fan, swing) and scenes.
@@ -44,13 +44,13 @@ The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
 
 The remote never shows stale state as current: after waking up it asks for a fresh snapshot
 and greys out controls until it arrives
-([ADR 0005](docs/architecture/adr/0005-fresh-state-after-wake.md)).
+([ADR 0005](docs/architecture/adr/0005-fresh-state-after-wake.en.md)).
 
 ## Hardware
 
 | Part | Notes |
 | --- | --- |
-| [Guition JC4880P443C_I_W (ESP32-P4 + ESP32-C6, 4.3" IPS 480×800, touch, case)](https://pl.aliexpress.com/item/1005009675498892.html) | ESP32-P4 runs the app, ESP32-C6 provides Wi-Fi over SDIO. Pins and timings verified on a real unit: [docs/hardware/verified-board-map.md](docs/hardware/verified-board-map.md) |
+| [Guition JC4880P443C_I_W (ESP32-P4 + ESP32-C6, 4.3" IPS 480×800, touch, case)](https://pl.aliexpress.com/item/1005009675498892.html) | ESP32-P4 runs the app, ESP32-C6 provides Wi-Fi over SDIO. Pins and timings verified on a real unit: [docs/hardware/verified-board-map.md](docs/hardware/verified-board-map.en.md) |
 | USB-C cable | power, flashing, logs, screenshots |
 
 The camera on the board is not used.
@@ -65,13 +65,13 @@ pilot ── MQTT broker ──┼── Z906 controller (ESP32)       (speakers
 
 | Device | Integration | Path |
 | --- | --- | --- |
-| LG TV (webOS) | [Glasshouse](https://github.com/rorygallagher2024/glasshouse) running on the TV | MQTT directly; channel shortcuts go through Home Assistant, which calls Glasshouse over HTTP ([ADR 0008](docs/architecture/adr/0008-tv-via-glasshouse.md)) |
-| Logitech Z906 | ESP32 controller based on [ggroohauga](https://github.com/nomis/ggroohauga), modified to publish MQTT | MQTT directly, topics `z906/<id>/…` ([ADR 0006](docs/architecture/adr/0006-direct-z906-topics.md)) |
-| Apple TV | Home Assistant `apple_tv` integration | `multimedia_remote/v1` contract through the HA package ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.md)) |
-| Air conditioner | any Home Assistant `climate` entity | same contract ([ADR 0009](docs/architecture/adr/0009-climate-via-home-assistant.md)) |
-| Weather | any Home Assistant `weather` entity | same contract ([ADR 0011](docs/architecture/adr/0011-weather-on-start-screen.md)) |
+| LG TV (webOS) | [Glasshouse](https://github.com/rorygallagher2024/glasshouse) running on the TV | MQTT directly; channel shortcuts go through Home Assistant, which calls Glasshouse over HTTP ([ADR 0008](docs/architecture/adr/0008-tv-via-glasshouse.en.md)) |
+| Logitech Z906 | ESP32 controller based on [ggroohauga](https://github.com/nomis/ggroohauga), modified to publish MQTT | MQTT directly, topics `z906/<id>/…` ([ADR 0006](docs/architecture/adr/0006-direct-z906-topics.en.md)) |
+| Apple TV | Home Assistant `apple_tv` integration | `multimedia_remote/v1` contract through the HA package ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.en.md)) |
+| Air conditioner | any Home Assistant `climate` entity | same contract ([ADR 0009](docs/architecture/adr/0009-climate-via-home-assistant.en.md)) |
+| Weather | any Home Assistant `weather` entity | same contract ([ADR 0011](docs/architecture/adr/0011-weather-on-start-screen.en.md)) |
 
-The full message format is in [docs/architecture/mqtt-contract.md](docs/architecture/mqtt-contract.md).
+The full message format is in [docs/architecture/mqtt-contract.md](docs/architecture/mqtt-contract.en.md).
 Every integration is optional: a screen without a source shows a "no fresh state" banner.
 
 ## Build and flash
@@ -104,7 +104,7 @@ Create a separate MQTT user for the remote.
 
 ### 2. Home Assistant
 
-Install the package from [homeassistant/](homeassistant/README.md) (instructions in Polish):
+Install the package from [homeassistant/](homeassistant/README.en.md):
 copy `multimedia_remote.yaml` to `packages/`, replace the example entity ids with yours,
 set the remote identifier, and put the Glasshouse address and token in `secrets.yaml`.
 
@@ -112,7 +112,7 @@ set the remote identifier, and put the Glasshouse address and token in `secrets.
 
 The remote expects one value per topic under `z906/<id>/state/<name>` and sends commands
 to `z906/<id>/command/<name>` — the full table is in
-[ADR 0006](docs/architecture/adr/0006-direct-z906-topics.md). If your controller publishes
+[ADR 0006](docs/architecture/adr/0006-direct-z906-topics.en.md). If your controller publishes
 a different layout, adapt `components/transport/z906_client.cpp`.
 
 ### 4. In the code
@@ -141,14 +141,23 @@ a different layout, adapt `components/transport/z906_client.cpp`.
 - **Log over MQTT** (`CONFIG_PILOT_REMOTE_LOG`, off by default): `tools/pilot_log.py`.
 - **Interactive mockup** of the whole UI: `docs/ux/mockup-pulpit/index.html`.
 
+## TODO
+
+- [ ] **More Home Assistant entities** — lights, covers, scenes, sensors and other devices
+  on the Home screen, configured from Home Assistant instead of being fixed in the code.
+- [ ] **Battery power** — today the remote runs from USB only. Planned: a battery and a
+  rear case, deep sleep between uses with touch wake-up, battery level on screen and
+  charging over USB-C.
+
 ## Documentation
 
-Design documents are in Polish:
-[architecture and ADRs](docs/architecture/README.md) ·
-[UI architecture](docs/architecture/ui-architecture.md) ·
-[board bring-up](docs/hardware/bring-up.md) ·
+Design documents are written in Polish, each with an English version next to it
+(`*.en.md`):
+[architecture and ADRs](docs/architecture/README.en.md) ·
+[UI architecture](docs/architecture/ui-architecture.en.md) ·
+[board bring-up](docs/hardware/bring-up.en.md) ·
 [integrations](docs/integrations/) ·
-[notes for contributors and AI agents](AGENTS.md).
+[notes for contributors and AI agents](AGENTS.en.md).
 
 ## License
 

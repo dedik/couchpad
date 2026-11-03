@@ -1,5 +1,7 @@
 # ADR 0002: Home Assistant jest granicą urządzeń
 
+[English](0002-home-assistant-boundary.en.md)
+
 - **Status:** zaakceptowane
 - **Data:** 2026-10-29
 

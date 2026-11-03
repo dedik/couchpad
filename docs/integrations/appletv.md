@@ -1,5 +1,7 @@
 # Apple TV — model Home Assistant
 
+[English](appletv.en.md)
+
 _Odczyt tylko do odczytu z 2026-10-31 przez REST API Home Assistanta (`/api/states` oraz
 `media_player.browse_media` dla `apps`). Integracja sparowana._
 

@@ -1,5 +1,7 @@
 # ADR 0005: Nowy stan po wybudzeniu
 
+[English](0005-fresh-state-after-wake.en.md)
+
 - **Status:** zaakceptowane
 - **Data:** 2026-10-29
 - **Zastępuje:** ADR 0004

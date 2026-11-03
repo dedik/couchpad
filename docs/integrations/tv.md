@@ -1,5 +1,7 @@
 # Telewizor LG OLED77C11LB przez Glasshouse
 
+[English](tv.en.md)
+
 Stan na 2026-11-02, Glasshouse 0.138.0, webOS (C1, 2021). Decyzja: [ADR 0008](../architecture/adr/0008-tv-via-glasshouse.md).
 
 ## Konfiguracja na pilocie

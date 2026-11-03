@@ -1,5 +1,7 @@
 # ADR 0008 — Telewizor wprost przez Glasshouse
 
+[English](0008-tv-via-glasshouse.en.md)
+
 - **Data:** 2026-11-02
 - **Status:** przyjęta
 - **Zmienia:** [ADR 0002](0002-home-assistant-boundary.md) w zakresie telewizora,

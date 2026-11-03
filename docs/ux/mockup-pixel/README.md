@@ -1,5 +1,7 @@
 # Pulpit CRT — wariant pikselowy
 
+[English](README.en.md)
+
 Trzeci kierunek interfejsu, obok [`../mockup/`](../mockup/) i [`../mockup-pulpit/`](../mockup-pulpit/).
 Żadnego z nich nie zastępuje.
 

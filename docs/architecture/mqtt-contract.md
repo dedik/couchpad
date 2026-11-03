@@ -1,5 +1,7 @@
 # Kontrakt MQTT v1
 
+[English](mqtt-contract.en.md)
+
 ## Zasada
 
 Home Assistant jest właścicielem rzeczywistych urządzeń i stanów. Pilot nie publikuje na istniejące, wewnętrzne tematy Z906 i nie zakłada nazw encji. Komunikuje się przez dedykowany kontrakt pilota, który obsługuje automatyzacja lub bridge po stronie Home Assistant.
