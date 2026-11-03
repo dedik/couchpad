@@ -1,5 +1,7 @@
 # ADR 0003: Jedno zadanie jest właścicielem LVGL
 
+[English](0003-single-ui-owner.en.md)
+
 - **Status:** zaakceptowane
 - **Data:** 2026-10-29
 

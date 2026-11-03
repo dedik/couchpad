@@ -1,5 +1,7 @@
 # Architektura firmware'u
 
+[English](README.en.md)
+
 ## Cel
 
 Firmware ma być szybkim, dotykowym pilotem do TV, Logitech Z906 oraz wybranych akcji Home Assistant. Płytka nie jest kolejnym kontrolerem urządzeń: jest responsywnym klientem interfejsu, a Home Assistant pozostaje centralnym miejscem automatyzacji i integracji.

@@ -1,5 +1,7 @@
 # Instrukcja dla kolejnych AI i osób rozwijających projekt
 
+[English](AGENTS.en.md)
+
 ## Zanim zaczniesz
 
 1. Przeczytaj `docs/architecture/README.md`, `docs/architecture/mqtt-contract.md`, `docs/ux/tv-and-z906-ui.md` oraz `docs/operations/ai-handoff.md`.

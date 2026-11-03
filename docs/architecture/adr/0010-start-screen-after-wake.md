@@ -1,5 +1,7 @@
 # ADR 0010 — Ekran startowy po włączeniu i wybudzeniu
 
+[English](0010-start-screen-after-wake.en.md)
+
 - **Data:** 2026-11-03
 - **Status:** przyjęta
 - **Uzupełnia:** [ADR 0005](0005-fresh-state-after-wake.md)

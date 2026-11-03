@@ -1,5 +1,7 @@
 # ADR 0007 — Apple TV przez Home Assistanta i kontrakt v1
 
+[English](0007-apple-tv-via-home-assistant.en.md)
+
 - **Data:** 2026-10-31
 - **Status:** przyjęta
 - **Uzupełnia:** [ADR 0002](0002-home-assistant-boundary.md), [ADR 0006](0006-direct-z906-topics.md)

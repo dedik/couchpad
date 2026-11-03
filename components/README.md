@@ -1,5 +1,7 @@
 # Komponenty
 
+[English](README.en.md)
+
 ## Obsługa płytki, przejęta od producenta
 
 Dwa katalogi pochodzą z przykładu Guition dla modelu `JC4880P443C_I_W` i są tu **celowo**, mimo że

@@ -1,5 +1,7 @@
 # Bring-up płytki
 
+[English](bring-up.en.md)
+
 ## Cel
 
 Przed implementacją funkcji biznesowych trzeba zweryfikować działanie dokładnie tej płytki: ekran, dotyk, ESP32-C6 i Wi-Fi. Dopiero wynik tej procedury pozwala przypiąć wersje ESP-IDF oraz komponentów.
