@@ -1,0 +1,9 @@
+build/
+managed_components/
+.DS_Store
+*.bin
+*.elf
+*.map
+sdkconfig
+sdkconfig.old
+tools/.venv/

@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulpit CRT — makieta pilota</title>
+<!-- Materiał projektowy, nie kod firmware. Implementacja produkcyjna powstaje w C++/LVGL. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap">
+<link rel="stylesheet" href="pixel.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="lab">
+  <div class="bezel">
+    <div class="screen" id="screen">
+
+      <!-- Strefa 1: tożsamość bieżącego ekranu i jego zasilanie -->
+      <header class="topbar">
+        <div class="ident">
+          <div class="ident-mark" data-icon=""><i data-lucide="tv" aria-hidden="true"></i></div>
+          <div><b class="ident-name">LG OLED</b><span class="ident-room">SALON</span></div>
+        </div>
+        <div class="topbar-end">
+          <button class="power" type="button" hidden><i data-lucide="power" aria-hidden="true"></i></button>
+        </div>
+      </header>
+
+      <!-- Pasek telemetrii: w wariancie dla geeków stan łącza jest widoczny stale,
+           a nie dopiero na ekranie diagnostycznym. -->
+      <div class="statusbar">
+        <span>MQTT <b class="st-link">online</b></span>
+        <span>REV <b class="st-rev">41</b></span>
+        <span>RSSI <b>-58dBm</b></span>
+        <span>RTT <b>42ms</b></span>
+      </div>
+
+      <!-- Strefa 2: treść ekranu. Nowy ekran dokłada tu jedną sekcję .scr -->
+      <main class="content">
+
+        <section class="scr" data-scr="tv" aria-label="Telewizor">
+          <p class="banner" data-dev="tv" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu telewizora. Sterowanie wróci po nowym snapshocie.</p>
+          <div class="group">
+            <i data-lucide="plug-zap" aria-hidden="true"></i>
+            <div class="seg" data-ctl="source" role="group" aria-label="Wejście">
+              <button class="seg-item" type="button" data-value="HDMI 1">HDMI 1</button>
+              <button class="seg-item" type="button" data-value="HDMI 2">HDMI 2</button>
+              <button class="seg-item" type="button" data-value="TV">TV</button>
+              <button class="seg-item" type="button" data-value="Aplikacje">Aplikacje</button>
+            </div>
+          </div>
+          <div class="group">
+            <i data-lucide="sparkles" aria-hidden="true"></i>
+            <div class="seg" data-ctl="picture" role="group" aria-label="Tryb obrazu">
+              <button class="seg-item" type="button" data-value="Żywy">Żywy</button>
+              <button class="seg-item" type="button" data-value="Standard">Standard</button>
+              <button class="seg-item" type="button" data-value="Kino">Kino</button>
+              <button class="seg-item" type="button" data-value="Filmmaker">Filmmaker</button>
+            </div>
+          </div>
+          <div class="tiles" data-ctl="channel" role="group" aria-label="Skróty kanałów">
+            <button class="tile" type="button" data-value="Polsat" aria-label="Polsat"><img class="logo-mark" src="assets/polsat.svg" alt="Polsat"></button>
+            <button class="tile" type="button" data-value="TVN" aria-label="TVN"><img class="logo-mark" src="assets/tvn.svg" alt="TVN"></button>
+            <button class="tile" type="button" data-value="TVP1" aria-label="TVP 1"><img class="logo-word" src="assets/tvp1.svg" alt="TVP 1"></button>
+            <button class="tile" type="button" data-value="TVP2" aria-label="TVP 2"><img class="logo-word" src="assets/tvp2.svg" alt="TVP 2"></button>
+          </div>
+          <div class="scr-fill">
+            <div class="pad" role="group" aria-label="Nawigacja">
+              <button class="pad-key up" type="button" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></button>
+              <button class="pad-key left" type="button" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+              <button class="pad-ok" type="button" data-key="ok">OK</button>
+              <button class="pad-key right" type="button" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+              <button class="pad-key down" type="button" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="duo">
+            <button class="act" type="button" data-key="back"><i data-lucide="undo-2" aria-hidden="true"></i>Cofnij</button>
+            <button class="act" type="button" data-key="menu"><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Menu TV</button>
+          </div>
+        </section>
+
+        <section class="scr" data-scr="appletv" aria-label="Apple TV" hidden>
+          <p class="banner" data-dev="appletv" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu Apple TV. Sterowanie wróci po nowym snapshocie.</p>
+          <div class="group">
+            <i data-lucide="clapperboard" aria-hidden="true"></i>
+            <div class="seg" role="group" aria-label="Rodzaj pozycji">
+              <button class="seg-item" type="button" data-lib-value="films">Nowe filmy</button>
+              <button class="seg-item" type="button" data-lib-value="series">Nowe seriale</button>
+            </div>
+          </div>
+          <!-- Plakaty naprawdę lecą po HTTP, tak jak polecą z Emby. Lokalne pliki są tylko zapasem. -->
+          <div class="rail" id="rail" role="group" aria-label="Ostatnio dodane"></div>
+          <div class="tiles cols-3" data-ctl="atvApp" role="group" aria-label="Aplikacje">
+            <button class="tile" type="button" data-value="infuse" aria-label="Infuse"><img class="logo-mark" src="assets/infuse.svg" alt="Infuse"></button>
+            <button class="tile" type="button" data-value="youtube" aria-label="YouTube"><img class="logo-mark" src="assets/youtube.svg" alt="YouTube"></button>
+            <button class="tile" type="button" data-value="wppilot" aria-label="WP Pilot"><img class="logo-mark" src="assets/wppilot.svg" alt="WP Pilot"></button>
+          </div>
+          <div class="scr-fill">
+            <!-- Menu i Home po bokach: zajmują miejsce, które i tak zostałoby puste obok koła. -->
+            <div class="pad-row">
+              <button class="act is-stack" type="button" data-key="menu"><i data-lucide="corner-up-left" aria-hidden="true"></i>Menu</button>
+              <div class="trackpad" id="trackpad" role="group" aria-label="Nawigacja Apple TV">
+                <div class="trackpad-key up" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></div>
+                <div class="trackpad-key left" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></div>
+                <div class="trackpad-key right" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></div>
+                <div class="trackpad-key down" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></div>
+                <div class="trackpad-center" data-key="select">OK</div>
+              </div>
+              <button class="act is-stack" type="button" data-key="atv-home"><i data-lucide="house" aria-hidden="true"></i>Home</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="scr" data-scr="audio" aria-label="Głośniki Z906" hidden>
+          <p class="banner" data-dev="z906" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu Z906. Sterowanie wróci po nowym snapshocie.</p>
+          <div class="group">
+            <i data-lucide="cable" aria-hidden="true"></i>
+            <div class="seg" data-ctl="zSource" role="group" aria-label="Źródło dźwięku">
+              <button class="seg-item" type="button" data-value="PC - analog 5.1" title="PC – analog 5.1">PC</button>
+              <button class="seg-item" type="button" data-value="RCA - stereo" title="RCA – stereo">RCA</button>
+              <button class="seg-item" type="button" data-value="Optical 1">O1</button>
+              <button class="seg-item" type="button" data-value="Optical 2">O2</button>
+              <button class="seg-item" type="button" data-value="Coaxial">COX</button>
+              <button class="seg-item" type="button" data-value="AUX">AUX</button>
+            </div>
+          </div>
+          <div class="scr-fill">
+            <div class="dial-zone">
+              <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Głośność" aria-valuemin="0" aria-valuemax="100" aria-valuenow="42">
+                <div class="dial-read"><b class="dial-value">42</b><span>głośność</span></div>
+              </div>
+              <button class="dial-side" id="mute" type="button" aria-label="Wycisz" aria-pressed="false"><i data-lucide="volume-2" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="levels">
+            <div class="level" data-level="center" role="slider" tabindex="0" aria-label="Center" aria-valuemin="0" aria-valuemax="100" aria-valuenow="56">
+              <span class="level-name">Center</span><span class="level-value">56</span><div class="level-track"></div>
+            </div>
+            <div class="level" data-level="sub" role="slider" tabindex="0" aria-label="Subwoofer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="49">
+              <span class="level-name">Subwoofer</span><span class="level-value">49</span><div class="level-track"></div>
+            </div>
+            <div class="level" data-level="rear" role="slider" tabindex="0" aria-label="Tył" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
+              <span class="level-name">Tył</span><span class="level-value">68</span><div class="level-track"></div>
+            </div>
+          </div>
+          <div class="group">
+            <i data-lucide="audio-waveform" aria-hidden="true"></i>
+            <div class="seg" data-ctl="zEffect" role="group" aria-label="Efekt">
+              <button class="seg-item" type="button" data-value="Stereo 3D">3D</button>
+              <button class="seg-item" type="button" data-value="Stereo 2.1">2.1</button>
+              <button class="seg-item" type="button" data-value="Stereo 4.1">4.1</button>
+              <button class="seg-item" type="button" data-value="No effect">Bez efektu</button>
+            </div>
+          </div>
+          <!-- Wskaźnik, nigdy przełącznik -->
+          <p class="readout"><span>Decode 5.1</span><b class="decode">nieaktywny</b></p>
+        </section>
+
+        <section class="scr" data-scr="home" aria-label="Dom" hidden>
+          <p class="cap">Sceny</p>
+          <div class="grid2" data-ctl="scene" role="group" aria-label="Sceny">
+            <button class="tile is-tall" type="button" data-value="film"><i data-lucide="clapperboard" aria-hidden="true"></i><span>Film</span></button>
+            <button class="tile is-tall" type="button" data-value="muzyka"><i data-lucide="music" aria-hidden="true"></i><span>Muzyka</span></button>
+            <button class="tile is-tall" type="button" data-value="noc"><i data-lucide="moon" aria-hidden="true"></i><span>Dobranoc</span></button>
+            <button class="tile is-tall" type="button" data-value="koniec"><i data-lucide="power" aria-hidden="true"></i><span>Wszystko off</span></button>
+          </div>
+          <p class="cap">Skróty</p>
+          <div class="grid2" role="group" aria-label="Skróty">
+            <button class="tile" type="button" data-key="swiatlo"><i data-lucide="lamp" aria-hidden="true"></i><span>Światło</span></button>
+            <button class="tile" type="button" data-key="rolety"><i data-lucide="blinds" aria-hidden="true"></i><span>Rolety</span></button>
+            <button class="tile" type="button" data-key="klimat"><i data-lucide="thermometer" aria-hidden="true"></i><span>Klimat</span></button>
+            <button class="tile" type="button" data-key="kamera"><i data-lucide="video" aria-hidden="true"></i><span>Kamera</span></button>
+          </div>
+          <p class="readout"><span>Snapshot</span><b class="revision is-on">rewizja 41</b></p>
+        </section>
+
+        <section class="scr" data-scr="settings" aria-label="Ustawienia" hidden>
+          <div class="list">
+            <button class="list-row" type="button"><i data-lucide="wifi" aria-hidden="true"></i><span><b>Wi-Fi</b><em>Połączono · ESP32-C6</em></span><var>-58 dBm</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="radio" aria-hidden="true"></i><span><b>MQTT</b><em>multimedia_remote/v1</em></span><var>online</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="sun" aria-hidden="true"></i><span><b>Jasność</b><em>automatyczna po zmroku</em></span><var>72%</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="moon" aria-hidden="true"></i><span><b>Uśpienie</b><em>po 45 s bezczynności</em></span><var>45 s</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="activity" aria-hidden="true"></i><span><b>Diagnostyka</b><em>logi, metryki, ostatnie polecenie</em></span><var></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="info" aria-hidden="true"></i><span><b>O urządzeniu</b><em>Guition JC4880P443C</em></span><var>v0.1</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Strefa 3: nawigacja. Stała liczba slotów, więc nowy ekran jej nie rozsadza. -->
+      <nav class="tabbar is-pixel" role="tablist" aria-label="Ekrany">
+        <button class="tab" type="button" data-tab="tv" role="tab"><i data-lucide="tv" aria-hidden="true"></i><span class="pix" data-pix="tv"></span>TV</button>
+        <button class="tab" type="button" data-tab="appletv" role="tab"><i data-lucide="airplay" aria-hidden="true"></i><span class="pix" data-pix="appletv"></span>APPLE TV</button>
+        <button class="tab" type="button" data-tab="audio" role="tab"><i data-lucide="audio-lines" aria-hidden="true"></i><span class="pix" data-pix="audio"></span>DŹWIĘK</button>
+        <button class="tab" type="button" data-tab="home" role="tab"><i data-lucide="house" aria-hidden="true"></i><span class="pix" data-pix="home"></span>DOM</button>
+        <button class="tab" type="button" data-tab="settings" role="tab"><i data-lucide="settings" aria-hidden="true"></i><span class="pix" data-pix="settings"></span>WIĘCEJ</button>
+      </nav>
+
+      <!-- Okno szczegółów pozycji z biblioteki -->
+      <div class="scrim" hidden></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-label="Szczegóły pozycji" hidden>
+        <div class="sheet-head">
+          <img class="sheet-art" src="" alt="">
+          <div><b class="sheet-title"></b><span class="sheet-meta"></span></div>
+        </div>
+        <p class="sheet-desc"></p>
+        <div class="duo">
+          <button class="act sheet-close" type="button"><i data-lucide="x" aria-hidden="true"></i>Zamknij</button>
+          <button class="act is-primary sheet-play" type="button"><i data-lucide="play" aria-hidden="true"></i>Odtwórz</button>
+        </div>
+      </section>
+
+      <!-- Nakładka wybudzenia: do czasu nowego snapshotu nie pokazujemy stanu urządzeń (ADR 0005) -->
+      <section class="wake" aria-live="polite" hidden>
+        <div class="wake-mark" data-icon=""><i data-lucide="house" aria-hidden="true"></i></div>
+        <h1>Łączenie z domem</h1>
+        <p>Pobieram aktualny stan TV i Z906</p>
+        <ol class="wake-steps"><li data-step="0">Wi-Fi</li><li data-step="1">MQTT</li><li data-step="2">Synchronizacja</li></ol>
+        <button class="wake-retry" type="button"><i data-lucide="rotate-cw" aria-hidden="true"></i>Ponów</button>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="lab-panel" role="group" aria-label="Symulacja stanów">
+    <p class="cap">Symulacja stanów</p>
+    <button type="button" data-lab="wake">Wybudzenie po dotyku</button>
+    <button type="button" data-lab="fail">Błąd połączenia</button>
+    <button type="button" data-lab="tv" aria-pressed="false">TV bez świeżego stanu</button>
+    <button type="button" data-lab="z906" aria-pressed="false">Z906 bez świeżego stanu</button>
+    <button type="button" data-lab="appletv" aria-pressed="false">Apple TV bez świeżego stanu</button>
+    <button type="button" data-lab="reject" aria-pressed="false">Brak potwierdzenia akcji</button>
+    <button type="button" data-lab="posters" aria-pressed="false">Plakaty jeszcze się ładują</button>
+    <button type="button" data-lab="pixel" aria-pressed="true">Ikony zakładek: pixel art</button>
+    <p class="lab-note">Panel nie należy do produktu. Ekran obok ma rzeczywiste 480 × 800 px, więc rozmiary celów dotyku są tu mierzalne 1 : 1.</p>
+  </div>
+</div>
+
+<script src="pixel-icons.js"></script>
+<script>
+(() => {
+  // Konfiguracja ekranów. Dodanie ekranu = wpis tutaj + sekcja .scr + zakładka.
+  const SCREENS = {
+    tv:       { name: 'LG OLED',  room: 'SALON',     icon: 'tv',          power: 'tvOn',  dev: 'tv' },
+    appletv:  { name: 'Apple TV', room: 'SALON',     icon: 'airplay',     power: 'atvOn', dev: 'appletv' },
+    audio:    { name: 'Z906',    room: 'SALON',      icon: 'audio-lines', power: 'zOn',  dev: 'z906' },
+    home:     { name: 'Dom',     room: 'SALON',      icon: 'house' },
+    settings: { name: 'Pilot',   room: 'USTAWIENIA', icon: 'settings' },
+  };
+
+  const root = document.getElementById('screen');
+  const lab = document.querySelector('.lab-panel');
+  const icons = () => globalThis.lucide?.createIcons({ attrs: { width: 20, height: 20 } });
+  const clamp = v => Math.min(100, Math.max(0, v));
+  const step2 = v => Math.round(v / 2) * 2;
+
+  // Stan potwierdzony snapshotem. Tylko to wolno pokazywać jako aktualne.
+  const state = {
+    screen: 'tv', tvOn: true, zOn: true, atvOn: true,
+    source: 'HDMI 1', picture: 'Filmmaker', channel: null, scene: null,
+    atvApp: null, playing: null, lib: 'films', revision: 41,
+    zSource: 'Optical 1', zEffect: 'Stereo 2.1', zMuted: false,
+    volume: 42, center: 56, sub: 49, rear: 68, decode: false,
+  };
+  // Symulowane łącze z Home Assistant. W firmware to stan transportu, nie UI.
+  // `posters` udaje stan pobierania obrazów po HTTP — to osobny kanał niż snapshot MQTT.
+  const link = { phase: 'connecting', step: 0, tv: true, z906: true, appletv: true, posters: true, reject: false };
+
+  /* ---------- Render ---------- */
+  const setIcon = (host, name) => {
+    if (host.dataset.icon === name) return;
+    host.dataset.icon = name;
+    host.innerHTML = `<i data-lucide="${name}" aria-hidden="true"></i>`;
+    icons();
+  };
+
+  const render = () => {
+    const cfg = SCREENS[state.screen];
+    setIcon(root.querySelector('.ident-mark'), cfg.icon);
+    root.querySelector('.ident-name').textContent = cfg.name;
+    root.querySelector('.ident-room').textContent = cfg.room;
+
+    // Zasilanie dotyczy wyłącznie urządzenia z bieżącego ekranu.
+    const power = root.querySelector('.power');
+    power.hidden = !cfg.power;
+    if (cfg.power) {
+      const on = state[cfg.power];
+      power.classList.toggle('is-on', on);
+      power.disabled = !link[cfg.dev];
+      power.setAttribute('aria-pressed', String(on));
+      power.setAttribute('aria-label', `${on ? 'Wyłącz' : 'Włącz'} ${cfg.name}`);
+    }
+
+    root.querySelectorAll('.scr').forEach(scr => { scr.hidden = scr.dataset.scr !== state.screen; });
+    root.querySelectorAll('.tab').forEach(tab => {
+      const sel = tab.dataset.tab === state.screen;
+      tab.classList.toggle('is-sel', sel);
+      tab.setAttribute('aria-selected', String(sel));
+    });
+
+    // Wybór w grupach: zaznaczenie zawsze pochodzi ze stanu, nigdy z kliknięcia.
+    root.querySelectorAll('[data-ctl]').forEach(group => {
+      const current = state[group.dataset.ctl];
+      group.querySelectorAll('[data-value]').forEach(item => {
+        const sel = item.dataset.value === current;
+        item.classList.toggle('is-sel', sel);
+        item.setAttribute('aria-pressed', String(sel));
+      });
+    });
+
+    const dial = root.querySelector('#dial');
+    dial.style.setProperty('--v', state.volume);
+    dial.setAttribute('aria-valuenow', state.volume);
+    root.querySelector('.dial-value').textContent = state.volume;
+
+    const mute = root.querySelector('#mute');
+    mute.classList.toggle('is-on', state.zMuted);
+    mute.setAttribute('aria-pressed', String(state.zMuted));
+    setIcon(mute, state.zMuted ? 'volume-x' : 'volume-2');
+
+    root.querySelectorAll('.level').forEach(level => {
+      const value = state[level.dataset.level];
+      level.style.setProperty('--v', value);
+      level.setAttribute('aria-valuenow', value);
+      level.querySelector('.level-value').textContent = value;
+    });
+
+    const healthy = link.tv && link.z906 && link.appletv && link.phase === 'ready';
+    root.querySelector('.st-rev').textContent = state.revision;
+    const linkState = root.querySelector('.st-link');
+    linkState.textContent = healthy ? 'online' : 'degraded';
+    linkState.classList.toggle('is-live', healthy);
+    root.querySelector('.revision').textContent = `rewizja ${state.revision}`;
+
+    root.querySelector('.decode').textContent = state.decode ? 'aktywny' : 'nieaktywny';
+    root.querySelector('.decode').classList.toggle('is-on', state.decode);
+
+    // Brak świeżego stanu: wyłączamy sterowanie zamiast zgadywać wartości.
+    root.querySelectorAll('.scr[data-scr]').forEach(scr => {
+      const dev = SCREENS[scr.dataset.scr]?.dev;
+      const ok = !dev || link[dev];
+      scr.classList.toggle('is-unavailable', !ok);
+      const banner = scr.querySelector('.banner');
+      if (banner) banner.hidden = ok;
+    });
+
+    root.querySelectorAll('[data-lib-value]').forEach(button => {
+      const sel = button.dataset.libValue === state.lib;
+      button.classList.toggle('is-sel', sel);
+      button.setAttribute('aria-pressed', String(sel));
+    });
+
+    // Plakat bez pobranego obrazu pokazuje szkielet, nigdy pustego miejsca.
+    root.querySelectorAll('.poster').forEach(poster =>
+      poster.classList.toggle('is-loading', !link.posters || poster.dataset.loaded !== '1'));
+
+    [['tv', !link.tv], ['appletv', !link.appletv], ['z906', !link.z906], ['posters', !link.posters], ['reject', link.reject]]
+      .forEach(([key, on]) => lab.querySelector(`[data-lab="${key}"]`)?.setAttribute('aria-pressed', String(on)));
+  };
+
+  /* ---------- Stan oczekujący ---------- */
+  // Każda akcja czeka na snapshot. Do tego czasu kontrolka pulsuje, a wybór się nie przesuwa.
+  const timers = new Map();
+  const settle = (el, apply, revert = () => {}) => {
+    clearTimeout(timers.get(el));
+    el.classList.remove('is-failed');
+    el.classList.add('is-pending');
+    const rejected = link.reject;
+    timers.set(el, setTimeout(() => {
+      timers.delete(el);
+      el.classList.remove('is-pending');
+      if (rejected) {
+        revert();
+        el.classList.add('is-failed');
+        setTimeout(() => el.classList.remove('is-failed'), 900);
+      } else {
+        apply();
+        state.revision += 1; // każdy potwierdzony snapshot to nowa rewizja
+      }
+      render();
+    }, rejected ? 2200 : 650));
+  };
+
+  /* ---------- Wartości ciągłe: zmiana względna, bez skoku do miejsca dotyku ---------- */
+  const dragValue = (host, key, factory) => {
+    let drag = null;
+    host.addEventListener('pointerdown', event => {
+      drag = { prev: state[key], value: state[key], moved: false, delta: factory(event) };
+      host.setPointerCapture(event.pointerId);
+      host.classList.add('is-dragging');
+    });
+    host.addEventListener('pointermove', event => {
+      if (!drag) return;
+      drag.value = clamp(drag.value + drag.delta(event));
+      const next = step2(drag.value);
+      if (next !== state[key]) { drag.moved = true; state[key] = next; host.classList.add('is-pending'); render(); }
+    });
+    const end = () => {
+      if (!drag) return;
+      const { prev, moved } = drag;
+      drag = null;
+      host.classList.remove('is-dragging');
+      if (moved) settle(host, () => {}, () => { state[key] = prev; });
+    };
+    host.addEventListener('pointerup', end);
+    host.addEventListener('pointercancel', end);
+    host.addEventListener('keydown', event => {
+      const dir = { ArrowUp: 2, ArrowRight: 2, ArrowDown: -2, ArrowLeft: -2 }[event.key];
+      if (dir === undefined) return;
+      event.preventDefault();
+      const prev = state[key];
+      state[key] = clamp(prev + dir);
+      render();
+      settle(host, () => {}, () => { state[key] = prev; });
+    });
+  };
+
+  // Tarcza: pełny obrót wokół środka = 100 punktów.
+  const dial = root.querySelector('#dial');
+  dragValue(dial, 'volume', event => {
+    const polar = e => {
+      const r = dial.getBoundingClientRect();
+      const x = e.clientX - (r.left + r.width / 2);
+      const y = e.clientY - (r.top + r.height / 2);
+      return { angle: Math.atan2(y, x) * 180 / Math.PI, dist: Math.hypot(x, y) };
+    };
+    let last = polar(event).angle;
+    return next => {
+      const { angle, dist } = polar(next);
+      if (dist < 30) return 0; // środek tarczy: kąt jest tam niestabilny
+      let delta = angle - last;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      last = angle;
+      return delta / 360 * 100;
+    };
+  });
+
+  // Kolumny kanałów: 120 px ruchu w pionie = pełny zakres.
+  root.querySelectorAll('.level').forEach(level => {
+    dragValue(level, level.dataset.level, event => {
+      let last = event.clientY;
+      return next => { const delta = last - next.clientY; last = next.clientY; return delta / 120 * 100; };
+    });
+  });
+
+  /* ---------- Wejścia dyskretne ---------- */
+  root.querySelectorAll('[data-ctl]').forEach(group => {
+    const key = group.dataset.ctl;
+    group.querySelectorAll('[data-value]').forEach(item => {
+      item.addEventListener('click', () => { const value = item.dataset.value; settle(item, () => { state[key] = value; }); });
+    });
+  });
+
+  root.querySelector('.power').addEventListener('click', event => {
+    const key = SCREENS[state.screen].power;
+    const value = !state[key];
+    settle(event.currentTarget, () => { state[key] = value; });
+  });
+
+  root.querySelector('#mute').addEventListener('click', event => {
+    const value = !state.zMuted;
+    settle(event.currentTarget, () => { state.zMuted = value; });
+  });
+
+  // Nawigacja i skróty to polecenia chwilowe: brak stanu do potwierdzenia, tylko odzew dotyku.
+  root.querySelectorAll('[data-key]').forEach(button => {
+    const flash = () => { button.classList.add('is-down'); setTimeout(() => button.classList.remove('is-down'), 160); };
+    button.addEventListener('pointerdown', flash);
+  });
+
+  // Zmiana zakładki nie odpytuje sieci: pokazuje potwierdzony AppState.
+  root.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => { state.screen = tab.dataset.tab; render(); }));
+
+  /* ---------- Biblioteka Emby ---------- */
+  // Dane symulowane. Docelowo metadane przychodzą osobnym tematem MQTT,
+  // a plakaty pobiera się po HTTP w rozmiarze docelowym (Emby skaluje po swojej stronie).
+  const LIBRARY = {
+    films: [
+      { id: 'diuna',       title: 'Diuna: Część druga', meta: 'Film · 2024 · 2 h 46 min', desc: 'Paul Atryda łączy siły z Fremenami, by pomścić rodzinę i powstrzymać przyszłość, którą widzi w wizjach.' },
+      { id: 'oppenheimer', title: 'Oppenheimer',        meta: 'Film · 2023 · 3 h 0 min',  desc: 'Historia fizyka, który kierował pracami nad pierwszą bombą atomową, i ceny, jaką za to zapłacił.' },
+      { id: 'blade',       title: 'Blade Runner 2049',  meta: 'Film · 2017 · 2 h 44 min', desc: 'Łowca androidów odkrywa tajemnicę, która może wywrócić porządek świata, i rusza śladem poprzednika.' },
+      { id: 'furiosa',     title: 'Furiosa',            meta: 'Film · 2024 · 2 h 28 min', desc: 'Porwana z Zielonego Miejsca dziewczyna przemierza pustkowia, szukając drogi powrotnej do domu.' },
+      { id: 'nikt',        title: 'Nikt',               meta: 'Film · 2021 · 1 h 32 min', desc: 'Spokojny ojciec rodziny okazuje się kimś zupełnie innym, niż sądzili włamywacze.' },
+      { id: 'wyspa',       title: 'Wyspa tajemnic',     meta: 'Film · 2010 · 2 h 18 min', desc: 'Śledczy bada zniknięcie pacjentki ze szpitala na odciętej od świata wyspie.' },
+    ],
+    series: [
+      { id: 'shogun',       title: 'Shōgun',       meta: 'Serial · 2024 · Sezon 1',   desc: 'Rozbitek z Anglii trafia do feudalnej Japonii i staje się pionkiem w grze o władzę nad krajem.' },
+      { id: 'fallout',      title: 'Fallout',      meta: 'Serial · 2024 · Sezon 1',   desc: 'Dwieście lat po zagładzie mieszkanka podziemnego schronu wychodzi na powierzchnię i poznaje jej zasady.' },
+      { id: 'sukcesja',     title: 'Sukcesja',     meta: 'Serial · 2023 · Sezon 4',   desc: 'Rodzeństwo walczy o kontrolę nad imperium medialnym ojca, nie przebierając w środkach.' },
+      { id: 'silos',        title: 'Silos',        meta: 'Serial · 2025 · Sezon 2',   desc: 'Tysiące ludzi żyją w podziemnym silosie, a pytanie o to, co jest na zewnątrz, bywa wyrokiem.' },
+      { id: 'rozdzielenie', title: 'Rozdzielenie', meta: 'Serial · 2025 · Sezon 2',   desc: 'Pracownicy poddali się zabiegowi, który oddziela ich pamięć służbową od prywatnej.' },
+      { id: 'czarnobyl',    title: 'Czarnobyl',    meta: 'Serial · 2019 · Miniserial', desc: 'Rekonstrukcja katastrofy i kosztu kłamstw, które ją poprzedziły oraz po niej nastąpiły.' },
+    ],
+  };
+  const findItem = id => [...LIBRARY.films, ...LIBRARY.series].find(item => item.id === id);
+  // Adres obrazu udaje Emby: serwer oddaje gotowy rozmiar, pilot nie skaluje niczego u siebie.
+  // Celowo mała rozdzielczość: plakat powiększa się bez wygładzania, więc widać piksele.
+  const posterUrl = id => `https://picsum.photos/seed/${id}/50/75`;
+
+  const rail = root.querySelector('#rail');
+  const renderRail = () => {
+    rail.scrollLeft = 0;
+    rail.innerHTML = LIBRARY[state.lib].map(item =>
+      `<button class="poster is-loading" type="button" data-id="${item.id}" aria-label="${item.title}">` +
+      `<span class="poster-art"><img alt="" src="${posterUrl(item.id)}">` +
+      `<b class="poster-name">${item.title}</b></span></button>`).join('');
+    rail.querySelectorAll('img').forEach(img => {
+      const poster = img.closest('.poster');
+      // Obraz doszedł — zdejmujemy szkielet. Nie doszedł — pokazujemy lokalny zapas.
+      img.addEventListener('load', () => { poster.dataset.loaded = '1'; render(); }, { once: true });
+      img.addEventListener('error', () => { img.src = `assets/posters/${poster.dataset.id}.svg`; }, { once: true });
+    });
+    requestAnimationFrame(() => { rail.scrollLeft = 0; });
+    render();
+  };
+  rail.addEventListener('click', event => {
+    const poster = event.target.closest('.poster');
+    if (poster) openSheet(poster.dataset.id);
+  });
+  root.querySelectorAll('[data-lib-value]').forEach(button => button.addEventListener('click', () => {
+    // Przełączenie rodzaju nie sięga do sieci — obie listy przyszły w tym samym komunikacie.
+    state.lib = button.dataset.libValue;
+    renderRail();
+  }));
+
+  const sheet = root.querySelector('.sheet');
+  const scrim = root.querySelector('.scrim');
+  let openId = null;
+  const openSheet = id => {
+    const item = findItem(id);
+    if (!item) return;
+    openId = id;
+    const art = sheet.querySelector('.sheet-art');
+    art.onerror = () => { art.onerror = null; art.src = `assets/posters/${item.id}.svg`; };
+    art.src = posterUrl(item.id);
+    sheet.querySelector('.sheet-title').textContent = item.title;
+    sheet.querySelector('.sheet-meta').textContent = item.meta;
+    sheet.querySelector('.sheet-desc').textContent = item.desc;
+    sheet.hidden = false;
+    scrim.hidden = false;
+  };
+  const closeSheet = () => { openId = null; sheet.hidden = true; scrim.hidden = true; };
+
+  renderRail();
+  scrim.addEventListener('click', closeSheet);
+  sheet.querySelector('.sheet-close').addEventListener('click', closeSheet);
+  // Odtworzenie to zwykłe polecenie: czeka na potwierdzenie, dopiero potem zamykamy okno.
+  sheet.querySelector('.sheet-play').addEventListener('click', event => {
+    const id = openId;
+    settle(event.currentTarget, () => { state.playing = id; closeSheet(); });
+  });
+
+  /* ---------- Gładzik Apple TV ---------- */
+  // Przesunięcie palcem nawiguje, dotknięcie strefy działa jak klawisz kierunku.
+  const pad = root.querySelector('#trackpad');
+  const flashKey = dir => {
+    const key = pad.querySelector(`[data-key="${dir}"]`);
+    if (!key) return;
+    key.classList.add('is-down');
+    setTimeout(() => key.classList.remove('is-down'), 150);
+  };
+  // Pole jest kołem, więc strefę wyznacza odległość od środka i kąt, nie prostokąty.
+  const zoneAt = event => {
+    const r = pad.getBoundingClientRect();
+    const dx = event.clientX - (r.left + r.width / 2);
+    const dy = event.clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < r.width * 0.22) return 'select';
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI; // 0° na prawo, rośnie w dół
+    if (angle >= -45 && angle < 45) return 'right';
+    if (angle >= 45 && angle < 135) return 'down';
+    if (angle >= -135 && angle < -45) return 'up';
+    return 'left';
+  };
+  const SWIPE = 26; // po tylu pikselach ruch liczymy jako gest i wysyłamy kolejny krok
+  let padDrag = null;
+  pad.addEventListener('pointerdown', event => {
+    padDrag = { x: event.clientX, y: event.clientY, x0: event.clientX, y0: event.clientY, far: 0 };
+    try { pad.setPointerCapture(event.pointerId); } catch { /* wskaźnik już zwolniony */ }
+  });
+  pad.addEventListener('pointermove', event => {
+    if (!padDrag) return;
+    padDrag.far = Math.max(padDrag.far, Math.hypot(event.clientX - padDrag.x0, event.clientY - padDrag.y0));
+    const dx = event.clientX - padDrag.x;
+    const dy = event.clientY - padDrag.y;
+    if (Math.abs(dx) < SWIPE && Math.abs(dy) < SWIPE) return;
+    flashKey(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    padDrag.x = event.clientX;
+    padDrag.y = event.clientY;
+  });
+  pad.addEventListener('pointerup', event => {
+    if (!padDrag) return;
+    const far = padDrag.far;
+    padDrag = null;
+    if (far > 12) return; // to był gest, nie dotknięcie strefy
+    flashKey(zoneAt(event));
+  });
+  pad.addEventListener('pointercancel', () => { padDrag = null; });
+
+  /* ---------- Wybudzenie ---------- */
+  const wakeEl = root.querySelector('.wake');
+  let wakeTimers = [];
+  const renderWake = () => {
+    const bad = link.phase === 'error';
+    wakeEl.hidden = link.phase === 'ready';
+    wakeEl.classList.toggle('is-error', bad);
+    wakeEl.querySelector('h1').textContent = bad ? 'Brak połączenia z domem' : 'Łączenie z domem';
+    wakeEl.querySelector('p').textContent = bad
+      ? 'Nie pokazuję zapamiętanego stanu. Spróbuj ponownie.'
+      : 'Pobieram aktualny stan TV i Z906';
+    wakeEl.querySelector('.wake-retry').hidden = !bad;
+    wakeEl.querySelectorAll('[data-step]').forEach(li => {
+      const i = Number(li.dataset.step);
+      li.classList.toggle('is-done', i < link.step);
+      li.classList.toggle('is-now', !bad && i === link.step);
+      li.classList.toggle('is-bad', bad && i === link.step);
+    });
+    setIcon(wakeEl.querySelector('.wake-mark'), bad ? 'wifi-off' : 'house');
+  };
+  const wake = (fail = false) => {
+    wakeTimers.forEach(clearTimeout);
+    wakeTimers = [];
+    const at = (ms, fn) => wakeTimers.push(setTimeout(() => { fn(); renderWake(); render(); }, ms));
+    link.phase = 'connecting'; link.step = 0; renderWake();
+    at(600, () => { link.step = 1; });
+    if (fail) { at(3000, () => { link.phase = 'error'; }); return; }
+    at(1300, () => { link.step = 2; });
+    at(2300, () => { link.phase = 'ready'; });
+  };
+  wakeEl.querySelector('.wake-retry').addEventListener('click', () => wake());
+
+  lab.querySelectorAll('[data-lab]').forEach(button => button.addEventListener('click', () => {
+    const what = button.dataset.lab;
+    if (what === 'wake') wake();
+    else if (what === 'fail') wake(true);
+    else if (what === 'reject') link.reject = !link.reject;
+    else if (what === 'pixel') button.setAttribute('aria-pressed', String(root.querySelector('.tabbar').classList.toggle('is-pixel')));
+    else link[what] = !link[what];
+    render();
+  }));
+
+  render();
+  icons();
+  wake();
+})();
+</script>
+</body>
+</html>

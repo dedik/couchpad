@@ -1,0 +1,24 @@
+menu "Pilot"
+
+    config PILOT_REMOTE_LOG
+        bool "Wysyłaj log pilota do MQTT (pilot_debug/<id>/log)"
+        default n
+        help
+            Narzędzie na czas rozwoju: kopia każdej linii ESP_LOG idzie do tematu
+            pilot_debug/<id>/log na brokerze z ustawień MQTT. Port szeregowy działa
+            jak dotąd. Kosztuje osobne połączenie MQTT (zadanie z 6 kB stosu
+            i bufory w pamięci wewnętrznej), więc domyślnie wyłączone — włączać
+            na czas szukania błędu bez kabla.
+
+    config PILOT_USB_CONSOLE
+        bool "Konsola USB: zrzuty ekranu i zdalny dotyk (tools/remote.py)"
+        default y
+        help
+            Narzędzie na czas rozwoju: pilot słucha na USB-Serial-JTAG komend
+            `shot` (bieżąca ramka panelu 480 x 800, RGB565, w base64), `tap x y`
+            i `drag x1 y1 x2 y2 ms` (dotyk przez osobne wejście LVGL).
+            Kosztuje sterownik USB-Serial-JTAG z buforem 4 kB i zadanie z 4 kB
+            stosu w pamięci wewnętrznej; kopia ramki (750 kB) idzie do PSRAM
+            tylko na czas zrzutu.
+
+endmenu

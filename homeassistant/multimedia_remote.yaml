@@ -1,0 +1,596 @@
+# Bridge kontraktu MQTT v1 pilota — strona Home Assistanta.
+#
+# Pilot nie zna encji Z906 i nie publikuje na wewnętrzne tematy jego kontrolera
+# (ADR 0002). Rozmawia wyłącznie tym kontraktem, a tłumaczeniem na encje zajmuje
+# się ten pakiet.
+#
+# Format tematów i payloadów opisuje docs/architecture/mqtt-contract.md i to on
+# jest źródłem prawdy. Zmiana payloadu wymaga nowej wersji w temacie.
+#
+# INSTALACJA: patrz homeassistant/README.md.
+#
+# PRZED UŻYCIEM podmień `living-room-remote` na identyfikator wpisany w pilocie
+# (Więcej → MQTT → Identyfikator pilota). Musi być identyczny w obu
+# miejscach, bo to on tworzy temat.
+#
+# APPLE TV (ADR 0007): encje, wpis konfiguracji i ulubione aplikacje odczytano
+# z Home Assistanta 2026-10-31 — patrz docs/integrations/appletv.md.
+#
+# KLIMATYZACJA (ADR 0009): encja `climate.living_room_ac` (Midea), odczytana 2026-11-02.
+# Tryby, zakres, krok i opcje bierzemy z jej atrybutów, nie z tego pliku.
+
+# Skróty kanałów TV (ADR 0008). Glasshouse przełącza kanał wyłącznie po HTTP,
+# więc pilot wysyła `tv.channel.open` tym kontraktem, a zapytania robi Home
+# Assistant. Adres telewizora i token Glasshouse leżą w secrets.yaml:
+#
+#   glasshouse_channels_url: http://<adres-tv>:8080/api/home/channels
+#   glasshouse_open_url: http://<adres-tv>:8080/api/home/open
+#   glasshouse_authorization: Bearer <token z config.json Glasshouse>
+rest_command:
+  multimedia_remote_tv_channels:
+    url: !secret glasshouse_channels_url
+    method: GET
+    headers:
+      Authorization: !secret glasshouse_authorization
+    timeout: 5
+  multimedia_remote_tv_open:
+    url: !secret glasshouse_open_url
+    method: POST
+    headers:
+      Authorization: !secret glasshouse_authorization
+    # Glasshouse przyjmuje POST wyłącznie jako JSON (ochrona przed CSRF).
+    content_type: application/json
+    payload: '{"kind":"ch","id":"{{ channel_id }}"}'
+    timeout: 5
+
+counter:
+  multimedia_remote_revision:
+    name: Rewizja snapshotu pilota
+    initial: 0
+    step: 1
+    # Pilot ignoruje snapshot o rewizji nie większej niż ostatnio przetworzona,
+    # więc licznik musi rosnąć i przeżyć restart Home Assistanta.
+    restore: true
+
+script:
+  # Lista kanałów tunera dla menu kanałów na pilocie (ADR 0008). Osobny temat,
+  # retained: lista ma kilka kilobajtów i zmienia się wyłącznie po wyszukaniu
+  # kanałów, więc nie należy do snapshotu publikowanego po każdej zmianie.
+  multimedia_remote_publish_channels:
+    alias: Pilot — opublikuj listę kanałów TV
+    mode: single
+    max_exceeded: silent
+    sequence:
+      - service: rest_command.multimedia_remote_tv_channels
+        response_variable: listing
+      # Telewizor w czuwaniu nie odpowiada: zostaje poprzednia lista retained.
+      - if: "{{ listing.status == 200 and listing.content.channels is defined }}"
+        then:
+          - service: mqtt.publish
+            data:
+              topic: multimedia_remote/v1/living-room-remote/channels
+              retain: true
+              qos: 1
+              payload: >-
+                {% set ns = namespace(items=[]) %}
+                {% for c in listing.content.channels if not c.radio %}
+                  {% set ns.items = ns.items + [{'number': c.number, 'name': c.name, 'id': c.id}] %}
+                {% endfor %}
+                {{ {'channels': ns.items} | tojson }}
+
+  # Pogoda dla ekranu startowego (ADR 0011). Osobny temat retained, nie snapshot:
+  # to treść, a nie stan urządzenia, więc pilot pokazuje ostatnią z pamięci.
+  multimedia_remote_publish_weather:
+    alias: Pilot — opublikuj pogodę
+    mode: queued
+    max: 3
+    sequence:
+      - variables:
+          weather_entity: weather.forecast_home
+      - if: "{{ states(weather_entity) not in ['unavailable', 'unknown', 'none'] }}"
+        then:
+          - service: mqtt.publish
+            data:
+              topic: multimedia_remote/v1/living-room-remote/weather
+              retain: true
+              qos: 1
+              payload: >-
+                {{ {'condition': states(weather_entity),
+                    'temperature': state_attr(weather_entity, 'temperature') | float(0),
+                    'night': is_state('sun.sun', 'below_horizon')}
+                   | tojson }}
+
+  multimedia_remote_publish:
+    alias: Pilot — opublikuj snapshot
+    mode: queued
+    max: 10
+    sequence:
+      - service: counter.increment
+        target:
+          entity_id: counter.multimedia_remote_revision
+
+      # Jedno miejsce na encje Apple TV; automatyzacje niżej wołają je kotwicą.
+      - variables: &appletv
+          atv_player: media_player.living_room_apple_tv
+          atv_remote: remote.living_room_apple_tv
+          atv_keyboard: binary_sensor.living_room_apple_tv_keyboard_focus
+          # Ustawienia → Urządzenia i usługi → Apple TV → ⋮ → identyfikator wpisu.
+          atv_config_entry: WPISZ_ID_WPISU_APPLE_TV
+          # Kafelki pilota. `id` to bundle id (atrybut `app_id`), `label` to pozycja
+          # z `source_list` co do znaku. Oba przepisać z urządzenia — nie zgadywać.
+          # Kolejność bez znaczenia; pilot dopasowuje po `id`.
+          atv_favourites:
+            - { id: "com.firecore.infuse", label: "Infuse" }
+            - { id: "com.google.ios.youtube", label: "YouTube" }
+            # Na Apple TV ta aplikacja nazywa się „Pilot WP”, nie „WP Pilot”.
+            - { id: "pl.pilotwp.appletv", label: "Pilot WP" }
+
+      - variables: &climate
+          climate_entity: climate.living_room_ac
+
+      - variables:
+          power: "{{ states('switch.z906_power') }}"
+          # Encja niedostępna oznacza brak świeżego stanu. Pilot pokaże wtedy
+          # pasek zamiast zgadywać wartości, zgodnie z ADR 0005.
+          available: >-
+            {{ states('switch.z906_power') not in
+               ['unavailable', 'unknown', 'none'] }}
+          snapshot:
+            revision: "{{ states('counter.multimedia_remote_revision') | int(0) }}"
+            z906:
+              available: >-
+                {{ states('switch.z906_power') not in
+                   ['unavailable', 'unknown', 'none'] }}
+              power: "{{ 'on' if is_state('switch.z906_power', 'on') else 'off' }}"
+              muted: "{{ is_state('switch.z906_mute', 'on') }}"
+              volume_percent: "{{ states('number.z906_volume') | int(0) }}"
+              # Pilot dopasowuje tę wartość do listy opcji, więc musi to być
+              # bieżąca opcja selecta, a nie wewnętrzny identyfikator wejścia.
+              source: "{{ states('select.z906_input') }}"
+              source_options: >-
+                {{ state_attr('select.z906_input', 'options') or [] }}
+              center_percent: "{{ states('number.z906_center') | int(0) }}"
+              subwoofer_percent: "{{ states('number.z906_subwoofer') | int(0) }}"
+              rear_percent: "{{ states('number.z906_rear') | int(0) }}"
+              effect: "{{ states('select.z906_effect') }}"
+              effect_options: >-
+                {{ state_attr('select.z906_effect', 'options') or [] }}
+              decode_5_1: >-
+                {{ is_state('binary_sensor.z906_decode_5_1', 'on') }}
+            appletv:
+              # `remote` jest „on” tylko wtedy, gdy integracja ma połączenie z Apple TV.
+              # Bez niego polecenia przepadają w HA („not connected”), więc pilot
+              # ma pokazać brak stanu, a nie przyjmować dotyk bez skutku.
+              available: >-
+                {{ states(atv_player) not in ['unavailable', 'unknown', 'none'] and
+                   is_state(atv_remote, 'on') }}
+              power: "{{ 'off' if states(atv_player) in ['off', 'standby'] else 'on' }}"
+              app_id: "{{ state_attr(atv_player, 'app_id') or '' }}"
+              # Tylko ulubione, które Apple TV faktycznie ma: odinstalowana aplikacja
+              # znika z pilota, zamiast zostawić martwy kafelek.
+              apps: >-
+                {% set installed = state_attr(atv_player, 'source_list') or [] %}
+                {{ atv_favourites | selectattr('id') | selectattr('label', 'in', installed)
+                   | list }}
+              keyboard_active: "{{ is_state(atv_keyboard, 'on') }}"
+            # Identyfikatory HA, nie nazwy — polskie nazwy dobiera pilot (ADR 0009).
+            # Brak atrybutu daje pustą listę, a pilot chowa wtedy to sterowanie.
+            climate:
+              available: >-
+                {{ states(climate_entity) not in ['unavailable', 'unknown', 'none'] }}
+              hvac_mode: "{{ states(climate_entity) }}"
+              hvac_modes: "{{ state_attr(climate_entity, 'hvac_modes') or [] }}"
+              target: "{{ state_attr(climate_entity, 'temperature') | float(0) }}"
+              current: >-
+                {% set t = state_attr(climate_entity, 'current_temperature') %}
+                {{ t | float if t is number else none }}
+              min: "{{ state_attr(climate_entity, 'min_temp') | float(16) }}"
+              max: "{{ state_attr(climate_entity, 'max_temp') | float(30) }}"
+              step: "{{ state_attr(climate_entity, 'target_temp_step') | float(0.5) }}"
+              fan_mode: "{{ state_attr(climate_entity, 'fan_mode') or '' }}"
+              fan_modes: "{{ state_attr(climate_entity, 'fan_modes') or [] }}"
+              swing_mode: "{{ state_attr(climate_entity, 'swing_mode') or '' }}"
+              swing_modes: "{{ state_attr(climate_entity, 'swing_modes') or [] }}"
+              swing_horizontal_mode: >-
+                {{ state_attr(climate_entity, 'swing_horizontal_mode') or '' }}
+              swing_horizontal_modes: >-
+                {{ state_attr(climate_entity, 'swing_horizontal_modes') or [] }}
+
+      - service: mqtt.publish
+        data:
+          topic: multimedia_remote/v1/living-room-remote/state
+          qos: 1
+          retain: true
+          payload: "{{ snapshot | to_json }}"
+
+automation:
+  # ---------------------------------------------------------------------------
+  # Każda zmiana po stronie Z906 daje nowy snapshot. Dzięki temu pilot pokazuje
+  # też zmiany wprowadzone skądinąd: pilotem wzmacniacza, aplikacją, automatyzacją.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — publikuj snapshot po zmianie Z906, Apple TV lub klimy
+    id: multimedia_remote_publish_on_change
+    mode: queued
+    max: 25
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id:
+          - switch.z906_power
+          - switch.z906_mute
+          - number.z906_volume
+          - number.z906_subwoofer
+          - number.z906_center
+          - number.z906_rear
+          - select.z906_input
+          - select.z906_effect
+          - binary_sensor.z906_decode_5_1
+          - media_player.living_room_apple_tv
+          - remote.living_room_apple_tv
+          - binary_sensor.living_room_apple_tv_keyboard_focus
+      # Zmiana aplikacji nie zmienia stanu odtwarzacza, tylko atrybut.
+      - platform: state
+        entity_id: media_player.living_room_apple_tv
+        attribute: app_id
+      # Klima: tryb (`to: ~` — sam stan, bez atrybutów) i tylko te atrybuty, które
+      # pokazuje pilot. Midea zmienia ich wiele naraz, a każdy dawałby snapshot.
+      - platform: state
+        entity_id: climate.living_room_ac
+        to: ~
+      - platform: state
+        entity_id: climate.living_room_ac
+        attribute: temperature
+      - platform: state
+        entity_id: climate.living_room_ac
+        attribute: current_temperature
+      - platform: state
+        entity_id: climate.living_room_ac
+        attribute: fan_mode
+      - platform: state
+        entity_id: climate.living_room_ac
+        attribute: swing_mode
+      - platform: state
+        entity_id: climate.living_room_ac
+        attribute: swing_horizontal_mode
+    action:
+      - service: script.multimedia_remote_publish
+
+  # Po restarcie Home Assistanta pilot musi dostać świeży obraz stanu.
+  - alias: Pilot — publikuj snapshot po starcie
+    id: multimedia_remote_publish_on_start
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - delay: "00:00:20"
+      - service: script.multimedia_remote_publish
+
+  # ---------------------------------------------------------------------------
+  # Polecenia z pilota. Każde kończy się publikacją snapshotu, bo dopiero on
+  # przesuwa zaznaczenie na ekranie — dotknięcie samo z siebie niczego nie zmienia.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — wykonaj polecenie
+    id: multimedia_remote_command
+    mode: queued
+    max: 25
+    max_exceeded: silent
+    trigger:
+      - platform: mqtt
+        topic: multimedia_remote/v1/living-room-remote/command
+    # Nawigację obsługuje osobna automatyzacja niżej: bez opóźnienia i bez
+    # snapshotu, żeby trackpad nie stał w kolejce za resztą poleceń.
+    condition: >-
+      {{ trigger.payload_json.action not in
+         ['appletv.navigate', 'tv.channel.open', 'tv.channels.request'] }}
+    variables:
+      <<: [*appletv, *climate]
+      command: "{{ trigger.payload_json.action }}"
+      args: "{{ trigger.payload_json.args | default({}, true) }}"
+    action:
+      - choose:
+          - conditions: "{{ command == 'z906.power.set' }}"
+            sequence:
+              - service: "switch.turn_{{ 'on' if args.on else 'off' }}"
+                target:
+                  entity_id: switch.z906_power
+
+          - conditions: "{{ command == 'z906.mute.set' }}"
+            sequence:
+              - service: "switch.turn_{{ 'on' if args.muted else 'off' }}"
+                target:
+                  entity_id: switch.z906_mute
+
+          - conditions: "{{ command == 'z906.volume.set' }}"
+            sequence:
+              - service: number.set_value
+                target:
+                  entity_id: number.z906_volume
+                data:
+                  value: "{{ args.percent | int(0) }}"
+
+          - conditions: "{{ command == 'z906.level.set' }}"
+            sequence:
+              - service: number.set_value
+                target:
+                  entity_id: >-
+                    {% set map = {
+                      'center': 'number.z906_center',
+                      'subwoofer': 'number.z906_subwoofer',
+                      'rear': 'number.z906_rear' } %}
+                    {{ map.get(args.channel, 'number.z906_volume') }}
+                data:
+                  value: "{{ args.percent | int(0) }}"
+
+          - conditions: "{{ command == 'z906.source.set' }}"
+            sequence:
+              - service: select.select_option
+                target:
+                  entity_id: select.z906_input
+                data:
+                  option: "{{ args.source }}"
+
+          - conditions: "{{ command == 'z906.effect.set' }}"
+            sequence:
+              - service: select.select_option
+                target:
+                  entity_id: select.z906_effect
+                data:
+                  option: "{{ args.effect }}"
+
+          # Usypia i budzi samo urządzenie. `remote.turn_on/off` integracji apple_tv
+          # przełącza tylko stan w HA i niczego na Apple TV nie zmienia
+          # (sprawdzone 2026-10-31, docs/integrations/appletv.md).
+          - conditions: "{{ command == 'appletv.power.set' }}"
+            sequence:
+              - service: "media_player.turn_{{ 'on' if args.on else 'off' }}"
+                target:
+                  entity_id: "{{ atv_player }}"
+
+          # Wyłącznie aplikacje z listy ulubionych — pilot nie uruchamia niczego,
+          # czego bridge nie opublikował w `apps`.
+          - conditions: >-
+              {{ command == 'appletv.app.launch' and
+                 args.app_id | default('') in
+                 (atv_favourites | selectattr('id') | map(attribute='id') | list) }}
+            sequence:
+              # Bundle id nie zmienia się z wersją aplikacji ani językiem systemu.
+              # Jeśli na tym Apple TV zadziała tylko select_source, podmień na nie
+              # (patrz docs/integrations/appletv.md).
+              - service: media_player.play_media
+                target:
+                  entity_id: "{{ atv_player }}"
+                data:
+                  media_content_type: app
+                  media_content_id: "{{ args.app_id }}"
+
+          - conditions: "{{ command == 'appletv.keyboard.set' }}"
+            sequence:
+              - service: apple_tv.set_keyboard_text
+                data:
+                  config_entry_id: "{{ atv_config_entry }}"
+                  text: "{{ args.text | default('') }}"
+
+          - conditions: "{{ command == 'appletv.keyboard.clear' }}"
+            sequence:
+              - service: apple_tv.clear_keyboard_text
+                data:
+                  config_entry_id: "{{ atv_config_entry }}"
+
+          # Klimatyzacja (ADR 0009). Włączenie wraca do ostatniego trybu.
+          - conditions: "{{ command == 'climate.power.set' }}"
+            sequence:
+              - service: "climate.turn_{{ 'on' if args.on else 'off' }}"
+                target:
+                  entity_id: "{{ climate_entity }}"
+
+          # Tylko tryby, które encja zgłasza. Wybór przy wyłączonej klimie ją włącza.
+          - conditions: >-
+              {{ command == 'climate.mode.set' and
+                 args.mode | default('') in (state_attr(climate_entity, 'hvac_modes') or []) }}
+            sequence:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ climate_entity }}"
+                data:
+                  hvac_mode: "{{ args.mode }}"
+
+          - conditions: "{{ command == 'climate.target.set' and args.temperature is number }}"
+            sequence:
+              - service: climate.set_temperature
+                target:
+                  entity_id: "{{ climate_entity }}"
+                data:
+                  temperature: >-
+                    {{ [[args.temperature | float,
+                         state_attr(climate_entity, 'min_temp') | float(16)] | max,
+                        state_attr(climate_entity, 'max_temp') | float(30)] | min }}
+
+          - conditions: >-
+              {{ command == 'climate.fan.set' and
+                 args.mode | default('') in (state_attr(climate_entity, 'fan_modes') or []) }}
+            sequence:
+              - service: climate.set_fan_mode
+                target:
+                  entity_id: "{{ climate_entity }}"
+                data:
+                  fan_mode: "{{ args.mode }}"
+
+          - conditions: >-
+              {{ command == 'climate.swing.set' and
+                 args.mode | default('') in (state_attr(climate_entity, 'swing_modes') or []) }}
+            sequence:
+              - service: climate.set_swing_mode
+                target:
+                  entity_id: "{{ climate_entity }}"
+                data:
+                  swing_mode: "{{ args.mode }}"
+
+          - conditions: >-
+              {{ command == 'climate.swing_horizontal.set' and
+                 args.mode | default('') in
+                 (state_attr(climate_entity, 'swing_horizontal_modes') or []) }}
+            sequence:
+              - service: climate.set_swing_horizontal_mode
+                target:
+                  entity_id: "{{ climate_entity }}"
+                data:
+                  swing_horizontal_mode: "{{ args.mode }}"
+
+          # Wybudzenie pilota. Snapshot musi powstać po sprawdzeniu bieżącego
+          # stanu, a nie być odesłaniem starej wiadomości retained.
+          - conditions: "{{ command == 'remote.sync.request' }}"
+            sequence: []
+        default:
+          # Polecenia TV i scen dojdą, gdy integracja LG będzie potwierdzona.
+          - service: system_log.write
+            data:
+              level: warning
+              logger: multimedia_remote
+              message: "Nieobsługiwane polecenie pilota: {{ command }}"
+
+      # Encje potrzebują chwili na ustalenie się, zanim odczytamy je do snapshotu.
+      # Tekst klawiatury nie należy do snapshotu, a pisanie na żywo wysyła go
+      # kilka razy na sekundę — wtedy nie publikujemy.
+      - if: "{{ command not in ['appletv.keyboard.set', 'appletv.keyboard.clear'] }}"
+        then:
+          - delay: "00:00:00.4"
+          - service: script.multimedia_remote_publish
+
+  # ---------------------------------------------------------------------------
+  # Nawigacja Apple TV (ADR 0007). Zdarzenie chwilowe: bez opóźnienia i bez
+  # snapshotu — przesunięcie po trackpadzie daje kilka kroków na sekundę.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — nawigacja Apple TV
+    id: multimedia_remote_appletv_navigate
+    mode: queued
+    max: 10
+    max_exceeded: silent
+    trigger:
+      - platform: mqtt
+        topic: multimedia_remote/v1/living-room-remote/command
+    condition: >-
+      {{ trigger.payload_json.action == 'appletv.navigate' and
+         trigger.payload_json.args.key | default('') in
+         ['up', 'down', 'left', 'right', 'select', 'menu', 'home'] and
+         trigger.payload_json.args.action | default('tap') in ['tap', 'double', 'hold'] }}
+    variables:
+      <<: *appletv
+      press: "{{ trigger.payload_json.args.action | default('tap') }}"
+    action:
+      # Integracja zna tylko stuknięcie i przytrzymanie (hold_secs ≥ 1). Podwójne
+      # stuknięcie to dwa stuknięcia bez przerwy — Apple TV bierze je za Home ×2
+      # (sprawdzone 2026-10-31, docs/integrations/appletv.md).
+      - service: remote.send_command
+        target:
+          entity_id: "{{ atv_remote }}"
+        data:
+          command: "{{ trigger.payload_json.args.key }}"
+          num_repeats: "{{ 2 if press == 'double' else 1 }}"
+          delay_secs: 0
+          hold_secs: "{{ 1 if press == 'hold' else 0 }}"
+
+  # ---------------------------------------------------------------------------
+  # Skrót kanału TV (ADR 0008). Zdarzenie chwilowe, bez snapshotu: stan TV pilot
+  # czyta wprost z Glasshouse. Kanał wybieramy po nazwie z listy tunera, bo
+  # identyfikator zawiera parametry multipleksu i zmienia się po wyszukaniu kanałów.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — kanał TV
+    id: multimedia_remote_tv_channel
+    mode: queued
+    max: 4
+    max_exceeded: silent
+    trigger:
+      - platform: mqtt
+        topic: multimedia_remote/v1/living-room-remote/command
+    condition: >-
+      {{ trigger.payload_json.action == 'tv.channel.open' and
+         (trigger.payload_json.args.name | default('') | length > 0 or
+          trigger.payload_json.args.id | default('') | length > 0) }}
+    action:
+      # Z menu kanałów pilot podaje identyfikator z opublikowanej listy — nazwy
+      # się powtarzają (TVP World pod 33 i 91), więc tu nie szukamy.
+      - if: "{{ trigger.payload_json.args.id | default('') | length > 0 }}"
+        then:
+          - service: rest_command.multimedia_remote_tv_open
+            data:
+              channel_id: "{{ trigger.payload_json.args.id }}"
+          - stop: identyfikator z listy
+      - service: rest_command.multimedia_remote_tv_channels
+        response_variable: listing
+      - variables:
+          # Porównanie bez wielkości liter i spacji: „TVP 1” to „tvp1”.
+          wanted: >-
+            {{ trigger.payload_json.args.name | lower | regex_replace('[^a-z0-9]', '') }}
+          # Pierwszy pasujący wygrywa: tuner układa kanały po numerze.
+          channel_id: >-
+            {% set ns = namespace(id='') %}
+            {% if listing.status == 200 %}
+              {% for c in listing.content.channels | default([]) if not c.radio %}
+                {% if not ns.id and (c.name | lower | regex_replace('[^a-z0-9]', '')) == wanted %}
+                  {% set ns.id = c.id %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+            {{ ns.id }}
+      - if: "{{ channel_id | length > 0 }}"
+        then:
+          - service: rest_command.multimedia_remote_tv_open
+            data:
+              channel_id: "{{ channel_id }}"
+        else:
+          - service: system_log.write
+            data:
+              level: warning
+              logger: multimedia_remote
+              message: >-
+                Kanał '{{ trigger.payload_json.args.name }}' nieznaleziony
+                (HTTP {{ listing.status }})
+
+  # ---------------------------------------------------------------------------
+  # Pogoda na ekran startowy pilota (ADR 0011): po zmianie warunku lub temperatury
+  # i po starcie HA. Temat retained, więc pilot po restarcie dostaje ją od brokera.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — pogoda
+    id: multimedia_remote_weather
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id: weather.forecast_home
+        to: ~
+      - platform: state
+        entity_id: weather.forecast_home
+        attribute: temperature
+      # `partlycloudy` z met.no nie ma wariantu nocnego — pilot rysuje go sam,
+      # więc wschód i zachód słońca też dają nową wiadomość.
+      - platform: state
+        entity_id: sun.sun
+        to: ~
+    action:
+      # Po starcie HA broker i encja potrzebują chwili, jak przy snapshocie.
+      - if: "{{ trigger.platform == 'homeassistant' }}"
+        then:
+          - delay: "00:00:20"
+      - service: script.multimedia_remote_publish_weather
+
+  # ---------------------------------------------------------------------------
+  # Lista kanałów dla pilota (ADR 0008): po starcie, co godzinę (po ponownym
+  # wyszukaniu kanałów lista się zmienia) i na żądanie pilota po połączeniu.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — lista kanałów TV
+    id: multimedia_remote_tv_channel_list
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: time_pattern
+        minutes: 7
+      - platform: mqtt
+        topic: multimedia_remote/v1/living-room-remote/command
+    condition: >-
+      {{ trigger.platform != 'mqtt' or trigger.payload_json.action == 'tv.channels.request' }}
+    action:
+      - service: script.multimedia_remote_publish_channels

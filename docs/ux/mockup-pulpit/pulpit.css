@@ -1,0 +1,443 @@
+/* Pulpit — system projektowy pilota multimedialnego.
+   Jedno źródło stylu dla makiety (index.html) i galerii komponentów (system.html).
+   Wszystkie wymiary są w rzeczywistych pikselach panelu 480 × 800. */
+
+/* ---------- Tokeny ---------- */
+:root {
+  /* Powierzchnie, od najgłębszej do wyniesionej */
+  --bg: #0a0b0e;
+  --surface: #14161b;
+  --surface-2: #1c1f26;
+  --surface-3: #282c35;
+  --line: #30353f;
+
+  /* Tekst */
+  --text: #f3f5f9;
+  --dim: #98a0ae;
+  --faint: #626a78;
+
+  /* Jeden akcent dla stanu aktywnego. Kolor semantyczny tylko dla znaczenia. */
+  --accent: #f2a93b;
+  --accent-ink: #17120a;
+  --accent-soft: rgba(242, 169, 59, .14);
+  --ok: #56d6a0;
+  --danger: #ff5f5f;
+  --danger-soft: rgba(255, 95, 95, .13);
+
+  /* Promienie */
+  --r1: 10px; --r2: 14px; --r3: 18px; --r4: 24px; --rf: 999px;
+
+  /* Rytm odstępów: wielokrotności 4 */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s7: 32px;
+
+  /* Krój. Ubuntu ma odmiany 400/500/700 — projekt używa wyłącznie tych trzech,
+     więc przeglądarka ani firmware nie muszą pogrubiać niczego sztucznie.
+     Wszystkie dziesięć cyfr Ubuntu ma tę samą szerokość, więc odczyty liczbowe nie skaczą
+     przy zmianie wartości i nie trzeba do nich osobnego kroju o stałej szerokości. */
+  --font: 'Ubuntu', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Typografia */
+  --t-cap: 11px;   /* etykieta sekcji, wersaliki */
+  --t-sm: 13px;
+  --t-md: 15px;
+  --t-lg: 19px;
+  --t-xl: 26px;
+  --t-num: 46px;   /* duża wartość liczbowa */
+
+  /* Powłoka ekranu */
+  /* 2026-11-03: nagłówek bez paska statusu — wiersz 64 px i 5 px od górnej krawędzi */
+  --topbar: 69px;
+  --tabbar: 80px;   /* same ikony: 8 + 68 + 4 */
+  --gutter: 24px;
+
+  /* Najmniejszy dopuszczalny cel dotyku: 68 px ≈ 8 mm na tym panelu */
+  --touch: 68px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; }
+
+.cap { margin: 0; font-size: var(--t-cap); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+
+/* ---------- Powłoka: ramka, ekran, trzy strefy ---------- */
+.bezel { width: 508px; padding: 14px; border-radius: 40px; background: linear-gradient(#1b1e24, #0e1014); box-shadow: 0 30px 70px rgba(0, 0, 0, .55); }
+.screen { width: 480px; height: 800px; position: relative; overflow: hidden; border-radius: 26px; background: var(--bg); display: flex; flex-direction: column; }
+
+.topbar { height: var(--topbar); flex: none; display: flex; align-items: center; justify-content: space-between; padding: 5px var(--gutter) 0; }
+.ident { display: flex; align-items: center; gap: var(--s3); min-width: 0; }
+.ident-mark { width: 44px; height: 44px; flex: none; border-radius: var(--r2); background: var(--surface); color: var(--accent); display: grid; place-items: center; }
+.ident-mark i { width: 22px; height: 22px; }
+.ident b { display: block; font-size: var(--t-lg); font-weight: 700; letter-spacing: -.01em; }
+.ident span { display: block; margin-top: 3px; font-size: var(--t-cap); letter-spacing: .16em; color: var(--faint); }
+.topbar-end { display: flex; align-items: center; gap: var(--s3); }
+
+.content { flex: 1; min-height: 0; position: relative; padding: var(--s3) var(--gutter) var(--s4); }
+
+.tabbar { height: var(--tabbar); flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s1); padding: var(--s2) var(--s4) var(--s1); background: var(--surface); border-top: 1px solid var(--line); }
+.tab { border-radius: var(--r3); color: var(--faint); display: grid; place-items: center; align-content: center; font-size: 0; }
+/* Same ikony, bez podpisów (2026-11-03); podpis zostaje w HTML dla czytników ekranu. */
+.tab i { width: 20px; height: 20px; }
+.tab.is-sel { color: var(--accent); background: var(--accent-soft); }
+/* Ikony pixel art: siatka 24 × 24 rysowana w skali 2 ×, więc każdy piksel pada na całe piksele ekranu.
+   Sprite ma własne kolory, więc wybranej zakładki nie znaczy już barwa ikony, tylko jej tło. */
+.tab .pix { display: none; width: 48px; height: 48px; }
+.tab .pix svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+/* Ikony 48 × 48: na zakładce 1 ×, na kafelku startowym 2 × — zawsze bez wygładzania. */
+.pix img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+/* Lucide zastępuje <i> własnym <svg>, więc ukrywamy bezpośrednie dziecko zakładki, nie znacznik <i>. */
+.tabbar.is-pixel .tab > i, .tabbar.is-pixel .tab > svg { display: none; }
+.tabbar.is-pixel .tab .pix { display: block; }
+.tabbar.is-pixel .tab { gap: 2px; }
+
+/* Ekran wypełnia tylko strefę środkową. Nowy ekran = nowa sekcja .scr. */
+.scr { height: 100%; display: flex; flex-direction: column; gap: var(--s3); }
+.scr[hidden] { display: none; }
+.scr-fill { flex: 1; min-height: 0; display: grid; place-items: center; }
+
+/* ---------- Przycisk zasilania ---------- */
+.power { width: 64px; height: 64px; border-radius: var(--rf); background: var(--surface-2); color: var(--dim); display: grid; place-items: center; }
+.power i { width: 24px; height: 24px; }
+.power.is-on { background: var(--accent); color: var(--accent-ink); }
+.power[hidden] { display: none; }
+
+/* ---------- Grupa wyboru: ikona wiodąca + segmenty ---------- */
+.group { display: grid; grid-template-columns: 22px 1fr; align-items: center; gap: var(--s3); }
+.group > i { width: 18px; height: 18px; color: var(--faint); justify-self: center; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s1); padding: var(--s1); background: var(--surface-2); border-radius: var(--r3); }
+.seg-item { height: 60px; border-radius: var(--r2); color: var(--dim); font-size: var(--t-sm); line-height: 1.15; display: grid; place-items: center; padding: 0 2px; }
+.seg-item.is-sel { background: var(--surface-3); color: var(--text); font-weight: 500; box-shadow: inset 0 -3px 0 var(--accent); }
+
+/* ---------- Kafelek ---------- */
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s2); }
+/* Aplikacje Apple TV w rozmiarze skrótów kanałów TV: kolumna jak przy pięciu, rząd wyśrodkowany */
+.tiles.cols-3 { grid-template-columns: repeat(3, calc((100% - 4 * var(--s2)) / 5)); justify-content: center; }
+.scr-fill:has(.pad-row) { place-items: stretch; }
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s2); }
+.tile { height: 80px; border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; gap: var(--s2); padding: var(--s2); color: var(--dim); }
+.tile i { width: 22px; height: 22px; }
+.tile span { font-size: var(--t-sm); }
+/* Logotypy wyrównujemy optycznie, nie metrycznie: znak kwadratowy musi być wyższy niż napis szeroki. */
+.tile img { width: 100%; object-fit: contain; }
+.tile img.logo-mark { height: 38px; }
+.tile img.logo-word { height: 22px; }
+.tile.is-tall { height: 120px; }
+.tile.is-sel { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.tile.is-sel i { color: var(--accent); }
+
+/* ---------- Przycisk akcji ---------- */
+.duo { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s2); }
+.act { height: 72px; border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); color: var(--text); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); font-size: var(--t-md); }
+.act i { width: 20px; height: 20px; color: var(--dim); }
+
+/* ---------- D-pad ---------- */
+.pad { width: 256px; height: 256px; position: relative; }
+.pad::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); }
+.pad-key { position: absolute; width: 80px; height: 80px; border-radius: var(--r4); color: var(--dim); display: grid; place-items: center; }
+.pad-key i { width: 24px; height: 24px; }
+.pad-key.up { left: 88px; top: 2px; }
+.pad-key.down { left: 88px; bottom: 2px; }
+.pad-key.left { left: 2px; top: 88px; }
+.pad-key.right { right: 2px; top: 88px; }
+.pad-ok { position: absolute; left: 72px; top: 72px; width: 112px; height: 112px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: var(--t-md); font-weight: 700; letter-spacing: .08em; display: grid; place-items: center; }
+.pad-key.is-down { color: var(--accent); background: var(--surface-2); }
+.pad-ok.is-down { background: color-mix(in srgb, var(--accent) 80%, #fff); }
+
+/* ---------- Tarcza wartości (obrót palcem) ---------- */
+.dial-zone { position: relative; display: grid; place-items: center; }
+.dial { --v: 42; width: 248px; height: 248px; position: relative; display: grid; place-items: center; border-radius: 50%; cursor: grab; touch-action: none; user-select: none;
+  background: conic-gradient(from 225deg, var(--accent) 0 calc(var(--v) * 2.7deg), var(--surface-3) calc(var(--v) * 2.7deg) 270deg, transparent 270deg 360deg); }
+.dial::before { content: ""; position: absolute; inset: 18px; border-radius: 50%; background: var(--bg); }
+.dial.is-dragging { cursor: grabbing; }
+.dial-read { position: relative; text-align: center; }
+.dial-read b { display: block; font-size: 64px; line-height: .9; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.dial-read span { display: block; margin-top: var(--s2); font-size: var(--t-cap); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+/* −/+ głośności: ten sam przycisk co przy tarczy temperatury, w osi tarczy */
+.dial-zone { width: 100%; }
+.thermo-step.vol-step { top: 50%; bottom: auto; transform: translateY(-50%); }
+.thermo-step.vol-step.minus { left: 0; }
+.thermo-step.vol-step.plus { right: 0; }
+/* Segment z bieżącą wartością (wejście, efekt): nazwa do szerokości, potem wielokropek */
+.value-pick { padding: 0 var(--s3); }
+.value-pick .opt-value { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Decode 5.1 w nagłówku ekranu dźwięku */
+.decode-pill { height: 36px; padding: 0 var(--s3); border-radius: var(--rf); background: var(--surface); border: 1px solid var(--line); color: var(--faint); font-size: var(--t-sm); font-weight: 500; display: inline-flex; align-items: center; gap: var(--s2); }
+.decode-pill[hidden] { display: none; }
+.decode-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.decode-pill.is-on { color: var(--ok); border-color: rgba(86, 214, 160, .45); }
+.decode-pill.is-on i { background: var(--ok); }
+.dial-side { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; border-radius: var(--rf); background: var(--surface-2); border: 1px solid var(--line); color: var(--dim); display: grid; place-items: center; }
+.dial-side i { width: 24px; height: 24px; }
+.dial-side.is-on { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+
+/* ---------- Kolumna poziomu (przeciąganie w pionie) ---------- */
+.levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.level { --v: 50; display: grid; justify-items: center; gap: var(--s2); padding: var(--s2) 0; border-radius: var(--r3); cursor: ns-resize; touch-action: none; user-select: none; }
+.level-name { font-size: var(--t-cap); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.level-value { font-size: var(--t-md); font-weight: 700; font-variant-numeric: tabular-nums; }
+.level-track { width: 56px; height: 170px; border-radius: var(--r2); background: var(--surface-2); position: relative; overflow: hidden; }
+.level-track::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--v) * 1%); background: var(--accent); }
+.level.is-dragging .level-track { outline: 1px solid var(--accent); }
+
+/* ---------- Wiersz listy ---------- */
+.list { display: grid; gap: var(--s2); }
+.list-row { height: 76px; padding: 0 var(--s4); border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); display: grid; grid-template-columns: 24px 1fr auto 20px; align-items: center; gap: var(--s3); text-align: left; }
+.list-row > i:first-child { width: 20px; height: 20px; color: var(--dim); }
+.list-row b { font-size: var(--t-md); font-weight: 500; }
+.list-row em { display: block; margin-top: 2px; font-size: var(--t-cap); font-style: normal; color: var(--faint); }
+.list-row var { font-size: var(--t-sm); font-style: normal; color: var(--dim); }
+.list-row > i:last-child { width: 18px; height: 18px; color: var(--faint); }
+
+/* ---------- Wiersz informacyjny (tylko odczyt) ---------- */
+.readout { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); font-size: var(--t-sm); color: var(--faint); }
+.readout b { font-weight: 500; color: var(--dim); display: inline-flex; align-items: center; gap: var(--s2); }
+.readout b::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.readout b.is-on { color: var(--ok); }
+.readout b.is-on::before { background: var(--ok); box-shadow: 0 0 0 4px rgba(86, 214, 160, .15); }
+
+/* ---------- Karta braku stanu ----------
+   Leży poza układem, więc jej pojawienie się nie przesuwa żadnej kontrolki. */
+.banner { position: absolute; left: var(--gutter); right: var(--gutter); top: 50%; transform: translateY(-50%); z-index: 5; margin: 0;
+  display: grid; justify-items: center; gap: var(--s3); padding: var(--s6) var(--s5); text-align: center;
+  border-radius: var(--r4); background: var(--surface); border: 1px solid rgba(255, 95, 95, .35); color: var(--text);
+  font-size: var(--t-sm); line-height: 1.45; box-shadow: 0 18px 44px rgba(0, 0, 0, .55); }
+.banner i { width: 26px; height: 26px; color: var(--danger); }
+.banner[hidden] { display: none; }
+
+/* ---------- Stany wspólne dla każdego sterowania ---------- */
+/* oczekiwanie na snapshot */
+.is-pending { animation: pulse-ring 1s ease-in-out infinite; }
+.level.is-pending { animation: none; }
+.level.is-pending .level-value { color: var(--accent); animation: pulse-fade 1s ease-in-out infinite; }
+/* brak potwierdzenia w czasie */
+.is-failed { animation: nudge .3s ease-in-out 2; box-shadow: 0 0 0 2px var(--danger); }
+/* urządzenie bez świeżego stanu */
+.is-unavailable > *:not(.banner) { opacity: .3; filter: grayscale(1); pointer-events: none; }
+.power:disabled { opacity: .3; pointer-events: none; }
+
+@keyframes pulse-ring { 50% { box-shadow: 0 0 0 3px var(--accent-soft); } }
+@keyframes pulse-fade { 50% { opacity: .35; } }
+@keyframes nudge { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+
+/* ---------- Ekran łączenia po wybudzeniu (ADR 0005) ---------- */
+.wake { position: absolute; inset: 0; z-index: 10; background: var(--bg); padding: 0 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.wake[hidden] { display: none; }
+.wake-mark { width: 96px; height: 96px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; animation: breathe 1.7s ease-in-out infinite; }
+.wake-mark i { width: 38px; height: 38px; }
+.wake.is-error .wake-mark { background: var(--danger-soft); color: var(--danger); animation: none; }
+.wake h1 { margin: var(--s7) 0 0; font-size: 23px; font-weight: 700; }
+.wake p { margin: var(--s3) 0 0; font-size: var(--t-sm); line-height: 1.5; color: var(--dim); }
+.wake-steps { list-style: none; margin: var(--s7) 0 0; padding: 0; display: flex; gap: var(--s5); font-size: var(--t-cap); letter-spacing: .08em; color: var(--faint); }
+.wake-steps li { display: flex; align-items: center; gap: var(--s2); }
+.wake-steps li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--surface-3); }
+.wake-steps li.is-now { color: var(--text); }
+.wake-steps li.is-now::before { background: var(--accent); animation: pulse-fade .9s ease-in-out infinite; }
+.wake-steps li.is-done::before { background: var(--ok); }
+.wake-steps li.is-bad { color: var(--danger); }
+.wake-steps li.is-bad::before { background: var(--danger); }
+.wake-retry { margin-top: var(--s7); min-width: 180px; height: var(--touch); border-radius: var(--r3); background: var(--accent); color: var(--accent-ink); font-size: var(--t-md); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); }
+.wake-retry[hidden] { display: none; }
+.wake-retry i { width: 20px; height: 20px; }
+
+@keyframes breathe { 50% { transform: scale(.93); } }
+
+/* ---------- Gładzik: przesunięcie palcem + cztery strefy dotknięcia ----------
+   Odwzorowuje sposób sterowania pilotem Apple TV. Strefy są tylko rysunkiem —
+   zdarzenia obsługuje całe pole, żeby gest nie kolidował z dotknięciem. */
+/* Powierzchnia jest jednolita, bo cała służy do przesuwania palcem.
+   Nic jej nie dzieli wizualnie na przyciski — akcent oznacza w tym systemie stan, nie akcję. */
+/* Pole jest kołem, więc przesunięcie w pionie ma dokładnie tyle samo miejsca co w poziomie.
+   Sylwetka jest ta sama co krzyżaka na ekranie TV — jedna nawigacja, jeden kształt. */
+.pad-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) 84px; gap: var(--s3); align-items: center; justify-items: center; height: 100%; }
+.trackpad { position: relative; width: min(100%, 280px); aspect-ratio: 1; max-height: 100%; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); touch-action: none; user-select: none; }
+.trackpad-key { position: absolute; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; color: var(--faint); pointer-events: none; transition: background-color .12s, color .12s; }
+.trackpad-key i { width: 22px; height: 22px; }
+.trackpad-key.up { top: 5px; left: 50%; transform: translateX(-50%); }
+.trackpad-key.down { bottom: 5px; left: 50%; transform: translateX(-50%); }
+.trackpad-key.left { left: 5px; top: 50%; transform: translateY(-50%); }
+.trackpad-key.right { right: 5px; top: 50%; transform: translateY(-50%); }
+.trackpad-key.is-down { color: var(--accent); background: var(--accent-soft); }
+.act.is-stack { flex-direction: column; gap: var(--s2); width: 100%; height: 124px; font-size: var(--t-sm); }
+.trackpad-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 84px; height: 84px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; color: var(--faint); font-size: var(--t-cap); letter-spacing: .16em; pointer-events: none; transition: background-color .12s, color .12s, border-color .12s; }
+.trackpad-center.is-down { border-color: transparent; background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- Karuzela plakatów ---------- */
+/* Krawędź w krawędź z ekranem: treść może wyjeżdżać poza margines boczny. */
+.rail { display: flex; gap: var(--s2); overflow-x: auto; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); scroll-snap-type: x mandatory; scroll-padding-left: var(--gutter); scrollbar-width: none; }
+.rail::-webkit-scrollbar { display: none; }
+.poster { flex: none; width: 100px; scroll-snap-align: start; border-radius: var(--r2); }
+.poster-art { width: 100px; height: 150px; border-radius: var(--r2); background: var(--surface-2); overflow: hidden; display: block; position: relative; }
+.poster-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Tytuł leży na plakacie, więc nie zabiera wysokości karuzeli. */
+.poster-art::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 62%; z-index: 1; background: linear-gradient(to top, rgba(0, 0, 0, .9), rgba(0, 0, 0, 0)); }
+.poster-name { position: absolute; left: 7px; right: 7px; bottom: 7px; z-index: 2; display: block; text-align: left; font-size: 11px; line-height: 1.2; font-weight: 500; color: #fff; }
+/* Plakat jeszcze nie przyszedł z sieci — pokazujemy szkielet, nie puste miejsce. */
+.poster.is-loading .poster-art img, .poster.is-loading .poster-art::before, .poster.is-loading .poster-name { visibility: hidden; }
+.poster.is-loading .poster-art::after { content: ""; position: absolute; inset: 0; z-index: 3; background: linear-gradient(100deg, var(--surface-2) 32%, var(--surface-3) 50%, var(--surface-2) 68%); background-size: 260% 100%; animation: sweep 1.3s linear infinite; }
+@keyframes sweep { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+
+/* ---------- Okno szczegółów pozycji ---------- */
+.scrim { position: absolute; inset: 0; z-index: 8; background: rgba(0, 0, 0, .62); }
+.scrim[hidden] { display: none; }
+.sheet { position: absolute; left: var(--s4); right: var(--s4); bottom: var(--s4); z-index: 9; padding: var(--s5); border-radius: var(--r4); background: var(--surface-2); border: 1px solid var(--line); display: grid; gap: var(--s4); }
+.sheet[hidden] { display: none; }
+.sheet-head { display: grid; grid-template-columns: 84px 1fr; gap: var(--s4); align-items: start; }
+.sheet-art { width: 84px; height: 126px; border-radius: var(--r2); object-fit: cover; display: block; }
+.sheet-title { display: block; font-size: var(--t-lg); font-weight: 700; line-height: 1.15; }
+.sheet-meta { display: block; margin-top: var(--s2); font-size: var(--t-cap); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.sheet-desc { margin: 0; font-size: var(--t-sm); line-height: 1.5; color: var(--dim); }
+.act.is-primary { background: var(--accent); border-color: transparent; color: var(--accent-ink); font-weight: 700; }
+.act.is-primary i { color: var(--accent-ink); }
+
+/* ---------- Kafelek urządzenia (ekran Dom) ----------
+   Pokazuje stan, nie steruje: dotknięcie otwiera podstronę urządzenia. */
+.device-tile { width: 100%; height: 168px; padding: var(--s4) var(--s5); border-radius: var(--r4); background: var(--surface); border: 1px solid var(--line); display: grid; grid-template-rows: auto 1fr; text-align: left; }
+.device-head { display: grid; grid-template-columns: 44px 1fr 20px; align-items: center; gap: var(--s3); }
+.device-mark { width: 44px; height: 44px; border-radius: var(--r2); background: var(--surface-2); color: var(--faint); display: grid; place-items: center; }
+.device-mark i, .device-mark svg { width: 22px; height: 22px; }
+.device-name b { display: block; font-size: var(--t-md); font-weight: 500; }
+.device-name em { display: block; margin-top: 3px; font-style: normal; font-size: var(--t-cap); letter-spacing: .16em; color: var(--faint); }
+.device-go { width: 20px; height: 20px; color: var(--faint); }
+.device-body { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s4); }
+.device-temp { font-size: var(--t-num); line-height: .9; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: var(--dim); }
+.device-temp small { font-size: var(--t-lg); font-weight: 500; letter-spacing: 0; margin-left: 2px; color: var(--faint); }
+.device-temp[hidden], .device-fan[hidden] { display: none; }
+.device-fan { display: grid; gap: 4px; min-width: 0; }
+.device-fan em { font-style: normal; font-size: var(--t-cap); letter-spacing: .16em; color: var(--faint); }
+.device-fan b { font-size: var(--t-xl); font-weight: 700; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px; }
+.device-meta { display: grid; justify-items: end; gap: 4px; text-align: right; }
+.device-mode { font-size: var(--t-md); font-weight: 500; color: var(--dim); }
+.device-now { font-size: var(--t-sm); color: var(--faint); }
+/* Włączona: akcent na znaku i trybie, temperatura pełnym tekstem */
+.device-tile.is-on .device-mark { background: var(--accent-soft); color: var(--accent); }
+.device-tile.is-on .device-temp { color: var(--text); }
+.device-tile.is-on .device-mode { color: var(--accent); }
+.device-tile.is-stale { border-color: rgba(255, 95, 95, .35); }
+.device-tile.is-stale .device-mark { background: var(--danger-soft); color: var(--danger); }
+.device-tile:active { background: var(--surface-2); }
+
+/* ---------- Podstrona: pełny ekran nad paskiem zakładek (widgets::make_page) ---------- */
+.page { position: absolute; inset: 0; z-index: 7; background: var(--bg); display: flex; flex-direction: column; }
+.page[hidden] { display: none; }
+.page-title { display: block; font-size: var(--t-lg); font-weight: 700; letter-spacing: -.01em; }
+.page-room { display: block; margin-top: 3px; font-size: var(--t-cap); letter-spacing: .16em; color: var(--faint); }
+.page-body { flex: 1; min-height: 0; position: relative; padding: var(--s3) var(--gutter) var(--s5); display: flex; flex-direction: column; gap: var(--s3); }
+/* Cofnij: ta sama wielkość co zasilanie po drugiej stronie nagłówka */
+.back { width: 64px; height: 64px; flex: none; border-radius: var(--rf); background: var(--surface); border: 1px solid var(--line); color: var(--dim); display: grid; place-items: center; }
+.back i, .back svg { width: 24px; height: 24px; }
+.back:active { background: var(--surface-2); color: var(--text); }
+
+/* ---------- Tarcza temperatury: łuk 270°, otwarty u dołu na przyciski −/+ ---------- */
+.thermo-zone { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
+.thermo { --f: .4; --size: 300px; --ring: 20px; width: var(--size); height: var(--size); position: relative; display: grid; place-items: center; border-radius: 50%; cursor: grab; touch-action: none; user-select: none;
+  background: conic-gradient(from 225deg, var(--accent) 0 calc(var(--f) * 270deg), var(--surface-3) calc(var(--f) * 270deg) 270deg, transparent 270deg 360deg); }
+.thermo::before { content: ""; position: absolute; inset: var(--ring); border-radius: 50%; background: var(--bg); }
+.thermo.is-dragging { cursor: grabbing; }
+/* Uchwyt leży na środku pierścienia, w miejscu bieżącej wartości */
+.thermo-knob { position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; margin: -16px; border-radius: 50%; background: var(--text); border: 5px solid var(--bg);
+  transform: rotate(calc(-135deg + var(--f) * 270deg)) translateY(calc(var(--size) / -2 + var(--ring) / 2)); }
+.thermo-scale { position: absolute; bottom: 22px; font-size: var(--t-cap); color: var(--faint); font-variant-numeric: tabular-nums; }
+.thermo-scale.lo { left: 46px; }
+.thermo-scale.hi { right: 46px; }
+.thermo-read { position: relative; display: grid; justify-items: center; text-align: center; }
+.thermo-action { font-size: var(--t-cap); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+.thermo-value { margin-top: var(--s3); font-size: 64px; line-height: .9; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.thermo-value small { font-size: var(--t-xl); font-weight: 500; letter-spacing: 0; margin-left: 2px; color: var(--dim); vertical-align: top; }
+.thermo-now { margin-top: var(--s4); display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); color: var(--dim); }
+.thermo-now i, .thermo-now svg { width: 16px; height: 16px; color: var(--faint); }
+.thermo.is-pending { animation: none; }
+.thermo.is-pending .thermo-value { color: var(--accent); animation: pulse-fade 1s ease-in-out infinite; }
+.thermo.is-failed { box-shadow: none; }
+.thermo.is-failed .thermo-value { color: var(--danger); }
+.thermo-step { position: absolute; bottom: 0; width: 72px; height: 72px; border-radius: var(--rf); background: var(--surface-2); border: 1px solid var(--line); color: var(--text); display: grid; place-items: center; }
+.thermo-step i, .thermo-step svg { width: 26px; height: 26px; }
+.thermo-step.minus { left: 0; }
+.thermo-step.plus { right: 0; }
+.thermo-step:active { background: var(--surface-3); }
+.thermo-step:disabled { opacity: .3; }
+/* Wyłączona albo sam nawiew: temperatura docelowa nie działa, więc tarcza gaśnie */
+.thermo-zone.is-idle .thermo { --f: 0; pointer-events: none; background: conic-gradient(from 225deg, var(--surface-2) 0 270deg, transparent 270deg 360deg); }
+.thermo-zone.is-idle .thermo-knob { display: none; }
+.thermo-zone.is-idle .thermo-value { color: var(--faint); }
+.thermo-zone.is-idle .thermo-step { opacity: .3; pointer-events: none; }
+
+/* ---------- Segmenty z ikoną nad podpisem ---------- */
+.seg.is-stack .seg-item { height: 72px; align-content: center; gap: 6px; font-size: var(--t-cap); letter-spacing: .02em; }
+.seg.is-stack .seg-item i, .seg.is-stack .seg-item svg { width: 22px; height: 22px; justify-self: center; }
+.seg.is-stack .seg-item.is-sel svg { color: var(--accent); }
+
+/* ---------- Kafelek opcji: podpis + bieżąca wartość, otwiera listę ---------- */
+.tile.opt-tile { height: 88px; place-items: initial; align-content: center; justify-items: start; text-align: left; padding: 0 var(--s4); gap: 6px; }
+.opt-cap { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-cap); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.opt-cap i, .opt-cap svg { width: 14px; height: 14px; }
+.opt-value { font-size: var(--t-md); font-weight: 500; color: var(--text); white-space: nowrap; }
+
+/* ---------- Lista wyboru w oknie od dołu ---------- */
+.picker-head { display: flex; align-items: center; justify-content: space-between; }
+.picker-title { font-size: var(--t-lg); font-weight: 700; }
+.picker-head .back { width: 56px; height: 56px; background: var(--surface-3); border-color: transparent; }
+.picker-list { display: grid; gap: var(--s1); }
+.picker-list.is-two { grid-template-columns: repeat(2, 1fr); }
+.opt { height: var(--touch); padding: 0 var(--s4); border-radius: var(--r2); background: var(--surface); color: var(--dim); font-size: var(--t-md); display: flex; align-items: center; justify-content: space-between; gap: var(--s2); text-align: left; }
+.opt span { flex: 1; }
+.opt svg { width: 20px; height: 20px; color: var(--accent); visibility: hidden; flex: none; }
+/* Ikona wiodąca (moc nawiewu) jest zawsze widoczna; ukrywa się tylko znacznik wyboru. */
+.opt svg.opt-icon { visibility: visible; color: var(--faint); }
+.opt.is-sel svg.opt-icon { color: var(--accent); }
+.opt.is-sel { background: var(--surface-3); color: var(--text); font-weight: 500; box-shadow: inset 3px 0 0 var(--accent); }
+.opt.is-sel svg { visibility: visible; }
+
+/* ---------- Ekran startowy ----------
+   Pełny ekran nad nagłówkiem i paskiem zakładek. Cztery wielkie cele dotyku, bo to pierwszy
+   ekran po wybudzeniu: palec trafia, zanim wzrok się skupi. */
+.start { position: absolute; inset: 0; z-index: 6; background: var(--bg); display: flex; flex-direction: column; padding: 0 var(--gutter) var(--s5); }
+.start[hidden] { display: none; }
+.start-head { height: 148px; flex: none; display: flex; align-items: center; justify-content: space-between; }
+.start-time { display: block; font-size: 56px; line-height: .95; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.start-date { display: block; margin-top: var(--s2); font-size: var(--t-sm); color: var(--dim); }
+.start-weather { display: flex; align-items: center; gap: var(--s2); }
+.start-weather img { width: 64px; height: 64px; image-rendering: pixelated; }
+.start-weather span { display: grid; justify-items: end; gap: 4px; }
+.start-weather b { font-size: var(--t-xl); font-weight: 700; }
+.start-weather em { font-style: normal; font-size: var(--t-sm); color: var(--dim); }
+.start-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: var(--s3); }
+.launch { position: relative; border-radius: var(--r4); background: var(--surface); border: 1px solid var(--line); padding: var(--s5); display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; overflow: hidden; }
+.launch:active { background: var(--surface-2); }
+/* Sprite 24 × 24 w skali 4 ×: każdy piksel siatki to 4 × 4 piksele ekranu */
+.launch .pix { display: block; width: 96px; height: 96px; }
+.launch .pix svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.launch-text { display: grid; gap: 6px; width: 100%; }
+.launch-text b { font-size: var(--t-xl); font-weight: 700; letter-spacing: -.01em; }
+.launch-state { font-style: normal; font-size: var(--t-sm); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.launch-state::before { content: ""; width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--surface-3); }
+.launch.is-on .launch-state { color: var(--dim); }
+.launch.is-on .launch-state::before { background: var(--accent); }
+.launch.is-wait .launch-state::before { background: var(--faint); animation: pulse-fade .9s ease-in-out infinite; }
+.launch.is-stale .launch-state::before { background: var(--danger); }
+.start-foot { height: 56px; flex: none; margin-top: var(--s3); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); font-size: var(--t-sm); color: var(--faint); }
+.start-link { display: inline-flex; align-items: center; gap: var(--s2); }
+.start-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); animation: pulse-fade .9s ease-in-out infinite; }
+.start-foot.is-ready .start-dot { background: var(--ok); animation: none; box-shadow: 0 0 0 4px rgba(86, 214, 160, .15); }
+.start-foot.is-ready { color: var(--dim); }
+.start-foot.is-error .start-dot { background: var(--danger); animation: none; }
+.start-retry { height: 48px; padding: 0 var(--s4); border-radius: var(--r2); background: var(--accent); color: var(--accent-ink); font-weight: 700; display: inline-flex; align-items: center; gap: var(--s2); }
+.start-retry[hidden] { display: none; }
+.start-retry i, .start-retry svg { width: 18px; height: 18px; }
+
+/* ---------- Panel symulacji: poza ekranem, nie należy do produktu ---------- */
+.lab { display: flex; gap: var(--s7); align-items: flex-start; justify-content: center; padding: var(--s7) var(--s5) 64px; flex-wrap: wrap; }
+.lab-panel { width: 236px; display: grid; gap: var(--s2); align-content: start; }
+.lab-panel .cap { margin-bottom: var(--s1); }
+.lab-panel button { min-height: 44px; padding: 0 var(--s3); border-radius: var(--r2); background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: var(--t-sm); text-align: left; }
+.lab-panel button[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.lab-note { margin: var(--s2) 0 0; font-size: 12px; line-height: 1.5; color: var(--faint); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }

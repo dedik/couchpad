@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulpit CRT — system projektowy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap">
+<link rel="stylesheet" href="pixel.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  /* Style wyłącznie galerii. Nie należą do produktu. */
+  .doc { max-width: 880px; margin: 0 auto; padding: 48px 24px 96px; }
+  .doc h1 { font-size: 30px; margin: 0 0 8px; }
+  .doc h2 { font-size: 19px; margin: 56px 0 6px; }
+  .doc p.lead { margin: 0 0 8px; color: var(--dim); font-size: 15px; line-height: 1.6; }
+  .doc hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0 24px; }
+  .specimen { padding: 24px; border: 1px solid var(--line); border-radius: var(--r4); background: var(--surface); margin-top: 16px; }
+  .specimen + .specimen { margin-top: 12px; }
+  .specimen > .cap { margin-bottom: 16px; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .swatch { border-radius: var(--r2); border: 1px solid var(--line); overflow: hidden; }
+  .swatch i { display: block; height: 56px; }
+  .swatch div { padding: 8px 10px; font-size: 12px; }
+  .swatch b { display: block; font-weight: 500; }
+  .swatch code { color: var(--faint); font-size: 11px; }
+  .scale { display: flex; align-items: flex-end; gap: 10px; }
+  .scale span { display: grid; gap: 6px; justify-items: center; font-size: 11px; color: var(--faint); }
+  .scale i { display: block; background: var(--accent); border-radius: 3px; width: 100%; }
+  .scale span > u { display: block; width: 100%; height: 48px; background: var(--surface-3); text-decoration: none; }
+  .type-row { display: flex; align-items: baseline; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .type-row code { width: 86px; flex: none; font-size: 11px; color: var(--faint); }
+  .states { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; align-items: start; }
+  .states figure { margin: 0; display: grid; gap: 10px; }
+  .states figcaption { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
+  td code { color: var(--accent); font-size: 12px; }
+  .box { width: 280px; }
+  .pixdemo { margin: 0; display: grid; gap: 10px; justify-items: center; }
+  .pixdemo .pix { display: block; width: 96px; height: 96px; }
+  .pixdemo .pix svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+  .pixdemo figcaption { font-size: 11px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <h1>Pulpit</h1>
+  <p class="lead">System projektowy pilota. Ta strona jest źródłem prawdy dla wyglądu: każdy nowy ekran składa się z komponentów pokazanych niżej, w stanach pokazanych niżej. Wszystkie wymiary są rzeczywistymi pikselami panelu 480 × 800.</p>
+
+  <h2>Kolory</h2>
+  <hr>
+  <p class="lead">Powierzchnie niosą hierarchię, akcent niesie stan aktywny. Kolor semantyczny pojawia się tylko tam, gdzie ma znaczenie: czerwony to wyciszenie i błąd, zielony to potwierdzona dostępność.</p>
+  <div class="specimen">
+    <div class="swatches">
+      <div class="swatch"><i style="background:var(--bg)"></i><div><b>Tło</b><code>--bg</code></div></div>
+      <div class="swatch"><i style="background:var(--surface)"></i><div><b>Karta</b><code>--surface</code></div></div>
+      <div class="swatch"><i style="background:var(--surface-2)"></i><div><b>Grupa</b><code>--surface-2</code></div></div>
+      <div class="swatch"><i style="background:var(--surface-3)"></i><div><b>Wybrany</b><code>--surface-3</code></div></div>
+      <div class="swatch"><i style="background:var(--accent)"></i><div><b>Akcent</b><code>--accent</code></div></div>
+      <div class="swatch"><i style="background:var(--ok)"></i><div><b>Dostępne</b><code>--ok</code></div></div>
+      <div class="swatch"><i style="background:var(--danger)"></i><div><b>Błąd, mute</b><code>--danger</code></div></div>
+      <div class="swatch"><i style="background:var(--text)"></i><div><b>Tekst</b><code>--text</code></div></div>
+      <div class="swatch"><i style="background:var(--dim)"></i><div><b>Tekst drugi</b><code>--dim</code></div></div>
+      <div class="swatch"><i style="background:var(--faint)"></i><div><b>Etykieta</b><code>--faint</code></div></div>
+    </div>
+  </div>
+
+  <h2>Rytm i typografia</h2>
+  <hr>
+  <p class="lead">Odstępy są wielokrotnością 4 px. Marginesy ekranu to 24 px, odstęp między sekcjami 12 px, wewnątrz grupy 8 px.</p>
+  <div class="specimen">
+    <p class="cap">Skala odstępów</p>
+    <div class="scale">
+      <span style="width:4px"><u></u>4</span><span style="width:8px"><u></u>8</span><span style="width:12px"><u></u>12</span>
+      <span style="width:16px"><u></u>16</span><span style="width:20px"><u></u>20</span><span style="width:24px"><u></u>24</span><span style="width:32px"><u></u>32</span>
+    </div>
+  </div>
+  <div class="specimen">
+    <p class="cap">Typografia</p>
+    <div class="type-row"><code>--t-num 46</code><b style="font-size:46px;font-weight:600;letter-spacing:-.04em">42</b></div>
+    <div class="type-row"><code>--t-xl 26</code><span style="font-size:26px;font-weight:600">Łączenie z domem</span></div>
+    <div class="type-row"><code>--t-lg 19</code><span style="font-size:19px;font-weight:600">LG OLED</span></div>
+    <div class="type-row"><code>--t-md 15</code><span style="font-size:15px">Wiersz listy, przycisk akcji</span></div>
+    <div class="type-row"><code>--t-sm 13</code><span style="font-size:13px">Etykieta segmentu, treść paska</span></div>
+    <div class="type-row"><code>--t-cap 11</code><span class="cap">Nagłówek sekcji</span></div>
+  </div>
+
+  <h2>Cele dotyku</h2>
+  <hr>
+  <p class="lead">Panel 4,3″ ma ok. 8,6 px na milimetr. Minimalny cel to <b>68 px</b>, czyli ok. 8 mm. Dlatego segment ma 60 px wysokości w kontenerze 68 px, kafelek 88 px, a OK na D-padzie 100 px. Makieta renderuje się 1 : 1, więc te wymiary można mierzyć linijką na ekranie.</p>
+
+  <h2>Komponenty</h2>
+  <hr>
+  <p class="lead">Nowy ekran nie wprowadza nowych kształtów. Dobiera je z tej listy.</p>
+
+  <div class="specimen">
+    <p class="cap">Grupa wyboru — jedna wartość z listy podanej w snapshocie</p>
+    <div class="group">
+      <i data-lucide="plug-zap" aria-hidden="true"></i>
+      <div class="seg">
+        <button class="seg-item is-sel" type="button">HDMI 1</button>
+        <button class="seg-item" type="button">HDMI 2</button>
+        <button class="seg-item" type="button">TV</button>
+        <button class="seg-item" type="button">Aplikacje</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">Kafelki — skrót lub scena</p>
+    <div class="tiles" style="max-width:432px">
+      <button class="tile" type="button"><i data-lucide="clapperboard" aria-hidden="true"></i><span>Film</span></button>
+      <button class="tile is-sel" type="button"><i data-lucide="music" aria-hidden="true"></i><span>Muzyka</span></button>
+      <button class="tile" type="button"><i data-lucide="moon" aria-hidden="true"></i><span>Noc</span></button>
+      <button class="tile" type="button"><i data-lucide="power" aria-hidden="true"></i><span>Koniec</span></button>
+    </div>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">Tarcza i kolumna — wartości ciągłe, zmieniane względnie</p>
+    <div style="display:flex;gap:40px;align-items:center;flex-wrap:wrap">
+      <div class="dial-zone">
+        <div class="dial" style="--v:42"><div class="dial-read"><b>42</b><span>głośność</span></div></div>
+        <button class="dial-side" type="button" aria-label="Wycisz"><i data-lucide="volume-2" aria-hidden="true"></i></button>
+      </div>
+      <div class="levels" style="width:240px">
+        <div class="level" style="--v:56"><span class="level-name">Center</span><span class="level-value">56</span><div class="level-track"></div></div>
+        <div class="level" style="--v:49"><span class="level-name">Sub</span><span class="level-value">49</span><div class="level-track"></div></div>
+        <div class="level" style="--v:68"><span class="level-name">Tył</span><span class="level-value">68</span><div class="level-track"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">D-pad i przyciski akcji — polecenia chwilowe, bez stanu</p>
+    <div style="display:flex;gap:40px;align-items:center;flex-wrap:wrap">
+      <div class="pad">
+        <button class="pad-key up" type="button" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></button>
+        <button class="pad-key left" type="button" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+        <button class="pad-ok" type="button">OK</button>
+        <button class="pad-key right" type="button" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        <button class="pad-key down" type="button" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></button>
+      </div>
+      <div class="duo box">
+        <button class="act" type="button"><i data-lucide="undo-2" aria-hidden="true"></i>Cofnij</button>
+        <button class="act" type="button"><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">Wiersz listy, wskaźnik i pasek ostrzeżenia</p>
+    <div class="list box" style="width:432px">
+      <button class="list-row" type="button"><i data-lucide="wifi" aria-hidden="true"></i><span><b>Wi-Fi</b><em>Połączono · ESP32-C6</em></span><var>-58 dBm</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+    </div>
+    <p class="readout" style="width:432px"><span>Decode 5.1</span><b class="is-on">aktywny</b></p>
+    <div style="position:relative;height:140px;max-width:432px;border-radius:var(--r4);background:var(--bg);overflow:hidden">
+      <p class="banner"><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu urządzenia. Sterowanie wróci po nowym snapshocie.</p>
+    </div>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">Gładzik — przesunięcie palcem oraz cztery strefy dotknięcia</p>
+    <div style="max-width:432px;height:240px"><div class="pad-row">
+      <button class="act is-stack" type="button"><i data-lucide="corner-up-left" aria-hidden="true"></i>Menu</button>
+      <div class="trackpad">
+        <div class="trackpad-key up"><i data-lucide="chevron-up" aria-hidden="true"></i></div>
+        <div class="trackpad-key left"><i data-lucide="chevron-left" aria-hidden="true"></i></div>
+        <div class="trackpad-key right is-down"><i data-lucide="chevron-right" aria-hidden="true"></i></div>
+        <div class="trackpad-key down"><i data-lucide="chevron-down" aria-hidden="true"></i></div>
+        <div class="trackpad-center">OK</div>
+      </div>
+      <button class="act is-stack" type="button"><i data-lucide="house" aria-hidden="true"></i>Home</button>
+    </div></div>
+    <p class="lead" style="margin-top:12px">Pole jest kołem o średnicy 240 px, więc przesunięcie w pionie ma dokładnie tyle samo miejsca co w poziomie — pas szeroki na cały ekran dawałby trzy razy mniej drogi w górę i w dół. Sylwetka jest ta sama co krzyżaka na ekranie TV: jedna nawigacja, jeden kształt. Powierzchnia jest jednolita i nie ma na niej wypełnionego przycisku — akcent oznacza w tym systemie stan, a nie akcję, więc podświetla się dopiero to, co właśnie naciskasz (tu: strefa prawa). Przesunięcie o 26 px wysyła krok w danym kierunku i liczy następny od nowa, więc jeden długi ruch przewija listę wielokrotnie. Dotknięcie bez ruchu działa jak klawisz strefy, a bliżej środka jak <code>OK</code>. Strefę wyznacza odległość od środka i kąt, nie prostokąty. Miejsce obok koła zajmują <code>Menu</code> i <code>Home</code>, zamiast zostawać puste.</p>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">Karuzela plakatów — pozycja wczytana i pozycja w trakcie pobierania</p>
+    <div class="rail" style="margin:0;padding:0;max-width:432px">
+      <div class="poster"><span class="poster-art"><img src="https://picsum.photos/seed/diuna/200/300" alt=""><b class="poster-name">Diuna: Część druga</b></span></div>
+      <div class="poster"><span class="poster-art"><img src="https://picsum.photos/seed/shogun/200/300" alt=""><b class="poster-name">Shōgun</b></span></div>
+      <div class="poster is-loading"><span class="poster-art"><img src="assets/posters/fallout.svg" alt=""><b class="poster-name">Fallout</b></span></div>
+      <div class="poster is-loading"><span class="poster-art"><img src="assets/posters/blade.svg" alt=""><b class="poster-name">Blade Runner 2049</b></span></div>
+    </div>
+    <p class="lead" style="margin-top:12px">Tytuł leży na plakacie pod przyciemnieniem, więc nie zabiera wysokości karuzeli. Dwa plakaty po prawej są w trakcie pobierania.</p>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">Okno szczegółów pozycji</p>
+    <div style="position:relative;height:300px;max-width:432px;border-radius:var(--r4);background:var(--bg);overflow:hidden">
+      <div class="scrim"></div>
+      <section class="sheet">
+        <div class="sheet-head">
+          <img class="sheet-art" src="assets/posters/diuna.svg" alt="">
+          <div><b class="sheet-title">Diuna: Część druga</b><span class="sheet-meta">Film · 2024 · 2 h 46 min</span></div>
+        </div>
+        <p class="sheet-desc">Paul Atryda łączy siły z Fremenami, by pomścić rodzinę i powstrzymać przyszłość, którą widzi w wizjach.</p>
+        <div class="duo">
+          <button class="act" type="button"><i data-lucide="x" aria-hidden="true"></i>Zamknij</button>
+          <button class="act is-primary" type="button"><i data-lucide="play" aria-hidden="true"></i>Odtwórz</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="specimen">
+    <p class="cap">Ikony zakładek w pixel art — siatka 24 × 24, rysowana w skali 2 ×</p>
+    <div style="display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap">
+      <figure class="pixdemo"><span class="pix" data-pix="tv"></span><figcaption>TV</figcaption></figure>
+      <figure class="pixdemo"><span class="pix" data-pix="appletv"></span><figcaption>Apple TV</figcaption></figure>
+      <figure class="pixdemo"><span class="pix" data-pix="audio"></span><figcaption>Dźwięk</figcaption></figure>
+      <figure class="pixdemo"><span class="pix" data-pix="home"></span><figcaption>Dom</figcaption></figure>
+      <figure class="pixdemo" style="color:var(--accent)"><span class="pix" data-pix="settings"></span><figcaption>Więcej, wybrane</figcaption></figure>
+    </div>
+    <p class="lead" style="margin-top:16px">Ikony są rysowane wprost w tekście źródła <code>pixel-icons.js</code>: jeden znak to jeden piksel, kropka znaczy przezroczysty, a pozostałe znaki odsyłają do wspólnej palety jedenastu barw. Poprawia się je w edytorze, nie w programie graficznym. Ponieważ sprite ma własne kolory, wybranej zakładki nie znaczy już barwa ikony, tylko jej tło. W firmware ta sama siatka staje się obrazem indeksowanym, skalowanym dwukrotnie metodą najbliższego sąsiada — bez antyaliasingu, bo w pixel arcie nie ma czego wygładzać.</p>
+  </div>
+
+  <h2>Stany</h2>
+  <hr>
+  <p class="lead">Każde sterowanie ma te same pięć stanów. To one, a nie kształt, niosą informację o tym, czy pilot ma potwierdzony stan z Home Assistanta.</p>
+  <div class="specimen">
+    <div class="states">
+      <figure><div class="seg"><button class="seg-item" type="button">Opcja</button></div><figcaption>Spoczynek</figcaption></figure>
+      <figure><div class="seg"><button class="seg-item is-sel" type="button">Opcja</button></div><figcaption>Wybrany</figcaption></figure>
+      <figure><div class="seg"><button class="seg-item is-pending" type="button">Opcja</button></div><figcaption>Czeka na snapshot</figcaption></figure>
+      <figure><div class="seg"><button class="seg-item is-failed" type="button">Opcja</button></div><figcaption>Bez potwierdzenia</figcaption></figure>
+      <figure><div class="seg" style="opacity:.3;filter:grayscale(1)"><button class="seg-item is-sel" type="button">Opcja</button></div><figcaption>Brak stanu</figcaption></figure>
+    </div>
+  </div>
+
+  <h2>Mapowanie na LVGL</h2>
+  <hr>
+  <p class="lead">Makieta nie jest kodem do przepisania. Ta tabela mówi, czym każdy komponent ma być w firmware.</p>
+  <table>
+    <thead><tr><th>Komponent</th><th>LVGL</th><th>Uwaga przy implementacji</th></tr></thead>
+    <tbody>
+      <tr><td><code>.seg</code></td><td><code>lv_obj</code> + <code>lv_button</code></td><td>Zaznaczenie przez styl i dolną krawędź (<code>border_side</code>), nie przez zmianę układu.</td></tr>
+      <tr><td><code>.tile</code></td><td><code>lv_button</code> + <code>lv_image</code></td><td>Logotypy wcześniej przeskalowane do RGB565 z przezroczystością.</td></tr>
+      <tr><td><code>.pad</code></td><td>5 × <code>lv_button</code></td><td>Pozycjonowane bezwzględnie na okrągłym <code>lv_obj</code>.</td></tr>
+      <tr><td><code>.dial</code></td><td><code>lv_arc</code></td><td><b>Domyślny <code>lv_arc</code> skacze do miejsca dotknięcia.</b> Wyłączyć to i liczyć zmianę kąta w <code>LV_EVENT_PRESSING</code>.</td></tr>
+      <tr><td><code>.level</code></td><td><code>lv_bar</code></td><td>Nie <code>lv_slider</code> — ten również skacze do dotyku. Gest pionowy obsłużyć ręcznie, polem chwytu jest cała kolumna.</td></tr>
+      <tr><td><code>.list-row</code></td><td><code>lv_button</code> + flex</td><td>Układ identyczny na każdym ekranie ustawień.</td></tr>
+      <tr><td><code>.trackpad</code></td><td><code>lv_obj</code> + własne zdarzenia</td><td><code>lv_indev_get_vect()</code> w <code>LV_EVENT_PRESSING</code> podaje przyrost ruchu palca — dokładnie to, czego potrzebuje gest. Strefy liczone z <code>lv_indev_get_point()</code> przy puszczeniu, o ile palec się nie przesunął.</td></tr>
+      <tr><td><code>.rail</code></td><td><code>lv_obj</code> przewijalny</td><td><code>lv_obj_set_scroll_dir(LV_DIR_HOR)</code> i <code>lv_obj_set_scroll_snap_x</code>. Przewijanie i tak obsługuje LVGL, nie trzeba własnego gestu.</td></tr>
+      <tr><td><code>.poster</code></td><td><code>lv_image</code></td><td>Obraz pobiera zadanie robocze i przekazuje gotową bitmapę kolejką — zadanie UI nigdy nie czeka na sieć. Do czasu odebrania obrazu obiekt pokazuje szkielet.</td></tr>
+      <tr><td><code>.sheet</code></td><td><code>lv_obj</code> na <code>lv_layer_top</code></td><td>Przyciemnienie tła to osobny obiekt z <code>bg_opa</code>, pod oknem.</td></tr>
+      <tr><td><code>.wake</code></td><td><code>lv_layer_top</code></td><td>Warstwa nad ekranami, zdejmowana dopiero po nowym snapshocie.</td></tr>
+      <tr><td>tokeny</td><td><code>lv_style_t</code></td><td>Jeden zestaw stylów w <code>ui/theme/</code>; ekrany nie definiują własnych kolorów.</td></tr>
+    </tbody>
+  </table>
+
+</div>
+<script src="pixel-icons.js"></script>
+<script>globalThis.lucide?.createIcons({ attrs: { width: 20, height: 20 } });</script>
+</body>
+</html>
