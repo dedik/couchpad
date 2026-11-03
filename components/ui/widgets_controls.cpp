@@ -11,10 +11,11 @@ using namespace detail;
 
 namespace {
 
-// Tarcza wypełnia miejsce po Decode 5.1 i rzędzie efektów (2026-11-03): 248 px
-// mieści się z −/+ po bokach co do piksela (72 + 20 + 248 + 20 + 72 = 432).
-constexpr int32_t kDialSize = 248;
-constexpr int32_t kDialRing = 18;
+// Tarcza wypełnia miejsce po Decode 5.1 i rzędzie efektów (~320 px wysokości).
+// −/+ siedzą w otwarciu łuku u dołu, więc boki są wolne (2026-11-03).
+constexpr int32_t kDialSize = 296;
+constexpr int32_t kDialRing = 22;
+constexpr int32_t kDialKnobPad = 3;     // uchwyt = szerokość łuku + 2 × 3 = 28 px
 constexpr int32_t kDialDeadZone = 30;   // środek tarczy: kąt jest tam niestabilny
 constexpr int32_t kLevelTrackW = 56;
 constexpr int32_t kLevelTrackH = 170;
@@ -31,11 +32,10 @@ void Dial::set_value(int32_t value) {
 }
 
 void Dial::set_status(domain::ControlStatus status) {
+    // Oczekiwanie bez wyróżnienia: zmianę widać na łuku. Kolor tylko przy błędzie.
     lv_obj_set_style_text_color(
         value_label,
-        status == domain::ControlStatus::Idle ? theme::text()
-        : status == domain::ControlStatus::Pending ? theme::accent()
-                                                   : theme::danger(),
+        status == domain::ControlStatus::Failed ? theme::danger() : theme::text(),
         LV_PART_MAIN);
 }
 
@@ -119,7 +119,8 @@ Dial* make_dial(lv_obj_t* parent, const char* caption, ValueHandler on_change, v
 
     dial->arc = lv_arc_create(dial->root);
     lv_obj_remove_style_all(dial->arc);
-    lv_obj_set_size(dial->arc, kDialSize, kDialSize);
+    // Łuk mniejszy o wystający uchwyt, żeby rodzic go nie przycinał.
+    lv_obj_set_size(dial->arc, kDialSize - 2 * kDialKnobPad, kDialSize - 2 * kDialKnobPad);
     lv_obj_center(dial->arc);
     lv_obj_remove_flag(dial->arc, LV_OBJ_FLAG_CLICKABLE);
     // Łuk z makiety zaczyna się na 225° od godziny dwunastej i obejmuje 270°.
@@ -130,11 +131,18 @@ Dial* make_dial(lv_obj_t* parent, const char* caption, ValueHandler on_change, v
     lv_obj_set_style_arc_color(dial->arc, theme::surface3(), LV_PART_MAIN);
     lv_obj_set_style_arc_width(dial->arc, kDialRing, LV_PART_INDICATOR);
     lv_obj_set_style_arc_color(dial->arc, theme::accent(), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_opa(dial->arc, LV_OPA_TRANSP, LV_PART_KNOB);
-    lv_obj_set_style_pad_all(dial->arc, 0, LV_PART_KNOB);
+    // Uchwyt na końcu wypełnienia: jasne koło z obwódką w kolorze akcentu.
+    lv_obj_set_style_bg_opa(dial->arc, LV_OPA_COVER, LV_PART_KNOB);
+    lv_obj_set_style_bg_color(dial->arc, theme::text(), LV_PART_KNOB);
+    lv_obj_set_style_radius(dial->arc, LV_RADIUS_CIRCLE, LV_PART_KNOB);
+    lv_obj_set_style_pad_all(dial->arc, kDialKnobPad, LV_PART_KNOB);
+    lv_obj_set_style_border_width(dial->arc, 4, LV_PART_KNOB);
+    lv_obj_set_style_border_color(dial->arc, theme::accent(), LV_PART_KNOB);
 
     lv_obj_t* readout = plain(dial->root);
-    lv_obj_set_size(readout, kDialSize - 2 * kDialRing - 8, LV_SIZE_CONTENT);
+    dial->readout = readout;
+    lv_obj_remove_flag(readout, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_size(readout, kDialSize - 2 * kDialRing - 16, LV_SIZE_CONTENT);
     lv_obj_center(readout);
     theme::make_column(readout, theme::kS2);
     lv_obj_set_flex_align(readout, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
@@ -166,8 +174,10 @@ constexpr int32_t kThermoSize = 300;
 constexpr int32_t kThermoRing = 20;
 constexpr int32_t kThermoKnobPad = 6;      // uchwyt = szerokość łuku + 2 × 6 = 32 px
 constexpr int32_t kThermoDeadZone = 40;
-constexpr int32_t kThermoStepSize = 72;
-constexpr int32_t kThermoHeight = 320;     // łuk + przyciski w jego dolnych rogach
+// −/+ w otwarciu łuku u dołu, jak przy tarczy głośności (2026-11-03).
+constexpr int32_t kThermoStepSize = 64;
+constexpr int32_t kThermoStepGap = 24;
+constexpr int32_t kThermoHeight = kThermoSize;
 constexpr uint32_t kThermoCommitMs = 700;  // tyle po ostatnim stuknięciu idzie polecenie
 
 void thermo_commit(lv_timer_t* timer) {
@@ -256,11 +266,11 @@ void thermo_event(lv_event_t* event) {
     }
 }
 
-lv_obj_t* thermo_step_button(lv_obj_t* parent, const char* symbol, lv_align_t align) {
+lv_obj_t* thermo_step_button(lv_obj_t* parent, const char* symbol, int32_t side) {
     lv_obj_t* button = lv_button_create(parent);
     lv_obj_remove_style_all(button);
     lv_obj_set_size(button, kThermoStepSize, kThermoStepSize);
-    lv_obj_align(button, align, 0, 0);
+    lv_obj_align(button, LV_ALIGN_BOTTOM_MID, side * (kThermoStepSize + kThermoStepGap) / 2, 0);
     lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(button, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(button, theme::surface2(), LV_PART_MAIN);
@@ -401,9 +411,9 @@ Thermostat* make_thermostat(lv_obj_t* parent, ValueHandler on_change, void* cont
     lv_obj_set_style_border_color(thermo->arc, theme::bg(), LV_PART_KNOB);
 
     thermo->scale_min = small_label(thermo->ring, theme::font_r11(), theme::faint());
-    lv_obj_align(thermo->scale_min, LV_ALIGN_BOTTOM_LEFT, 46, -22);
+    lv_obj_align(thermo->scale_min, LV_ALIGN_BOTTOM_LEFT, 34, -22);
     thermo->scale_max = small_label(thermo->ring, theme::font_r11(), theme::faint());
-    lv_obj_align(thermo->scale_max, LV_ALIGN_BOTTOM_RIGHT, -46, -22);
+    lv_obj_align(thermo->scale_max, LV_ALIGN_BOTTOM_RIGHT, -34, -22);
 
     lv_obj_t* readout = plain(thermo->ring);
     lv_obj_remove_flag(readout, LV_OBJ_FLAG_CLICKABLE);
@@ -428,8 +438,8 @@ Thermostat* make_thermostat(lv_obj_t* parent, ValueHandler on_change, void* cont
 
     thermo->now_label = small_label(readout, theme::font_r13(), theme::dim());
 
-    thermo->minus = thermo_step_button(thermo->root, LV_SYMBOL_MINUS, LV_ALIGN_BOTTOM_LEFT);
-    thermo->plus = thermo_step_button(thermo->root, LV_SYMBOL_PLUS, LV_ALIGN_BOTTOM_RIGHT);
+    thermo->minus = thermo_step_button(thermo->root, LV_SYMBOL_MINUS, -1);
+    thermo->plus = thermo_step_button(thermo->root, LV_SYMBOL_PLUS, 1);
     lv_obj_add_event_cb(
         thermo->minus,
         [](lv_event_t* event) {

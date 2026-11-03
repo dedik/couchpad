@@ -435,6 +435,18 @@ z siatek w `pixel-icons.js`). Wgrane; start czysty. Wygląd na pilocie ocenia u�
   i tylko ze świeżego stanu). Odzyskane miejsce: tarcza 208 → 248 px (odczyt 64 px),
   kolumny kanałów 80 → 140 px (pełny zakres: 160 px ruchu palca).
 
+Później tego dnia (wzór: tarcza termostatu w HA, zrzut od użytkownika):
+- Tarcza głośności 248 → 296 px, łuk 18 → 22 px, uchwyt na końcu wypełnienia (białe koło
+  z obwódką w kolorze akcentu). −/+ (64 px) przeszły z boków do otwarcia łuku u dołu,
+  wyciszenie (52 px) nad liczbę (`Dial::readout`).
+- Oczekiwanie na potwierdzenie głośności nie barwi już liczby na pomarańczowo (na prośbę
+  użytkownika); czerwień zostaje przy błędzie. W makiecie tarcza nie pulsuje obwódką.
+- Klimatyzacja: −/+ termostatu też w otwarciu łuku (64 px), skala 16°/31° odsunięta
+  pod końce łuku, `kThermoHeight` = 300.
+- Ekran `DOM` bez wiersza „Snapshot · rewizja N” — rewizja jest w Diagnostyce.
+- Pasek zakładek: górny odstęp 8 → 4 px (4 + 72 + 4), bo nad zaznaczoną zakładką było
+  wyraźnie więcej miejsca niż pod nią.
+
 ## Pogoda na ekranie startowym — 2026-11-03
 
 [ADR 0011](../architecture/adr/0011-weather-on-start-screen.md): bridge publikuje
@@ -463,7 +475,7 @@ kafelki kanałów i aplikacji Apple TV 88 → 100 px, gładzik 360 → 400 px, k
 Poprawki tego samego dnia: ikony zakładek wróciły (bez nich było dziwnie, a zysk mały) —
 `kTabbar` znów 96; nad wierszem nagłówka 5 px (`kTopbarPad`), bo zasilanie dotykało
 krawędzi; `kTopbar` = 69. Na koniec dnia podpisy zakładek zniknęły — same ikony 48 px,
-`kTabbar` = 80 (8 + 68 + 4). Treść: 623 px. Kafelki aplikacji Apple TV są nad gładzikiem,
+`kTabbar` = 80 (8 + 68 + 4; od 2026-11-03 wieczorem 4 + 72 + 4). Treść: 623 px. Kafelki aplikacji Apple TV są nad gładzikiem,
 w rozmiarze skrótów kanałów TV (80 × 100), wyśrodkowane.
 
 Później tego dnia skróty kanałów TV i kafelki aplikacji Apple TV zeszły do kwadratu

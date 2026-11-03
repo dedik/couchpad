@@ -34,27 +34,9 @@ void build_home(Context& context, lv_obj_t* parent) {
 
     widgets::make_cap(screen.section, "SCENY");
     screen.scenes = widgets::make_tiles(screen.section, kScenes, 4, 2, 120, &on_scene, &context);
-
-    lv_obj_t* fill = widgets::make_fill(screen.section);
-    lv_obj_set_height(fill, 0);
-
-    screen.revision = widgets::make_readout(screen.section, "Snapshot");
 }
 
 void render_home(Context& context) {
-    HomeScreen& screen = context.home;
-    const domain::AppState& state = context.controller->state();
-
-    char text[32];
-    const bool fresh = state.phase() == domain::LinkPhase::Ready;
-    if (fresh) {
-        lv_snprintf(text, sizeof(text), "rewizja %d",
-                    static_cast<int>(state.snapshot().revision));
-    } else {
-        lv_snprintf(text, sizeof(text), "brak");
-    }
-    screen.revision.set(text, fresh);
-
     render_climate(context);
 }
 

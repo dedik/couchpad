@@ -435,6 +435,18 @@ from the grids in `pixel-icons.js`). Flashed; clean boot. The look on the remote
   and only from fresh state). Space recovered: dial 208 → 248 px (readout 64 px),
   channel columns 80 → 140 px (full range: 160 px of finger travel).
 
+Later that day (model: the HA thermostat dial, a screenshot from the user):
+- Volume dial 248 → 296 px, arc 18 → 22 px, a knob at the end of the fill (white circle
+  with an accent-coloured border). −/+ (64 px) moved from the sides into the gap at the
+  bottom of the arc, mute (52 px) above the number (`Dial::readout`).
+- Waiting for volume confirmation no longer turns the number orange (user request); red
+  stays for a failure. In the mockup the dial no longer pulses an outline.
+- Air conditioning: the thermostat −/+ also sit in the arc gap (64 px), the 16°/31° scale
+  moved out under the arc ends, `kThermoHeight` = 300.
+- The `DOM` screen no longer has the "Snapshot · rewizja N" row — the revision is in Diagnostics.
+- Tab bar: top padding 8 → 4 px (4 + 72 + 4), because there was clearly more space above
+  the selected tab than below it.
+
 ## Weather on the start screen — 2026-11-03
 
 [ADR 0011](../architecture/adr/0011-weather-on-start-screen.en.md): the bridge publishes
@@ -463,7 +475,7 @@ channel tiles and Apple TV app tiles 88 → 100 px, trackpad 360 → 400 px, Z90
 Fixes the same day: the tab icons came back (without them it looked odd, and the gain was small) —
 `kTabbar` 96 again; 5 px above the header row (`kTopbarPad`), because the power button touched
 the edge; `kTopbar` = 69. At the end of the day the tab captions disappeared — icons only, 48 px,
-`kTabbar` = 80 (8 + 68 + 4). Content: 623 px. The Apple TV app tiles are above the trackpad,
+`kTabbar` = 80 (8 + 68 + 4; since the evening of 2026-11-03 4 + 72 + 4). Content: 623 px. The Apple TV app tiles are above the trackpad,
 the size of the TV channel shortcuts (80 × 100), centred.
 
 Later that day the TV channel shortcuts and the Apple TV app tiles were reduced to an

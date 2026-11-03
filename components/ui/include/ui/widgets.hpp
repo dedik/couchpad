@@ -83,6 +83,7 @@ Tiles make_tiles(lv_obj_t* parent, const TileSpec* specs, std::size_t count, int
 struct Dial {
     lv_obj_t* root = nullptr;
     lv_obj_t* arc = nullptr;
+    lv_obj_t* readout = nullptr;  // kolumna w środku łuku: wartość i podpis
     lv_obj_t* value_label = nullptr;
     lv_obj_t* caption = nullptr;
 

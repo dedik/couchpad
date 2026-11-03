@@ -121,12 +121,14 @@
           </div>
           <div class="scr-fill">
             <div class="dial-zone">
-              <!-- −/+ o jeden punkt w wolnym miejscu po bokach tarczy; przytrzymanie powtarza -->
-              <button class="thermo-step vol-step minus" type="button" data-vol="-1" aria-label="Ciszej o 1"><i data-lucide="minus" aria-hidden="true"></i></button>
               <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Głośność" aria-valuemin="0" aria-valuemax="100" aria-valuenow="42">
+                <span class="dial-knob" aria-hidden="true"></span>
                 <div class="dial-read"><b class="dial-value">42</b><span>głośność</span></div>
               </div>
+              <!-- −/+ o jeden punkt w otwarciu łuku u dołu; przytrzymanie powtarza -->
+              <button class="thermo-step vol-step minus" type="button" data-vol="-1" aria-label="Ciszej o 1"><i data-lucide="minus" aria-hidden="true"></i></button>
               <button class="thermo-step vol-step plus" type="button" data-vol="1" aria-label="Głośniej o 1"><i data-lucide="plus" aria-hidden="true"></i></button>
+              <!-- wyciszenie nad liczbą -->
               <button class="dial-side" id="mute" type="button" aria-label="Wycisz" aria-pressed="false"><i data-lucide="volume-2" aria-hidden="true"></i></button>
             </div>
           </div>
@@ -167,7 +169,6 @@
             <button class="tile is-tall" type="button" data-value="koniec"><i data-lucide="power" aria-hidden="true"></i><span>Wszystko off</span></button>
           </div>
           <div class="scr-fill"></div>
-          <p class="readout"><span>Snapshot</span><b class="revision is-on">rewizja 41</b></p>
         </section>
 
         <section class="scr" data-scr="settings" aria-label="Ustawienia" hidden>
