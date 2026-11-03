@@ -12,7 +12,7 @@ appearance.
 
 | File | Contents |
 | --- | --- |
-| `index.html` | mockup: four screens, full state simulation |
+| `index.html` | mockup: every screen and sub-page of the remote, full state simulation |
 | `system.html` | design system: tokens, components, states, mapping to LVGL |
 | `pulpit.css` | the single source of style; both pages use the same file |
 | `pixel-icons.js` | pixel-art tab icons, shared by both pages |
@@ -67,40 +67,39 @@ movement. A tap does not move the value to the finger position.
 
 ## Apple TV screen
 
-Built exclusively from system components, with three new ones:
+Layout as on the remote (`screen_appletv.cpp`): three app shortcuts (Infuse, YouTube, WP Pilot) the
+size of the TV channel shortcuts, below them **a touchpad — a circle 400 px across**, and three
+actions at the bottom: `Menu | Home | Tekst`.
 
-- **A touchpad** instead of a D-pad, because that is how the real Apple TV remote works. It is **a circle
-  240 px in diameter**, centred the same way as the D-pad on the TV screen — the same silhouette for the same role.
-  The shape follows from the gesture: a strip spanning the whole screen gave a 2.7 : 1 ratio, i.e. three times less
-  travel for vertical swipes than horizontal ones. A circle gives both directions the same room, and
-  zones are determined by distance from the centre and angle, not rectangles. The surface is uniform: there is no
-  filled button on it, because in this system the accent means state, not action — and a coloured block
-  in the middle of a swipe area contradicts the gesture itself. Only what you are
-  pressing right now lights up. `Menu` and `Home` sit at the sides of the circle instead of taking up a separate row.
-- **A new-releases carousel** with 100 × 150 posters, scrolled horizontally with snapping to positions.
-  Above it, a `Nowe filmy | Nowe seriale` (New movies | New series) toggle. Two separate carousels would take approx. 360 px of the 588
-  available, and hiding them behind a button would take away what looks best on the screen.
-  The title sits on the poster under a dimming overlay, so it takes no height. A tap opens a
-  details window with a description and a play button.
-- **Details window** — the first overlay component in the system, based on the same background dimming
-  as the wake-up screen.
+- **The touchpad** replaces the D-pad, because that is how the real Apple TV remote works. A circle
+  gives both directions the same travel, and the zone is decided by distance from the centre and
+  angle, not rectangles. The surface is plain: the accent in this system means state, not action, so
+  only what you are pressing lights up. Dragging scrolls step by step, tapping a zone is one key.
+- **Tekst** opens the on-screen keyboard (`widgets_editor.cpp`): text field, `Anuluj | Zapisz`,
+  sets `abc · ąę · 123 · #+=`, a `Na żywo` (live) toggle and the layout — a 6-column alphabetical
+  grid like on the Apple TV, or QWERTY. The same keyboard serves the settings fields (room name,
+  Wi-Fi password, MQTT fields).
 
-App shortcuts (Infuse, YouTube, WP Pilot) work like the channel shortcuts on the TV screen: for now
-visual only, eventually they launch the app through the bridge.
+The carousel of new titles with Emby posters was in the first version of the mockup; it never made
+it into the firmware and is gone from here too — the mockup shows what is on the remote.
 
-### Library and posters
+## Parity with the firmware
 
-Item metadata goes over a separate MQTT topic, and **posters are downloaded over HTTP** — the state snapshot is
-retained and must not be burdened with a list of movies. Emby scales the image on its side (`maxWidth`),
-so the remote downloads the target 106 × 160 directly: approx. 10 KB as JPEG, approx. 36 KB after decompression.
-Downloading and decoding are done by a worker task, never by the UI task.
+Since 2026-11-03 the mockup follows the remote screen by screen, not the other way round:
 
-**This requires a separate ADR**, because it splits the rule from ADR 0005. Device state must be fresh after
-every wake-up. The library is content, not state — it may be cached and
-shown immediately after wake-up, without waiting for the network. Without writing this difference down, someone will treat
-one like the other.
+- **TV:** source and picture mode as two segments in one row, each opening a picker; five 80 × 80
+  tiles — four channel shortcuts and the full channel list; D-pad with `VOL` and `P` rockers on the
+  sides; `Cofnij | Menu TV`.
+- **Pickers** (TV source and picture, Z906 input and effect, A/C fan and louvres, channels) are full
+  pages with one row per option and an "aktywne" (active) note. They close right after a choice, and
+  the pending state shows on the control that opened them.
+- **More:** Wi-Fi, MQTT, Display, Sound, Room and time, Keyboard and touchpad, Diagnostics, About —
+  each with a sub-page matching the remote. Restart, factory reset and forgetting the network ask
+  for confirmation.
+- **Header and scene icons** match the LVGL symbols used in the firmware.
 
-The Emby API key does not go into the repository — it goes into the device configuration in NVS.
+Sub-page data (networks, broker, IP address) is made up — the real values live only in the remote's
+NVS.
 
 ## Start screen
 
@@ -268,7 +267,8 @@ with step 2, `Decode 5.1` as an indicator, and the ban on guessing LG entities.
 The Infuse and YouTube logos come from the Simple Icons library. `assets/wppilot.svg` is the white wordmark
 from the pilot.wp.pl header (symbol `#logo`, fetched 2026-11-03) — on the tile it sits like the TVP wordmarks.
 
-**The mockup really downloads posters over HTTP**, from the random-photo service `picsum.photos`, at the target
+The poster carousel now survives only in the component gallery (`system.html`). The first version of
+the mockup **really downloaded posters over HTTP**, from the random-photo service `picsum.photos`, at the target
 size of 200 × 300. These are not the covers of those titles, just random photographs — the point is to
 evaluate the carousel's appearance and at the same time rehearse the real path: a skeleton while downloading,
 replacement once the image arrives, and a local fallback on error. One poster from there weighs approx. 8 KB, which is

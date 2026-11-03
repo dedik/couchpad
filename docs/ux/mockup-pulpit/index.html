@@ -34,74 +34,77 @@
 
         <section class="scr" data-scr="tv" aria-label="Telewizor">
           <p class="banner" data-dev="tv" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu telewizora. Sterowanie wróci po nowym snapshocie.</p>
-          <div class="group">
-            <i data-lucide="plug-zap" aria-hidden="true"></i>
-            <div class="seg" data-ctl="source" role="group" aria-label="Wejście">
-              <button class="seg-item" type="button" data-value="HDMI 1">HDMI 1</button>
-              <button class="seg-item" type="button" data-value="HDMI 2">HDMI 2</button>
-              <button class="seg-item" type="button" data-value="TV">TV</button>
-              <button class="seg-item" type="button" data-value="Aplikacje">Aplikacje</button>
+          <!-- Źródło i tryb obrazu w jednym rzędzie: segment pokazuje aktywną opcję, dotknięcie
+               otwiera listę wyboru (opcje przychodzą ze snapshotu TV) -->
+          <div class="duo">
+            <div class="group">
+              <i data-lucide="zap" aria-hidden="true"></i>
+              <div class="seg"><button class="seg-item is-sel value-pick" type="button" data-pick="source"><span class="opt-value"></span></button></div>
+            </div>
+            <div class="group">
+              <i data-lucide="image" aria-hidden="true"></i>
+              <div class="seg"><button class="seg-item is-sel value-pick" type="button" data-pick="picture"><span class="opt-value"></span></button></div>
             </div>
           </div>
-          <div class="group">
-            <i data-lucide="sparkles" aria-hidden="true"></i>
-            <div class="seg" data-ctl="picture" role="group" aria-label="Tryb obrazu">
-              <button class="seg-item" type="button" data-value="Żywy">Żywy</button>
-              <button class="seg-item" type="button" data-value="Standard">Standard</button>
-              <button class="seg-item" type="button" data-value="Kino">Kino</button>
-              <button class="seg-item" type="button" data-value="Filmmaker">Filmmaker</button>
-            </div>
-          </div>
-          <div class="tiles" data-ctl="channel" role="group" aria-label="Skróty kanałów">
+          <!-- Cztery skróty kanałów i piąty kafelek: lista wszystkich kanałów tunera -->
+          <div class="tiles cols-5" data-ctl="channel" role="group" aria-label="Skróty kanałów">
             <button class="tile" type="button" data-value="Polsat" aria-label="Polsat"><img class="logo-mark" src="assets/polsat.svg" alt="Polsat"></button>
             <button class="tile" type="button" data-value="TVN" aria-label="TVN"><img class="logo-mark" src="assets/tvn.svg" alt="TVN"></button>
             <button class="tile" type="button" data-value="TVP1" aria-label="TVP 1"><img class="logo-word" src="assets/tvp1.svg" alt="TVP 1"></button>
             <button class="tile" type="button" data-value="TVP2" aria-label="TVP 2"><img class="logo-word" src="assets/tvp2.svg" alt="TVP 2"></button>
+            <button class="tile" type="button" data-open="kanaly" aria-label="Wszystkie kanały"><i data-lucide="list" aria-hidden="true"></i></button>
           </div>
           <div class="scr-fill">
-            <div class="pad" role="group" aria-label="Nawigacja">
-              <button class="pad-key up" type="button" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></button>
-              <button class="pad-key left" type="button" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
-              <button class="pad-ok" type="button" data-key="ok">OK</button>
-              <button class="pad-key right" type="button" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-              <button class="pad-key down" type="button" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></button>
+            <!-- Kołyski głośności i kanałów po bokach krzyżaka (widgets_nav.cpp: 72 × 2 · 80 px) -->
+            <div class="nav-row">
+              <div class="rocker" role="group" aria-label="Głośność TV">
+                <button class="rocker-key" type="button" data-key="vol-up" aria-label="Głośniej"><i data-lucide="plus" aria-hidden="true"></i></button>
+                <span class="rocker-cap">VOL</span>
+                <button class="rocker-key" type="button" data-key="vol-down" aria-label="Ciszej"><i data-lucide="minus" aria-hidden="true"></i></button>
+              </div>
+              <div class="pad" role="group" aria-label="Nawigacja">
+                <button class="pad-key up" type="button" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></button>
+                <button class="pad-key left" type="button" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                <button class="pad-ok" type="button" data-key="ok">OK</button>
+                <button class="pad-key right" type="button" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+                <button class="pad-key down" type="button" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></button>
+              </div>
+              <div class="rocker" role="group" aria-label="Kanały">
+                <button class="rocker-key" type="button" data-key="ch-up" aria-label="Następny kanał"><i data-lucide="plus" aria-hidden="true"></i></button>
+                <span class="rocker-cap">P</span>
+                <button class="rocker-key" type="button" data-key="ch-down" aria-label="Poprzedni kanał"><i data-lucide="minus" aria-hidden="true"></i></button>
+              </div>
             </div>
           </div>
           <div class="duo">
-            <button class="act" type="button" data-key="back"><i data-lucide="undo-2" aria-hidden="true"></i>Cofnij</button>
-            <button class="act" type="button" data-key="menu"><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Menu TV</button>
+            <button class="act" type="button" data-key="back"><i data-lucide="chevron-left" aria-hidden="true"></i>Cofnij</button>
+            <button class="act" type="button" data-key="menu"><i data-lucide="list" aria-hidden="true"></i>Menu TV</button>
           </div>
         </section>
 
         <section class="scr" data-scr="appletv" aria-label="Apple TV" hidden>
           <p class="banner" data-dev="appletv" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu Apple TV. Sterowanie wróci po nowym snapshocie.</p>
-          <div class="group">
-            <i data-lucide="clapperboard" aria-hidden="true"></i>
-            <div class="seg" role="group" aria-label="Rodzaj pozycji">
-              <button class="seg-item" type="button" data-lib-value="films">Nowe filmy</button>
-              <button class="seg-item" type="button" data-lib-value="series">Nowe seriale</button>
-            </div>
-          </div>
-          <!-- Plakaty naprawdę lecą po HTTP, tak jak polecą z Emby. Lokalne pliki są tylko zapasem. -->
-          <div class="rail" id="rail" role="group" aria-label="Ostatnio dodane"></div>
+          <!-- Skróty aplikacji w rozmiarze skrótów kanałów TV (80 × 80), wyśrodkowane -->
           <div class="tiles cols-3" data-ctl="atvApp" role="group" aria-label="Aplikacje">
             <button class="tile" type="button" data-value="infuse" aria-label="Infuse"><img class="logo-mark" src="assets/infuse.svg" alt="Infuse"></button>
             <button class="tile" type="button" data-value="youtube" aria-label="YouTube"><img class="logo-mark" src="assets/youtube.svg" alt="YouTube"></button>
             <button class="tile" type="button" data-value="wppilot" aria-label="WP Pilot"><img class="logo-word" src="assets/wppilot.svg" alt="WP Pilot"></button>
           </div>
           <div class="scr-fill">
-            <!-- Menu i Home po bokach: zajmują miejsce, które i tak zostałoby puste obok koła. -->
-            <div class="pad-row">
-              <button class="act is-stack" type="button" data-key="menu"><i data-lucide="corner-up-left" aria-hidden="true"></i>Menu</button>
-              <div class="trackpad" id="trackpad" role="group" aria-label="Nawigacja Apple TV">
-                <div class="trackpad-key up" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></div>
-                <div class="trackpad-key left" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></div>
-                <div class="trackpad-key right" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></div>
-                <div class="trackpad-key down" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></div>
-                <div class="trackpad-center" data-key="select">OK</div>
-              </div>
-              <button class="act is-stack" type="button" data-key="atv-home"><i data-lucide="house" aria-hidden="true"></i>Home</button>
+            <!-- Gładzik 400 px jak pilot Siri: stuknięcie w strefę to klawisz, przeciągnięcie przewija.
+                 Przytrzymanie środka otwiera menu kontekstowe, Home ×2 przełącznik aplikacji. -->
+            <div class="trackpad is-wide" id="trackpad" role="group" aria-label="Nawigacja Apple TV">
+              <div class="trackpad-key up" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></div>
+              <div class="trackpad-key left" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></div>
+              <div class="trackpad-key right" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></div>
+              <div class="trackpad-key down" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></div>
+              <div class="trackpad-center" data-key="select">OK</div>
             </div>
+          </div>
+          <div class="trio">
+            <button class="act" type="button" data-key="menu"><i data-lucide="chevron-left" aria-hidden="true"></i>Menu</button>
+            <button class="act" type="button" data-key="atv-home"><i data-lucide="house" aria-hidden="true"></i>Home</button>
+            <button class="act" type="button" data-open-editor><i data-lucide="keyboard" aria-hidden="true"></i>Tekst</button>
           </div>
         </section>
 
@@ -163,22 +166,25 @@
           </button>
           <p class="cap">Sceny</p>
           <div class="grid2" data-ctl="scene" role="group" aria-label="Sceny">
-            <button class="tile is-tall" type="button" data-value="film"><i data-lucide="clapperboard" aria-hidden="true"></i><span>Film</span></button>
+            <button class="tile is-tall" type="button" data-value="film"><i data-lucide="film" aria-hidden="true"></i><span>Film</span></button>
             <button class="tile is-tall" type="button" data-value="muzyka"><i data-lucide="music" aria-hidden="true"></i><span>Muzyka</span></button>
-            <button class="tile is-tall" type="button" data-value="noc"><i data-lucide="moon" aria-hidden="true"></i><span>Dobranoc</span></button>
+            <button class="tile is-tall" type="button" data-value="noc"><i data-lucide="eye-off" aria-hidden="true"></i><span>Dobranoc</span></button>
             <button class="tile is-tall" type="button" data-value="koniec"><i data-lucide="power" aria-hidden="true"></i><span>Wszystko off</span></button>
           </div>
           <div class="scr-fill"></div>
         </section>
 
         <section class="scr" data-scr="settings" aria-label="Ustawienia" hidden>
-          <div class="list">
-            <button class="list-row" type="button"><i data-lucide="wifi" aria-hidden="true"></i><span><b>Wi-Fi</b><em>Połączono · ESP32-C6</em></span><var>-58 dBm</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-            <button class="list-row" type="button"><i data-lucide="radio" aria-hidden="true"></i><span><b>MQTT</b><em>multimedia_remote/v1</em></span><var>online</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-            <button class="list-row" type="button" data-open="ekran"><i data-lucide="sun" aria-hidden="true"></i><span><b>Ekran</b><em>styl, jasność, wygaszanie</em></span><var class="theme-now">ciemny</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-            <button class="list-row" type="button"><i data-lucide="moon" aria-hidden="true"></i><span><b>Uśpienie</b><em>po 45 s bezczynności</em></span><var>45 s</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-            <button class="list-row" type="button"><i data-lucide="activity" aria-hidden="true"></i><span><b>Diagnostyka</b><em>logi, metryki, ostatnie polecenie</em></span><var></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-            <button class="list-row" type="button"><i data-lucide="info" aria-hidden="true"></i><span><b>O urządzeniu</b><em>Guition JC4880P443C</em></span><var>v0.1</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+          <!-- Lista jak w screen_more.cpp. Każdy wiersz otwiera podstronę (widgets::make_page). -->
+          <div class="list is-scroll">
+            <button class="list-row is-ok" type="button" data-open="wifi"><i data-lucide="wifi" aria-hidden="true"></i><span><b>Wi-Fi</b><em>moja_siec</em></span><var>połączono</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row is-ok" type="button" data-open="mqtt"><i data-lucide="repeat-2" aria-hidden="true"></i><span><b>MQTT</b><em>multimedia_remote/v1</em></span><var>połączono</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button" data-open="ekran"><i data-lucide="eye" aria-hidden="true"></i><span><b>Ekran</b><em>styl, jasność, wygaszanie</em></span><var><span class="bind-display"></span></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button" data-open="dzwiek"><i data-lucide="volume-2" aria-hidden="true"></i><span><b>Dźwięk</b><em>limit głośności Z906</em></span><var><span class="bind-sound"></span></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button" data-open="pokoj"><i data-lucide="navigation" aria-hidden="true"></i><span><b>Pokój i czas</b><em>nazwa pokoju, strefa czasowa</em></span><var>SALON</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button" data-open="wejscie"><i data-lucide="keyboard" aria-hidden="true"></i><span><b>Klawiatura i gładzik</b><em>styl, tekst na żywo, czułość</em></span><var></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button" data-open="diagnostyka"><i data-lucide="list" aria-hidden="true"></i><span><b>Diagnostyka</b><em>IP, łącze z domem, stan urządzeń</em></span><var></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button" data-open="info"><i data-lucide="file" aria-hidden="true"></i><span><b>O urządzeniu</b><em>wersja, restart, ustawienia fabryczne</em></span><var>v1.0</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
           </div>
         </section>
 
@@ -264,16 +270,55 @@
       </section>
 
 
-      <!-- Podstrona „Ekran” z ustawień pilota (screen_device.cpp). Styl: ciemny, jasny albo
-           wg godzin — ciemny w wybranym oknie, jasny poza nim (Pref::ThemeMode, ThemeHours). -->
-      <section class="page" data-page="ekran" aria-label="Ekran" hidden>
+
+      <section class="page sub" data-page="wifi" aria-label="Wi-Fi" hidden>
         <header class="topbar">
           <div class="ident">
-            <button class="back" type="button" data-back-ekran aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
-            <div><b class="page-title">Ekran</b><span class="page-room">USTAWIENIA</span></div>
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Wi-Fi</b></div>
           </div>
         </header>
-        <div class="page-body">
+        <div class="page-body is-scroll">
+          <div class="readout"><span>Stan</span><b class="is-on">połączono</b></div>
+          <div class="readout"><span>Sygnał</span><b class="is-on">dobry · −61 dBm</b></div>
+          <div class="readout"><span>Od startu</span><b class="is-on">zerwania 0 · nieudane 0</b></div>
+          <button class="list-row" type="button" data-confirm="forget"><i data-lucide="wifi" aria-hidden="true"></i><span><b>moja_siec</b><em>dotknij, aby zapomnieć tę sieć</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="act is-block" type="button" data-key="rescan"><i data-lucide="refresh-cw" aria-hidden="true"></i>Szukaj sieci</button>
+          <p class="cap">Dostępne sieci</p>
+          <button class="list-row" type="button" data-edit="wifi"><i data-lucide="wifi" aria-hidden="true"></i><span><b>moja_siec_5G</b><em>zabezpieczona</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="wifi"><i data-lucide="wifi" aria-hidden="true"></i><span><b>sasiad</b><em>zabezpieczona</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="wifi"><i data-lucide="wifi" aria-hidden="true"></i><span><b>kawiarnia</b><em>otwarta</em></span><var></var><i aria-hidden="true"></i></button>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="mqtt" aria-label="MQTT" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">MQTT</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
+          <div class="readout"><span>Stan</span><b class="is-on">stan odebrany</b></div>
+          <button class="list-row" type="button" data-edit="host"><i data-lucide="wifi" aria-hidden="true"></i><span><b>Adres brokera</b><em>mqtt.local</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="port"><i data-lucide="settings" aria-hidden="true"></i><span><b>Port</b><em>1883</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="user"><i data-lucide="list" aria-hidden="true"></i><span><b>Użytkownik</b><em>pilot</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="pass"><i data-lucide="x" aria-hidden="true"></i><span><b>Hasło</b><em>zapisane</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="z906"><i data-lucide="file" aria-hidden="true"></i><span><b>Kontroler Z906</b><em>z906_a1b2c3</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="remote"><i data-lucide="house" aria-hidden="true"></i><span><b>Identyfikator pilota</b><em>salon</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row" type="button" data-edit="tv"><i data-lucide="film" aria-hidden="true"></i><span><b>Telewizor</b><em>lgtv</em></span><var></var><i aria-hidden="true"></i></button>
+          <button class="act is-block is-primary" type="button" data-key="mqtt-apply"><i data-lucide="check" aria-hidden="true"></i>Zapisz i połącz</button>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="ekran" aria-label="Ekran" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Ekran</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
           <p class="cap">Styl</p>
           <div class="group">
             <i data-lucide="image" aria-hidden="true"></i>
@@ -286,7 +331,7 @@
           <p class="cap theme-hours">Styl ciemny w godzinach</p>
           <div class="group theme-hours">
             <i data-lucide="clock" aria-hidden="true"></i>
-            <div class="seg" data-pref="hours" role="group" aria-label="Godziny stylu ciemnego">
+            <div class="seg" data-pref="hours" role="group" aria-label="Styl ciemny w godzinach">
               <button class="seg-item" type="button" data-value="17-7">17–7</button>
               <button class="seg-item" type="button" data-value="18-8">18–8</button>
               <button class="seg-item" type="button" data-value="19-7">19–7</button>
@@ -307,7 +352,7 @@
           <p class="cap">Wygaszanie po bezczynności</p>
           <div class="group">
             <i data-lucide="power" aria-hidden="true"></i>
-            <div class="seg" data-pref="sleep" role="group" aria-label="Wygaszanie">
+            <div class="seg" data-pref="sleep" role="group" aria-label="Wygaszanie po bezczynności">
               <button class="seg-item" type="button" data-value="15">15 s</button>
               <button class="seg-item" type="button" data-value="30">30 s</button>
               <button class="seg-item" type="button" data-value="60">1 min</button>
@@ -315,29 +360,230 @@
               <button class="seg-item" type="button" data-value="0">nigdy</button>
             </div>
           </div>
+          <p class="cap">Przyciemnianie przed wygaszeniem</p>
+          <div class="group">
+            <i data-lucide="eye-off" aria-hidden="true"></i>
+            <div class="seg" data-pref="dim" role="group" aria-label="Przyciemnianie przed wygaszeniem">
+              <button class="seg-item" type="button" data-value="0">wyłączone</button>
+              <button class="seg-item" type="button" data-value="1">10 s przed</button>
+            </div>
+          </div>
+          <p class="cap">Tryb nocny (jasność najwyżej 20%)</p>
+          <div class="group">
+            <i data-lucide="eye-off" aria-hidden="true"></i>
+            <div class="seg" data-pref="night" role="group" aria-label="Tryb nocny (jasność najwyżej 20%)">
+              <button class="seg-item" type="button" data-value="0">wył.</button>
+              <button class="seg-item" type="button" data-value="21-7">21–7</button>
+              <button class="seg-item" type="button" data-value="22-7">22–7</button>
+              <button class="seg-item" type="button" data-value="23-6">23–6</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="dzwiek" aria-label="Dźwięk" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Dźwięk</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
+          <p class="cap">Najwyższa głośność Z906 z tarczy</p>
+          <div class="group">
+            <i data-lucide="volume-2" aria-hidden="true"></i>
+            <div class="seg" data-pref="volmax" role="group" aria-label="Najwyższa głośność Z906 z tarczy">
+              <button class="seg-item" type="button" data-value="50">50%</button>
+              <button class="seg-item" type="button" data-value="60">60%</button>
+              <button class="seg-item" type="button" data-value="70">70%</button>
+              <button class="seg-item" type="button" data-value="80">80%</button>
+              <button class="seg-item" type="button" data-value="100">bez</button>
+            </div>
+          </div>
+          <p class="note">Tarcza nie wyśle więcej niż limit. Głośności ustawionej inaczej (pilot Logitech, aplikacja) pilot nie zmienia.</p>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="pokoj" aria-label="Pokój i czas" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Pokój i czas</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
+          <button class="list-row" type="button" data-edit="room"><i data-lucide="house" aria-hidden="true"></i><span><b>Nazwa pokoju</b><em>w nagłówku ekranów TV, Apple TV, Dźwięk, Dom</em></span><var><span class="bind-room">SALON</span></var><i aria-hidden="true"></i></button>
+          <p class="cap">Strefa czasowa</p>
+          <div class="group">
+            <i data-lucide="navigation" aria-hidden="true"></i>
+            <div class="seg" data-pref="tz" role="group" aria-label="Strefa czasowa">
+              <button class="seg-item" type="button" data-value="pl">Polska</button>
+              <button class="seg-item" type="button" data-value="utc">UTC</button>
+              <button class="seg-item" type="button" data-value="lon">Londyn</button>
+              <button class="seg-item" type="button" data-value="kyiv">Kijów</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="wejscie" aria-label="Klawiatura i gładzik" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Klawiatura i gładzik</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
+          <p class="cap">Styl klawiatury</p>
+          <div class="group">
+            <i data-lucide="keyboard" aria-hidden="true"></i>
+            <div class="seg" data-pref="kbstyle" role="group" aria-label="Styl klawiatury">
+              <button class="seg-item" type="button" data-value="atv">Apple TV</button>
+              <button class="seg-item" type="button" data-value="qwerty">QWERTY</button>
+            </div>
+          </div>
+          <p class="cap">Tekst na Apple TV</p>
+          <div class="group">
+            <i data-lucide="upload" aria-hidden="true"></i>
+            <div class="seg" data-pref="kblive" role="group" aria-label="Tekst na Apple TV">
+              <button class="seg-item" type="button" data-value="live">na żywo</button>
+              <button class="seg-item" type="button" data-value="save">po zapisie</button>
+            </div>
+          </div>
+          <p class="cap">Klawiatura przy polu tekstowym na Apple TV</p>
+          <div class="group">
+            <i data-lucide="chevron-down" aria-hidden="true"></i>
+            <div class="seg" data-pref="kbauto" role="group" aria-label="Klawiatura przy polu tekstowym na Apple TV">
+              <button class="seg-item" type="button" data-value="auto">sama</button>
+              <button class="seg-item" type="button" data-value="button">przyciskiem</button>
+            </div>
+          </div>
+          <p class="note">Sama: wysuwa się, gdy Apple TV pokaże pole tekstowe. Przyciskiem: tylko po przycisku Tekst na ekranie Apple TV. Przycisk działa w obu trybach.</p>
+          <p class="cap">Czułość gładzika</p>
+          <div class="group">
+            <i data-lucide="shuffle" aria-hidden="true"></i>
+            <div class="seg" data-pref="pad" role="group" aria-label="Czułość gładzika">
+              <button class="seg-item" type="button" data-value="20">czuły</button>
+              <button class="seg-item" type="button" data-value="26">zwykły</button>
+              <button class="seg-item" type="button" data-value="34">spokojny</button>
+            </div>
+          </div>
+          <p class="note">Czuły: krok co 20 px ruchu palcem. Zwykły: co 26 px. Spokojny: co 34 px.</p>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="diagnostyka" aria-label="Diagnostyka" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Diagnostyka</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
+          <div class="readout"><span>Adres IP</span><b class="is-on">192.0.2.41</b></div>
+          <div class="readout"><span>Łącze z domem</span><b class="is-on">gotowe</b></div>
+          <div class="readout"><span>Z906</span><b class="is-on">stan świeży</b></div>
+          <div class="readout"><span>Home Assistant</span><b class="is-on">klient pracuje</b></div>
+          <div class="readout"><span>Apple TV</span><b class="is-on">dostępne · aplikacji 3</b></div>
+          <div class="readout"><span>Rewizja stanu</span><b class="is-on">128</b></div>
+          <p class="note">Pełny log pilota idzie do MQTT (pilot_debug/&lt;id&gt;/log), patrz docs/operations/ai-handoff.md.</p>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="info" aria-label="O urządzeniu" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">O urządzeniu</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
+          <div class="readout"><span>Wersja</span><b class="is-on">v1.0</b></div>
+          <div class="readout"><span>Zbudowano</span><b class="is-on">Nov 3 2026 21:30:00</b></div>
+          <div class="readout"><span>ESP-IDF</span><b class="is-on">v5.5</b></div>
+          <div class="readout"><span>Wolna pamięć</span><b class="is-on">182 kB wewn. · 31 960 kB PSRAM</b></div>
+          <div class="readout"><span>Czas pracy</span><b class="is-on">0 h 12 min</b></div>
+          <button class="act is-block is-gap" type="button" data-confirm="restart"><i data-lucide="refresh-cw" aria-hidden="true"></i>Uruchom ponownie</button>
+          <button class="act is-block" type="button" data-confirm="factory"><i data-lucide="trash-2" aria-hidden="true"></i>Przywróć ustawienia fabryczne</button>
+
+        </div>
+      </section>
+      <section class="page sub" data-page="kanaly" aria-label="Kanały" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Kanały</b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll">
+          <button class="list-row ch-row" type="button" data-channel="TVP1"><span class="ch-num">1</span><span><b>TVP1</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TVP2"><span class="ch-num">2</span><span><b>TVP2</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TVP3 Poznań"><span class="ch-num">3</span><span><b>TVP3 Poznań</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="Polsat"><span class="ch-num">4</span><span><b>Polsat</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TVN"><span class="ch-num">5</span><span><b>TVN</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TV4"><span class="ch-num">6</span><span><b>TV4</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TV Puls"><span class="ch-num">7</span><span><b>TV Puls</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TVN 7"><span class="ch-num">8</span><span><b>TVN 7</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TTV"><span class="ch-num">9</span><span><b>TTV</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="Polsat News"><span class="ch-num">10</span><span><b>Polsat News</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TVN24"><span class="ch-num">11</span><span><b>TVN24</b></span><var></var><i aria-hidden="true"></i></button>
+          <button class="list-row ch-row" type="button" data-channel="TVP Info"><span class="ch-num">12</span><span><b>TVP Info</b></span><var></var><i aria-hidden="true"></i></button>
+
         </div>
       </section>
 
-      <!-- Lista wyboru opcji klimatyzacji (moc nawiewu, żaluzje). Zaznaczenie przesuwa dopiero snapshot. -->
-      <div class="scrim picker-scrim" hidden></div>
-      <section class="sheet picker" role="dialog" aria-modal="true" aria-label="Wybór opcji" hidden>
-        <div class="picker-head"><b class="picker-title"></b><button class="back picker-close" type="button" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>
-        <div class="picker-list" role="group"></div>
-      </section>
-
-      <!-- Okno szczegółów pozycji z biblioteki -->
-      <div class="scrim" hidden></div>
-      <section class="sheet" role="dialog" aria-modal="true" aria-label="Szczegóły pozycji" hidden>
-        <div class="sheet-head">
-          <img class="sheet-art" src="" alt="">
-          <div><b class="sheet-title"></b><span class="sheet-meta"></span></div>
-        </div>
-        <p class="sheet-desc"></p>
+      <!-- Klawiatura ekranowa (widgets_editor.cpp): tekst na Apple TV albo pola ustawień.
+           „Na żywo” wysyła każdą zmianę od razu, „po zapisie” dopiero po Zapisz. -->
+      <section class="editor" aria-label="Klawiatura" hidden>
+        <header class="editor-head">
+          <div><span class="cap editor-cap">APPLE TV</span><b class="editor-title">Wpisz tekst</b></div>
+          <div class="editor-tools">
+            <button class="editor-tool live" type="button" data-editor="live"><i data-lucide="refresh-cw" aria-hidden="true"></i><span>Na żywo</span></button>
+            <button class="editor-tool" type="button" data-editor="layout"><i data-lucide="keyboard" aria-hidden="true"></i><span class="editor-layout">Apple TV</span></button>
+          </div>
+        </header>
+        <div class="editor-field"><span class="editor-text"></span><i class="editor-caret"></i></div>
         <div class="duo">
-          <button class="act sheet-close" type="button"><i data-lucide="x" aria-hidden="true"></i>Zamknij</button>
-          <button class="act is-primary sheet-play" type="button"><i data-lucide="play" aria-hidden="true"></i>Odtwórz</button>
+          <button class="act" type="button" data-editor="cancel"><i data-lucide="x" aria-hidden="true"></i>Anuluj</button>
+          <button class="act is-primary" type="button" data-editor="save"><i data-lucide="check" aria-hidden="true"></i>Zapisz</button>
+        </div>
+        <div class="seg editor-sets" role="group" aria-label="Zestaw znaków">
+          <button class="seg-item" type="button" data-set="abc">abc</button>
+          <button class="seg-item" type="button" data-set="pl">ąę</button>
+          <button class="seg-item" type="button" data-set="num">123</button>
+          <button class="seg-item" type="button" data-set="sym">#+=</button>
+        </div>
+        <div class="editor-keys"></div>
+        <div class="duo editor-bottom">
+          <button class="editor-wide" type="button" data-editor="space">SPACJA</button>
+          <button class="editor-wide" type="button" data-editor="clear">WYCZYŚĆ</button>
         </div>
       </section>
+
+      <!-- Okno potwierdzenia (widgets::ask_confirm) dla nieodwracalnych akcji -->
+      <div class="scrim confirm-scrim" hidden></div>
+      <section class="sheet confirm" role="alertdialog" aria-modal="true" hidden>
+        <b class="confirm-title"></b>
+        <p class="sheet-desc confirm-text"></p>
+        <div class="duo">
+          <button class="act" type="button" data-confirm-no>Anuluj</button>
+          <button class="act is-primary" type="button" data-confirm-yes></button>
+        </div>
+      </section>
+
+      <!-- Lista wyboru (źródło i tryb obrazu TV, wejście i efekt Z906, nawiew i żaluzje klimy):
+           pełna strona z wierszem na opcję, jak w firmware. Zamyka się od razu po wyborze, a
+           oczekiwanie widać na kontrolce, która ją otworzyła. -->
+      <section class="page picker" aria-label="Wybór opcji" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back picker-close" type="button" aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title picker-title"></b></div>
+          </div>
+        </header>
+        <div class="page-body is-scroll picker-list" role="group"></div>
+      </section>
+
 
       <!-- Nakładka wybudzenia: do czasu nowego snapshotu nie pokazujemy stanu urządzeń (ADR 0005) -->
       <section class="wake" aria-live="polite" hidden>
@@ -360,7 +606,6 @@
     <button type="button" data-lab="appletv" aria-pressed="false">Apple TV bez świeżego stanu</button>
     <button type="button" data-lab="klima" aria-pressed="false">Klima bez świeżego stanu</button>
     <button type="button" data-lab="reject" aria-pressed="false">Brak potwierdzenia akcji</button>
-    <button type="button" data-lab="posters" aria-pressed="false">Plakaty jeszcze się ładują</button>
     <button type="button" data-lab="pixel" aria-pressed="true">Ikony zakładek: pixel art</button>
     <p class="cap lab-sep">Styl (skrót)</p>
     <button type="button" data-theme-lab="dark">Ciemny</button>
@@ -378,9 +623,9 @@
 (() => {
   // Konfiguracja ekranów. Dodanie ekranu = wpis tutaj + sekcja .scr + zakładka.
   const SCREENS = {
-    tv:       { name: 'LG OLED',  room: 'SALON',     icon: 'tv',          power: 'tvOn',  dev: 'tv' },
-    appletv:  { name: 'Apple TV', room: 'SALON',     icon: 'airplay',     power: 'atvOn', dev: 'appletv' },
-    audio:    { name: 'Z906',    room: 'SALON',      icon: 'audio-lines', power: 'zOn',  dev: 'z906' },
+    tv:       { name: 'LG OLED',  room: 'SALON',     icon: 'film',        power: 'tvOn',  dev: 'tv' },
+    appletv:  { name: 'Apple TV', room: 'SALON',     icon: 'play',        power: 'atvOn', dev: 'appletv' },
+    audio:    { name: 'Z906',    room: 'SALON',      icon: 'music',       power: 'zOn',  dev: 'z906' },
     home:     { name: 'Dom',     room: 'SALON',      icon: 'house' },
     settings: { name: 'Pilot',   room: 'USTAWIENIA', icon: 'settings' },
   };
@@ -396,7 +641,7 @@
     // Ekran startowy przykrywa wszystko; pojawia się wyłącznie po starcie i wybudzeniu.
     start: true,
     screen: 'tv', tvOn: true, zOn: true, atvOn: true,
-    source: 'HDMI 1', picture: 'Filmmaker', channel: null, scene: null,
+    source: 'TV', picture: 'Standard', channel: null, scene: null,
     atvApp: null, playing: null, lib: 'films',
     zSource: 'Optical 1', zEffect: 'Stereo 2.1', zMuted: false,
     volume: 42, center: 56, sub: 49, rear: 68, decode: false,
@@ -482,17 +727,7 @@
       if (banner) banner.hidden = ok;
     });
 
-    root.querySelectorAll('[data-lib-value]').forEach(button => {
-      const sel = button.dataset.libValue === state.lib;
-      button.classList.toggle('is-sel', sel);
-      button.setAttribute('aria-pressed', String(sel));
-    });
-
-    // Plakat bez pobranego obrazu pokazuje szkielet, nigdy pustego miejsca.
-    root.querySelectorAll('.poster').forEach(poster =>
-      poster.classList.toggle('is-loading', !link.posters || poster.dataset.loaded !== '1'));
-
-    [['tv', !link.tv], ['appletv', !link.appletv], ['z906', !link.z906], ['klima', !link.klima], ['posters', !link.posters], ['reject', link.reject]]
+    [['tv', !link.tv], ['appletv', !link.appletv], ['z906', !link.z906], ['klima', !link.klima], ['reject', link.reject]]
       .forEach(([key, on]) => lab.querySelector(`[data-lab="${key}"]`)?.setAttribute('aria-pressed', String(on)));
 
     if (klimaReady) { renderKlima(); renderStart(); }
@@ -625,84 +860,6 @@
   // Zmiana zakładki nie odpytuje sieci: pokazuje potwierdzony AppState.
   root.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => { state.screen = tab.dataset.tab; render(); }));
 
-  /* ---------- Biblioteka Emby ---------- */
-  // Dane symulowane. Docelowo metadane przychodzą osobnym tematem MQTT,
-  // a plakaty pobiera się po HTTP w rozmiarze docelowym (Emby skaluje po swojej stronie).
-  const LIBRARY = {
-    films: [
-      { id: 'diuna',       title: 'Diuna: Część druga', meta: 'Film · 2024 · 2 h 46 min', desc: 'Paul Atryda łączy siły z Fremenami, by pomścić rodzinę i powstrzymać przyszłość, którą widzi w wizjach.' },
-      { id: 'oppenheimer', title: 'Oppenheimer',        meta: 'Film · 2023 · 3 h 0 min',  desc: 'Historia fizyka, który kierował pracami nad pierwszą bombą atomową, i ceny, jaką za to zapłacił.' },
-      { id: 'blade',       title: 'Blade Runner 2049',  meta: 'Film · 2017 · 2 h 44 min', desc: 'Łowca androidów odkrywa tajemnicę, która może wywrócić porządek świata, i rusza śladem poprzednika.' },
-      { id: 'furiosa',     title: 'Furiosa',            meta: 'Film · 2024 · 2 h 28 min', desc: 'Porwana z Zielonego Miejsca dziewczyna przemierza pustkowia, szukając drogi powrotnej do domu.' },
-      { id: 'nikt',        title: 'Nikt',               meta: 'Film · 2021 · 1 h 32 min', desc: 'Spokojny ojciec rodziny okazuje się kimś zupełnie innym, niż sądzili włamywacze.' },
-      { id: 'wyspa',       title: 'Wyspa tajemnic',     meta: 'Film · 2010 · 2 h 18 min', desc: 'Śledczy bada zniknięcie pacjentki ze szpitala na odciętej od świata wyspie.' },
-    ],
-    series: [
-      { id: 'shogun',       title: 'Shōgun',       meta: 'Serial · 2024 · Sezon 1',   desc: 'Rozbitek z Anglii trafia do feudalnej Japonii i staje się pionkiem w grze o władzę nad krajem.' },
-      { id: 'fallout',      title: 'Fallout',      meta: 'Serial · 2024 · Sezon 1',   desc: 'Dwieście lat po zagładzie mieszkanka podziemnego schronu wychodzi na powierzchnię i poznaje jej zasady.' },
-      { id: 'sukcesja',     title: 'Sukcesja',     meta: 'Serial · 2023 · Sezon 4',   desc: 'Rodzeństwo walczy o kontrolę nad imperium medialnym ojca, nie przebierając w środkach.' },
-      { id: 'silos',        title: 'Silos',        meta: 'Serial · 2025 · Sezon 2',   desc: 'Tysiące ludzi żyją w podziemnym silosie, a pytanie o to, co jest na zewnątrz, bywa wyrokiem.' },
-      { id: 'rozdzielenie', title: 'Rozdzielenie', meta: 'Serial · 2025 · Sezon 2',   desc: 'Pracownicy poddali się zabiegowi, który oddziela ich pamięć służbową od prywatnej.' },
-      { id: 'czarnobyl',    title: 'Czarnobyl',    meta: 'Serial · 2019 · Miniserial', desc: 'Rekonstrukcja katastrofy i kosztu kłamstw, które ją poprzedziły oraz po niej nastąpiły.' },
-    ],
-  };
-  const findItem = id => [...LIBRARY.films, ...LIBRARY.series].find(item => item.id === id);
-  // Adres obrazu udaje Emby: serwer oddaje gotowy rozmiar, pilot nie skaluje niczego u siebie.
-  const posterUrl = id => `https://picsum.photos/seed/${id}/200/300`;
-
-  const rail = root.querySelector('#rail');
-  const renderRail = () => {
-    rail.scrollLeft = 0;
-    rail.innerHTML = LIBRARY[state.lib].map(item =>
-      `<button class="poster is-loading" type="button" data-id="${item.id}" aria-label="${item.title}">` +
-      `<span class="poster-art"><img alt="" src="${posterUrl(item.id)}">` +
-      `<b class="poster-name">${item.title}</b></span></button>`).join('');
-    rail.querySelectorAll('img').forEach(img => {
-      const poster = img.closest('.poster');
-      // Obraz doszedł — zdejmujemy szkielet. Nie doszedł — pokazujemy lokalny zapas.
-      img.addEventListener('load', () => { poster.dataset.loaded = '1'; render(); }, { once: true });
-      img.addEventListener('error', () => { img.src = `assets/posters/${poster.dataset.id}.svg`; }, { once: true });
-    });
-    requestAnimationFrame(() => { rail.scrollLeft = 0; });
-    render();
-  };
-  rail.addEventListener('click', event => {
-    const poster = event.target.closest('.poster');
-    if (poster) openSheet(poster.dataset.id);
-  });
-  root.querySelectorAll('[data-lib-value]').forEach(button => button.addEventListener('click', () => {
-    // Przełączenie rodzaju nie sięga do sieci — obie listy przyszły w tym samym komunikacie.
-    state.lib = button.dataset.libValue;
-    renderRail();
-  }));
-
-  const sheet = root.querySelector('.sheet:not(.picker)');
-  const scrim = root.querySelector('.scrim:not(.picker-scrim)');
-  let openId = null;
-  const openSheet = id => {
-    const item = findItem(id);
-    if (!item) return;
-    openId = id;
-    const art = sheet.querySelector('.sheet-art');
-    art.onerror = () => { art.onerror = null; art.src = `assets/posters/${item.id}.svg`; };
-    art.src = posterUrl(item.id);
-    sheet.querySelector('.sheet-title').textContent = item.title;
-    sheet.querySelector('.sheet-meta').textContent = item.meta;
-    sheet.querySelector('.sheet-desc').textContent = item.desc;
-    sheet.hidden = false;
-    scrim.hidden = false;
-  };
-  const closeSheet = () => { openId = null; sheet.hidden = true; scrim.hidden = true; };
-
-  renderRail();
-  scrim.addEventListener('click', closeSheet);
-  sheet.querySelector('.sheet-close').addEventListener('click', closeSheet);
-  // Odtworzenie to zwykłe polecenie: czeka na potwierdzenie, dopiero potem zamykamy okno.
-  sheet.querySelector('.sheet-play').addEventListener('click', event => {
-    const id = openId;
-    settle(event.currentTarget, () => { state.playing = id; closeSheet(); });
-  });
-
   /* ---------- Gładzik Apple TV ---------- */
   // Przesunięcie palcem nawiguje, dotknięcie strefy działa jak klawisz kierunku.
   const pad = root.querySelector('#trackpad');
@@ -773,6 +930,11 @@
       zSource: { title: 'Źródło dźwięku', options: [['PC - analog 5.1', 'PC - analog 5.1'], ['RCA - stereo', 'RCA - stereo'],
         ['Optical 1', 'Optical 1'], ['Optical 2', 'Optical 2'], ['Coaxial', 'Coaxial'], ['AUX', 'AUX']] },
       zEffect: { title: 'Efekt', options: [['Stereo 3D', 'Stereo 3D'], ['Stereo 2.1', 'Stereo 2.1'], ['Stereo 4.1', 'Stereo 4.1'], ['No effect', 'Bez efektu']] },
+      // TV: listy przychodzą ze snapshotu Glasshouse; tu wartości z prawdziwego telewizora.
+      source: { title: 'Źródło', options: [['TV', 'TV'], ['HDMI 1', 'HDMI 1'], ['HDMI 2', 'HDMI 2'], ['PC', 'PC'], ['Apple TV', 'Apple TV']] },
+      picture: { title: 'Tryb obrazu', options: [['Standard', 'Standard'], ['Dolby Vision Vivid', 'Dolby Vision Vivid'],
+        ['Dolby Vision Standard', 'Dolby Vision Standard'], ['Dolby Vision Cinema Bright', 'Dolby Vision Cinema Bright'],
+        ['Dolby Vision Cinema', 'Dolby Vision Cinema'], ['Dolby Vision Game', 'Dolby Vision Game']] },
       swingH: { title: 'Żaluzje — poziom', options: [['off', 'Stałe'], ['Full', 'Ruch'], ['Left', 'Lewo'], ['Center', 'Środek'], ['Right', 'Prawo']] },
     },
   };
@@ -781,7 +943,6 @@
   const thermo = root.querySelector('#thermo');
   const tile = root.querySelector('.device-tile');
   const picker = root.querySelector('.picker');
-  const pickerScrim = root.querySelector('.picker-scrim');
   const fmt = v => v.toFixed(1).replace('.', ',');
   const usesTarget = hvac => hvac !== 'off' && hvac !== 'fan_only';
   // Lista wyboru jest wspólna: opcje klimy żyją w `k`, wejście i efekt Z906 w `state`.
@@ -837,12 +998,13 @@
       item.querySelector('.opt-value').textContent = optLabel(item.dataset.pick, pickHost(item.dataset.pick)[item.dataset.pick]);
     });
 
-    picker.hidden = pickerScrim.hidden = pickKey === null;
+    picker.hidden = pickKey === null;
     if (pickKey) {
       picker.querySelectorAll('[data-opt]').forEach(row => {
         const sel = row.dataset.opt === pickHost(pickKey)[pickKey];
         row.classList.toggle('is-sel', sel);
         row.setAttribute('aria-pressed', String(sel));
+        row.querySelector('var').textContent = sel ? 'aktywne' : '';
       });
     }
   }
@@ -932,28 +1094,25 @@
     commitTemp();
   });
 
-  // Lista wyboru: nawiew i żaluzje. Okno zamyka się dopiero po potwierdzeniu.
+  // Lista wyboru: pełna strona, wiersz na opcję. Zamyka się od razu, a oczekiwanie
+  // pokazuje kontrolka, która ją otworzyła (jak `picker` w screen_tv.cpp).
   const openPicker = key => {
     pickKey = key;
     picker.querySelector('.picker-title').textContent = KLIMA.pick[key].title;
     const list = picker.querySelector('.picker-list');
-    const withIcons = KLIMA.pick[key].options.some(option => option[2]);
-    list.innerHTML = KLIMA.pick[key].options.map(([value, label, icon]) =>
-      `<button class="opt" type="button" data-opt="${value}">` +
-      (icon ? `<i class="opt-icon" data-lucide="${icon}" aria-hidden="true"></i>` : '') +
-      `<span>${label}</span><i data-lucide="check" aria-hidden="true"></i></button>`).join('');
-    list.classList.toggle('is-two', !withIcons && KLIMA.pick[key].options.length > 5);
+    list.innerHTML = KLIMA.pick[key].options.map(([value, label]) =>
+      `<button class="list-row opt-row" type="button" data-opt="${value}"><span><b>${label}</b></span><var></var><i aria-hidden="true"></i></button>`).join('');
     list.querySelectorAll('[data-opt]').forEach(row => row.addEventListener('click', () => {
       const value = row.dataset.opt;
-      if (value === pickHost(key)[key]) { pickKey = null; render(); return; }
-      settle(row, () => { pickHost(key)[key] = value; pickKey = null; });
+      pickKey = null;
+      const opener = root.querySelector(`[data-pick="${key}"]`);
+      if (value !== pickHost(key)[key]) settle(opener, () => { pickHost(key)[key] = value; });
+      render();
     }));
-    icons();
     render();
   };
   const closePicker = () => { pickKey = null; render(); };
   root.querySelectorAll('[data-pick]').forEach(item => item.addEventListener('click', () => openPicker(item.dataset.pick)));
-  pickerScrim.addEventListener('click', closePicker);
   picker.querySelector('.picker-close').addEventListener('click', closePicker);
 
   /* ---------- Ekran startowy ---------- */
@@ -1056,12 +1215,18 @@
 })();
 </script>
 <script>
-// Styl jasny/ciemny — odpowiednik effective_theme() i theme::apply() w firmware.
+// Ustawienia pilota, klawiatura i styl — odpowiednik screen_more/screen_device/widgets_editor
+// oraz effective_theme() i theme::apply() w firmware. Stan żyje tylko w makiecie.
 (() => {
   const screen = document.getElementById('screen');
-  const page = screen.querySelector('[data-page="ekran"]');
   const lab = document.querySelector('.lab-panel');
-  const pref = { theme: 'dark', hours: '18-8', bright: '100', sleep: '30' };
+  const icons = () => globalThis.lucide?.createIcons({ attrs: { width: 20, height: 20 } });
+  // Wartości domyślne jak w storage/settings.cpp.
+  const pref = {
+    theme: 'dark', hours: '18-8', bright: '100', sleep: '30', dim: '0', night: '0',
+    volmax: '100', tz: 'pl', kbstyle: 'atv', kblive: 'live', kbauto: 'auto', pad: '26',
+  };
+  let room = 'SALON';
   let fakeHour = null;  // null = prawdziwa godzina
 
   globalThis.pilotNow = () => {
@@ -1077,14 +1242,141 @@
     return hour >= from || hour < to ? 'dark' : 'light';
   }
 
+  /* ---------- Podstrony ---------- */
+  // Jedna podstrona naraz, nad ekranem; Cofnij wraca do listy (widgets::show_page).
+  const pages = screen.querySelectorAll('.page.sub');
+  const openPage = id => { pages.forEach(page => { page.hidden = page.dataset.page !== id; }); render(); };
+  screen.querySelectorAll('[data-open]').forEach(row => {
+    if (row.closest('.start') || row.classList.contains('device-tile')) return;
+    row.addEventListener('click', () => openPage(row.dataset.open));
+  });
+  screen.querySelectorAll('[data-back-sub]').forEach(button => button.addEventListener('click', () => openPage(null)));
+
+  screen.querySelectorAll('.page [data-pref]').forEach(seg => seg.addEventListener('click', event => {
+    const item = event.target.closest('.seg-item');
+    if (!item) return;
+    pref[seg.dataset.pref] = item.dataset.value;
+    render();
+  }));
+
+  /* ---------- Lista kanałów ---------- */
+  // Wybór zamyka listę od razu; oczekiwanie widać na kafelku, który ją otworzył.
+  screen.querySelectorAll('[data-channel]').forEach(row => row.addEventListener('click', () => {
+    const opener = screen.querySelector('[data-open="kanaly"]');
+    openPage(null);
+    opener.classList.add('is-pending');
+    setTimeout(() => opener.classList.remove('is-pending'), 650);
+  }));
+
+  /* ---------- Okno potwierdzenia ---------- */
+  const confirmEl = screen.querySelector('.confirm');
+  const confirmScrim = screen.querySelector('.confirm-scrim');
+  const CONFIRM = {
+    restart: ['Uruchomić ponownie?', 'Pilot zrestartuje się i połączy z domem od nowa. Ustawienia zostają.', 'Uruchom'],
+    factory: ['Przywrócić ustawienia fabryczne?', 'Pilot zapomni sieć Wi-Fi, broker MQTT i wszystkie ustawienia, po czym uruchomi się ponownie. Trzeba będzie wpisać je od nowa.', 'Przywróć'],
+    forget: ['Zapomnieć sieć?', 'Pilot rozłączy się z siecią moja_siec i nie połączy się z nią sam. Żeby wrócić, trzeba będzie wpisać hasło.', 'Zapomnij'],
+  };
+  const closeConfirm = () => { confirmEl.hidden = confirmScrim.hidden = true; };
+  screen.querySelectorAll('[data-confirm]').forEach(button => button.addEventListener('click', () => {
+    const [title, text, yes] = CONFIRM[button.dataset.confirm];
+    confirmEl.querySelector('.confirm-title').textContent = title;
+    confirmEl.querySelector('.confirm-text').textContent = text;
+    confirmEl.querySelector('[data-confirm-yes]').textContent = yes;
+    confirmEl.hidden = confirmScrim.hidden = false;
+  }));
+  confirmEl.querySelector('[data-confirm-no]').addEventListener('click', closeConfirm);
+  confirmEl.querySelector('[data-confirm-yes]').addEventListener('click', closeConfirm);
+  confirmScrim.addEventListener('click', closeConfirm);
+
+  /* ---------- Klawiatura ekranowa ---------- */
+  const editor = screen.querySelector('.editor');
+  const keysEl = editor.querySelector('.editor-keys');
+  const SETS = {
+    abc: { atv: 'abcdefghijklmnopqrstuvwxyz', qwerty: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] },
+    pl: { atv: 'ąćęłńóśźż', qwerty: ['ąćęłń', 'óśźż'] },
+    num: { atv: '1234567890', qwerty: ['1234567890'] },
+    sym: { atv: '.,-_@:/?!&+=#()\'"', qwerty: ['.,-_@:/?!', '&+=#()\'"'] },
+  };
+  const ed = { text: '', set: 'abc', shift: false, target: null, title: '', cap: '' };
+  const SHIFT = '⇧';
+  const BACK = '⌫';
+  function renderKeys() {
+    const qwerty = pref.kbstyle === 'qwerty';
+    const set = SETS[ed.set];
+    const up = c => (ed.shift ? c.toUpperCase() : c);
+    const key = c => `<button class="editor-key" type="button" data-char="${c}">${up(c)}</button>`;
+    const tool = (c, label) => `<button class="editor-key is-tool" type="button" data-char="${c}">${label}</button>`;
+    keysEl.classList.toggle('is-qwerty', qwerty);
+    if (qwerty) {
+      const rows = set.qwerty.map(r => [...r]);
+      keysEl.innerHTML = rows.map((r, i) => `<div class="editor-row">${i === rows.length - 1 ? tool(SHIFT, '⇧') : ''}${r.map(key).join('')}${i === rows.length - 1 ? tool(BACK, '⌫') : ''}</div>`).join('');
+    } else {
+      // Siatka jak na Apple TV: sześć kolumn, ⇧ i ⌫ na końcu.
+      const chars = [...set.atv];
+      const gap = (10 - (chars.length % 6)) % 6;  // ⇧ i ⌫ zawsze w dwóch ostatnich kolumnach
+      keysEl.innerHTML = `<div class="editor-grid">${chars.map(key).join('')}${'<span></span>'.repeat(gap)}${tool(SHIFT, '⇧')}${tool(BACK, '⌫')}</div>`;
+    }
+  }
+  function renderEditor() {
+    editor.querySelector('.editor-text').textContent = ed.text;
+    editor.querySelector('.editor-cap').textContent = ed.cap;
+    editor.querySelector('.editor-title').textContent = ed.title;
+    editor.querySelector('.editor-layout').textContent = pref.kbstyle === 'qwerty' ? 'QWERTY' : 'Apple TV';
+    const live = editor.querySelector('[data-editor="live"]');
+    live.hidden = ed.target !== 'appletv';
+    live.classList.toggle('is-on', pref.kblive === 'live');
+    editor.querySelectorAll('[data-set]').forEach(b => b.classList.toggle('is-sel', b.dataset.set === ed.set));
+    renderKeys();
+  }
+  const openEditor = (target, cap, title, text) => {
+    Object.assign(ed, { target, cap, title, text, set: 'abc', shift: false });
+    editor.hidden = false;
+    renderEditor();
+  };
+  const closeEditor = () => { editor.hidden = true; };
+  screen.querySelector('[data-open-editor]').addEventListener('click', () => openEditor('appletv', 'APPLE TV', 'Wpisz tekst', ''));
+  screen.querySelectorAll('[data-edit]').forEach(row => row.addEventListener('click', () => {
+    const what = row.dataset.edit;
+    if (what === 'room') openEditor('room', 'POKÓJ', 'Nazwa w nagłówku ekranów', room);
+    else if (what === 'wifi') openEditor('wifi', 'HASŁO SIECI', row.querySelector('b').textContent, '');
+    else openEditor(what, row.querySelector('b').textContent.toUpperCase(), 'Pole ustawień MQTT', '');
+  }));
+  editor.addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    const char = button.dataset.char;
+    if (char === SHIFT) ed.shift = !ed.shift;
+    else if (char === BACK) ed.text = ed.text.slice(0, -1);
+    else if (char) { ed.text += ed.shift ? char.toUpperCase() : char; ed.shift = false; }
+    else if (button.dataset.set) ed.set = button.dataset.set;
+    else {
+      const action = button.dataset.editor;
+      if (action === 'space') ed.text += ' ';
+      else if (action === 'clear') ed.text = '';
+      else if (action === 'live') pref.kblive = pref.kblive === 'live' ? 'save' : 'live';
+      else if (action === 'layout') pref.kbstyle = pref.kbstyle === 'qwerty' ? 'atv' : 'qwerty';
+      else if (action === 'cancel') { closeEditor(); return; }
+      else if (action === 'save') {
+        if (ed.target === 'room') room = ed.text.trim() || 'SALON';
+        closeEditor(); render(); return;
+      }
+    }
+    renderEditor();
+  });
+
+  /* ---------- Wiązanie ze stanem ---------- */
+  const SLEEP = { 15: '15 s', 30: '30 s', 60: '1 min', 120: '2 min', 0: 'zawsze' };
   function render() {
     const mode = effective();
     screen.dataset.theme = mode;
-    page.querySelectorAll('[data-pref]').forEach(seg => seg.querySelectorAll('.seg-item').forEach(item =>
+    screen.querySelectorAll('.page [data-pref]').forEach(seg => seg.querySelectorAll('.seg-item').forEach(item =>
       item.classList.toggle('is-sel', item.dataset.value === pref[seg.dataset.pref])));
-    page.querySelectorAll('.theme-hours').forEach(el => { el.hidden = pref.theme !== 'auto'; });
-    const label = { dark: 'ciemny', light: 'jasny' }[mode];
-    screen.querySelector('.theme-now').textContent = pref.theme === 'auto' ? `wg godzin · ${label}` : label;
+    screen.querySelectorAll('.theme-hours').forEach(el => { el.hidden = pref.theme !== 'auto'; });
+    const style = { dark: 'ciemny', light: 'jasny', auto: 'auto' }[pref.theme];
+    screen.querySelector('.bind-display').textContent = `${style} · ${pref.bright}% · ${SLEEP[pref.sleep]}`;
+    screen.querySelector('.bind-sound').textContent = pref.volmax === '100' ? 'bez limitu' : `maks. ${pref.volmax}%`;
+    screen.querySelectorAll('.bind-room').forEach(el => { el.textContent = room; });
+    screen.querySelector('[data-open="pokoj"] var').textContent = room;
     lab.querySelectorAll('[data-theme-lab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeLab === pref.theme)));
     const now = globalThis.pilotNow();
     lab.querySelector('.lab-hour-value').textContent = fakeHour === null ? `teraz (${now.getHours()}:00)` : `${fakeHour}:00`;
@@ -1092,19 +1384,12 @@
     if (clock) clock.textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
   }
 
-  screen.querySelector('[data-open="ekran"]').addEventListener('click', () => { page.hidden = false; render(); });
-  page.querySelector('[data-back-ekran]').addEventListener('click', () => { page.hidden = true; });
-  page.querySelectorAll('[data-pref]').forEach(seg => seg.addEventListener('click', event => {
-    const item = event.target.closest('.seg-item');
-    if (!item) return;
-    pref[seg.dataset.pref] = item.dataset.value;
-    render();
-  }));
   lab.querySelectorAll('[data-theme-lab]').forEach(b => b.addEventListener('click', () => { pref.theme = b.dataset.themeLab; render(); }));
   const hour = lab.querySelector('.lab-hour-input');
   hour.value = new Date().getHours();
   hour.addEventListener('input', () => { fakeHour = Number(hour.value); render(); });
   setInterval(render, 1000);  // jak on_tick: granica godziny przełącza styl sama
+  icons();
   render();
 })();
 </script>
