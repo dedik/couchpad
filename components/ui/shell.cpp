@@ -152,9 +152,9 @@ void build_tabbar(Context& context) {
     lv_obj_set_style_border_width(shell.tabbar, 1, LV_PART_MAIN);
     lv_obj_set_style_border_side(shell.tabbar, LV_BORDER_SIDE_TOP, LV_PART_MAIN);
     lv_obj_set_style_border_color(shell.tabbar, theme::line(), LV_PART_MAIN);
-    // 8 + 68 + 4: zakładka ma najmniejszy dopuszczalny cel dotyku, a ikona 48 px
-    // siedzi w nim na środku.
-    lv_obj_set_style_pad_top(shell.tabbar, theme::kS2, LV_PART_MAIN);
+    // 4 + 72 + 4: odstęp nad i pod zaznaczoną zakładką wygląda tak samo (nad nią
+    // jest jeszcze 1 px linii), a ikona 48 px siedzi w niej na środku.
+    lv_obj_set_style_pad_top(shell.tabbar, theme::kS1, LV_PART_MAIN);
     lv_obj_set_style_pad_bottom(shell.tabbar, theme::kS1, LV_PART_MAIN);
     lv_obj_set_style_pad_hor(shell.tabbar, theme::kS4, LV_PART_MAIN);
     theme::make_row(shell.tabbar, theme::kS1);

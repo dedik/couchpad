@@ -93,10 +93,13 @@ void on_volume(void* raw, int32_t value, bool) {
     send_value(*static_cast<Context*>(raw), domain::ControlId::ZVolume,
                value > limit ? limit : value);
 }
-// −/+ obok tarczy: krok o jeden punkt. Kolejny liczymy od wartości w toku, żeby
+// −/+ pod tarczą: krok o jeden punkt. Kolejny liczymy od wartości w toku, żeby
 // szybkie stuknięcia i przytrzymanie się sumowały, zanim snapshot je potwierdzi.
 // Kontroler przyjmuje dowolny procent, choć encja w HA deklaruje krok 2.
 constexpr int32_t kVolumeStep = 1;
+// Dwa przyciski mieszczą się między końcami łuku tarczy (296 px, łuk 22 px).
+constexpr int32_t kStepSize = 64;
+constexpr int32_t kStepGap = 24;
 
 void step_volume(Context& context, int32_t delta) {
     const domain::AppState& state = context.controller->state();
@@ -162,18 +165,24 @@ void build_audio(Context& context, lv_obj_t* parent) {
     screen.source = widgets::make_value_segment(selectors, LV_SYMBOL_USB, &on_source, &context);
     screen.effect = widgets::make_value_segment(selectors, LV_SYMBOL_AUDIO, &on_effect, &context);
 
-    // −/+ w wolnym miejscu po bokach tarczy, z powtarzaniem przy przytrzymaniu.
     lv_obj_t* fill = widgets::make_fill(screen.section);
-    lv_obj_set_style_pad_column(fill, theme::kS5, LV_PART_MAIN);
-    widgets::make_step_button(fill, LV_SYMBOL_MINUS, true, &on_volume_down, &context);
     screen.dial = widgets::make_dial(fill, "głośność", &on_volume, &context);
-    widgets::make_step_button(fill, LV_SYMBOL_PLUS, true, &on_volume_up, &context);
 
-    // Wyciszenie siedzi na dole tarczy, tak jak w makiecie.
-    screen.mute = lv_button_create(screen.dial->root);
+    // −/+ w otwarciu łuku u dołu, z powtarzaniem przy przytrzymaniu.
+    lv_obj_t* volume_down = widgets::make_step_button(screen.dial->root, LV_SYMBOL_MINUS, true,
+                                                      &on_volume_down, &context);
+    lv_obj_set_size(volume_down, kStepSize, kStepSize);
+    lv_obj_align(volume_down, LV_ALIGN_BOTTOM_MID, -(kStepSize + kStepGap) / 2, 0);
+    lv_obj_t* volume_up = widgets::make_step_button(screen.dial->root, LV_SYMBOL_PLUS, true,
+                                                    &on_volume_up, &context);
+    lv_obj_set_size(volume_up, kStepSize, kStepSize);
+    lv_obj_align(volume_up, LV_ALIGN_BOTTOM_MID, (kStepSize + kStepGap) / 2, 0);
+
+    // Wyciszenie nad liczbą, w miejscu, które −/+ zwolniły u dołu tarczy.
+    screen.mute = lv_button_create(screen.dial->readout);
+    lv_obj_move_to_index(screen.mute, 0);
     lv_obj_remove_style_all(screen.mute);
-    lv_obj_set_size(screen.mute, 64, 64);
-    lv_obj_align(screen.mute, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_size(screen.mute, 52, 52);
     lv_obj_set_style_radius(screen.mute, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(screen.mute, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(screen.mute, theme::surface2(), LV_PART_MAIN);

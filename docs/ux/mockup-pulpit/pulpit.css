@@ -47,7 +47,7 @@
   /* Powłoka ekranu */
   /* 2026-11-03: nagłówek bez paska statusu — wiersz 64 px i 5 px od górnej krawędzi */
   --topbar: 69px;
-  --tabbar: 80px;   /* same ikony: 8 + 68 + 4 */
+  --tabbar: 80px;   /* same ikony: 4 + 72 + 4 */
   --gutter: 24px;
 
   /* Najmniejszy dopuszczalny cel dotyku: 68 px ≈ 8 mm na tym panelu */
@@ -82,7 +82,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 
 .content { flex: 1; min-height: 0; position: relative; padding: var(--s3) var(--gutter) var(--s4); }
 
-.tabbar { height: var(--tabbar); flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s1); padding: var(--s2) var(--s4) var(--s1); background: var(--surface); border-top: 1px solid var(--line); }
+.tabbar { height: var(--tabbar); flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s1); padding: var(--s1) var(--s4); background: var(--surface); border-top: 1px solid var(--line); }
 .tab { border-radius: var(--r3); color: var(--faint); display: grid; place-items: center; align-content: center; font-size: 0; }
 /* Same ikony, bez podpisów (2026-11-03); podpis zostaje w HTML dla czytników ekranu. */
 .tab i { width: 20px; height: 20px; }
@@ -153,18 +153,18 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 
 /* ---------- Tarcza wartości (obrót palcem) ---------- */
 .dial-zone { position: relative; display: grid; place-items: center; }
-.dial { --v: 42; width: 248px; height: 248px; position: relative; display: grid; place-items: center; border-radius: 50%; cursor: grab; touch-action: none; user-select: none;
+.dial { --v: 42; --size: 290px; --ring: 22px; width: var(--size); height: var(--size); position: relative; display: grid; place-items: center; border-radius: 50%; cursor: grab; touch-action: none; user-select: none;
   background: conic-gradient(from 225deg, var(--accent) 0 calc(var(--v) * 2.7deg), var(--surface-3) calc(var(--v) * 2.7deg) 270deg, transparent 270deg 360deg); }
-.dial::before { content: ""; position: absolute; inset: 18px; border-radius: 50%; background: var(--bg); }
+.dial::before { content: ""; position: absolute; inset: var(--ring); border-radius: 50%; background: var(--bg); }
 .dial.is-dragging { cursor: grabbing; }
-.dial-read { position: relative; text-align: center; }
+/* Uchwyt na końcu wypełnienia: jasne koło z obwódką w kolorze akcentu */
+.dial-knob { position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; margin: -14px; border-radius: 50%; background: var(--text); border: 4px solid var(--accent); z-index: 1;
+  transform: rotate(calc(-135deg + var(--v) * 2.7deg)) translateY(calc(var(--size) / -2 + var(--ring) / 2)); }
+.dial-read { position: relative; text-align: center; padding-top: 64px; }
 .dial-read b { display: block; font-size: 64px; line-height: .9; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .dial-read span { display: block; margin-top: var(--s2); font-size: var(--t-cap); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
-/* −/+ głośności: ten sam przycisk co przy tarczy temperatury, w osi tarczy */
-.dial-zone { width: 100%; }
-.thermo-step.vol-step { top: 50%; bottom: auto; transform: translateY(-50%); }
-.thermo-step.vol-step.minus { left: 0; }
-.thermo-step.vol-step.plus { right: 0; }
+/* −/+ głośności: ten sam przycisk co przy tarczy temperatury */
+.dial-zone { width: 296px; height: 296px; }
 /* Segment z bieżącą wartością (wejście, efekt): nazwa do szerokości, potem wielokropek */
 .value-pick { padding: 0 var(--s3); }
 .value-pick .opt-value { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -174,7 +174,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .decode-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
 .decode-pill.is-on { color: var(--ok); border-color: rgba(86, 214, 160, .45); }
 .decode-pill.is-on i { background: var(--ok); }
-.dial-side { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; border-radius: var(--rf); background: var(--surface-2); border: 1px solid var(--line); color: var(--dim); display: grid; place-items: center; }
+.dial-side { position: absolute; top: 76px; left: 50%; transform: translateX(-50%); width: 52px; height: 52px; border-radius: var(--rf); background: var(--surface-2); border: 1px solid var(--line); color: var(--dim); display: grid; place-items: center; }
 .dial-side i { width: 24px; height: 24px; }
 .dial-side.is-on { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
 
@@ -215,6 +215,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 /* ---------- Stany wspólne dla każdego sterowania ---------- */
 /* oczekiwanie na snapshot */
 .is-pending { animation: pulse-ring 1s ease-in-out infinite; }
+/* Tarcza głośności czeka bez pulsującej obwódki: zmianę widać na łuku */
+.dial.is-pending { animation: none; }
 .level.is-pending { animation: none; }
 .level.is-pending .level-value { color: var(--accent); animation: pulse-fade 1s ease-in-out infinite; }
 /* brak potwierdzenia w czasie */
@@ -336,7 +338,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .back:active { background: var(--surface-2); color: var(--text); }
 
 /* ---------- Tarcza temperatury: łuk 270°, otwarty u dołu na przyciski −/+ ---------- */
-.thermo-zone { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
+.thermo-zone { position: relative; width: 300px; height: 300px; display: grid; place-items: center; }
 .thermo { --f: .4; --size: 300px; --ring: 20px; width: var(--size); height: var(--size); position: relative; display: grid; place-items: center; border-radius: 50%; cursor: grab; touch-action: none; user-select: none;
   background: conic-gradient(from 225deg, var(--accent) 0 calc(var(--f) * 270deg), var(--surface-3) calc(var(--f) * 270deg) 270deg, transparent 270deg 360deg); }
 .thermo::before { content: ""; position: absolute; inset: var(--ring); border-radius: 50%; background: var(--bg); }
@@ -345,8 +347,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .thermo-knob { position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; margin: -16px; border-radius: 50%; background: var(--text); border: 5px solid var(--bg);
   transform: rotate(calc(-135deg + var(--f) * 270deg)) translateY(calc(var(--size) / -2 + var(--ring) / 2)); }
 .thermo-scale { position: absolute; bottom: 22px; font-size: var(--t-cap); color: var(--faint); font-variant-numeric: tabular-nums; }
-.thermo-scale.lo { left: 46px; }
-.thermo-scale.hi { right: 46px; }
+.thermo-scale.lo { left: 34px; }
+.thermo-scale.hi { right: 34px; }
 .thermo-read { position: relative; display: grid; justify-items: center; text-align: center; }
 .thermo-action { font-size: var(--t-cap); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
 .thermo-value { margin-top: var(--s3); font-size: 64px; line-height: .9; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
@@ -357,10 +359,11 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .thermo.is-pending .thermo-value { color: var(--accent); animation: pulse-fade 1s ease-in-out infinite; }
 .thermo.is-failed { box-shadow: none; }
 .thermo.is-failed .thermo-value { color: var(--danger); }
-.thermo-step { position: absolute; bottom: 0; width: 72px; height: 72px; border-radius: var(--rf); background: var(--surface-2); border: 1px solid var(--line); color: var(--text); display: grid; place-items: center; }
+.thermo-step { position: absolute; bottom: 0; width: 64px; height: 64px; border-radius: var(--rf); background: var(--surface-2); border: 1px solid var(--line); color: var(--text); display: grid; place-items: center; }
 .thermo-step i, .thermo-step svg { width: 26px; height: 26px; }
-.thermo-step.minus { left: 0; }
-.thermo-step.plus { right: 0; }
+/* −/+ w otwarciu łuku u dołu, jak przy tarczy głośności */
+.thermo-step.minus { left: calc(50% - 76px); }
+.thermo-step.plus { right: calc(50% - 76px); }
 .thermo-step:active { background: var(--surface-3); }
 .thermo-step:disabled { opacity: .3; }
 /* Wyłączona albo sam nawiew: temperatura docelowa nie działa, więc tarcza gaśnie */

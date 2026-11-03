@@ -174,7 +174,6 @@ struct StartScreen {
 struct HomeScreen {
     lv_obj_t* section = nullptr;
     widgets::Tiles scenes;
-    widgets::Readout revision;
 };
 
 // ---------- Ekran Więcej ----------
