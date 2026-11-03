@@ -1,0 +1,14 @@
+## Wersje przypięte po teście na tym egzemplarzu płytki.
+## Powód i skutki poluzowania: ../docs/hardware/verified-board-map.md.
+## esp_lvgl_port 2.9 używa stałej dodanej dopiero w LVGL 9.3 i z 9.2.2 nie kompiluje się wcale.
+dependencies:
+  idf: "~5.5.0"
+  lvgl/lvgl: "==9.2.2"
+  espressif/esp_lvgl_port: "==2.6.0"
+  espressif/esp_lcd_touch_gt911: "==1.1.3"
+
+  ## Łączność: ESP32-P4 nie ma własnego radia. `esp_wifi_remote` podstawia zwykłe API Wi-Fi,
+  ## a `esp_hosted` dowozi je po SDIO do ESP32-C6. Wersje zostają luźne do czasu testu na
+  ## sprzęcie — protokół musi dogadać się z firmware slave, które siedzi we flashu C6.
+  espressif/esp_wifi_remote: "*"
+  espressif/esp_hosted: "*"

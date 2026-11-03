@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulpit — makieta pilota</title>
+<!-- Materiał projektowy, nie kod firmware. Implementacja produkcyjna powstaje w C++/LVGL. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="pulpit.css?v=55">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="lab">
+  <div class="bezel">
+    <div class="screen" id="screen">
+
+      <!-- Strefa 1: tożsamość bieżącego ekranu i jego zasilanie -->
+      <header class="topbar">
+        <div class="ident">
+          <div class="ident-mark" data-icon=""><i data-lucide="tv" aria-hidden="true"></i></div>
+          <div><b class="ident-name">LG OLED</b><span class="ident-room">SALON</span></div>
+        </div>
+        <div class="topbar-end">
+          <!-- Decode 5.1 tylko na ekranie dźwięku: wskaźnik, nigdy przełącznik -->
+          <span class="decode-pill" hidden><i></i>Decode 5.1</span>
+          <button class="power" type="button" hidden><i data-lucide="power" aria-hidden="true"></i></button>
+        </div>
+      </header>
+
+      <!-- Strefa 2: treść ekranu. Nowy ekran dokłada tu jedną sekcję .scr -->
+      <main class="content">
+
+        <section class="scr" data-scr="tv" aria-label="Telewizor">
+          <p class="banner" data-dev="tv" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu telewizora. Sterowanie wróci po nowym snapshocie.</p>
+          <div class="group">
+            <i data-lucide="plug-zap" aria-hidden="true"></i>
+            <div class="seg" data-ctl="source" role="group" aria-label="Wejście">
+              <button class="seg-item" type="button" data-value="HDMI 1">HDMI 1</button>
+              <button class="seg-item" type="button" data-value="HDMI 2">HDMI 2</button>
+              <button class="seg-item" type="button" data-value="TV">TV</button>
+              <button class="seg-item" type="button" data-value="Aplikacje">Aplikacje</button>
+            </div>
+          </div>
+          <div class="group">
+            <i data-lucide="sparkles" aria-hidden="true"></i>
+            <div class="seg" data-ctl="picture" role="group" aria-label="Tryb obrazu">
+              <button class="seg-item" type="button" data-value="Żywy">Żywy</button>
+              <button class="seg-item" type="button" data-value="Standard">Standard</button>
+              <button class="seg-item" type="button" data-value="Kino">Kino</button>
+              <button class="seg-item" type="button" data-value="Filmmaker">Filmmaker</button>
+            </div>
+          </div>
+          <div class="tiles" data-ctl="channel" role="group" aria-label="Skróty kanałów">
+            <button class="tile" type="button" data-value="Polsat" aria-label="Polsat"><img class="logo-mark" src="assets/polsat.svg" alt="Polsat"></button>
+            <button class="tile" type="button" data-value="TVN" aria-label="TVN"><img class="logo-mark" src="assets/tvn.svg" alt="TVN"></button>
+            <button class="tile" type="button" data-value="TVP1" aria-label="TVP 1"><img class="logo-word" src="assets/tvp1.svg" alt="TVP 1"></button>
+            <button class="tile" type="button" data-value="TVP2" aria-label="TVP 2"><img class="logo-word" src="assets/tvp2.svg" alt="TVP 2"></button>
+          </div>
+          <div class="scr-fill">
+            <div class="pad" role="group" aria-label="Nawigacja">
+              <button class="pad-key up" type="button" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></button>
+              <button class="pad-key left" type="button" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+              <button class="pad-ok" type="button" data-key="ok">OK</button>
+              <button class="pad-key right" type="button" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+              <button class="pad-key down" type="button" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="duo">
+            <button class="act" type="button" data-key="back"><i data-lucide="undo-2" aria-hidden="true"></i>Cofnij</button>
+            <button class="act" type="button" data-key="menu"><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Menu TV</button>
+          </div>
+        </section>
+
+        <section class="scr" data-scr="appletv" aria-label="Apple TV" hidden>
+          <p class="banner" data-dev="appletv" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu Apple TV. Sterowanie wróci po nowym snapshocie.</p>
+          <div class="group">
+            <i data-lucide="clapperboard" aria-hidden="true"></i>
+            <div class="seg" role="group" aria-label="Rodzaj pozycji">
+              <button class="seg-item" type="button" data-lib-value="films">Nowe filmy</button>
+              <button class="seg-item" type="button" data-lib-value="series">Nowe seriale</button>
+            </div>
+          </div>
+          <!-- Plakaty naprawdę lecą po HTTP, tak jak polecą z Emby. Lokalne pliki są tylko zapasem. -->
+          <div class="rail" id="rail" role="group" aria-label="Ostatnio dodane"></div>
+          <div class="tiles cols-3" data-ctl="atvApp" role="group" aria-label="Aplikacje">
+            <button class="tile" type="button" data-value="infuse" aria-label="Infuse"><img class="logo-mark" src="assets/infuse.svg" alt="Infuse"></button>
+            <button class="tile" type="button" data-value="youtube" aria-label="YouTube"><img class="logo-mark" src="assets/youtube.svg" alt="YouTube"></button>
+            <button class="tile" type="button" data-value="wppilot" aria-label="WP Pilot"><img class="logo-word" src="assets/wppilot.svg" alt="WP Pilot"></button>
+          </div>
+          <div class="scr-fill">
+            <!-- Menu i Home po bokach: zajmują miejsce, które i tak zostałoby puste obok koła. -->
+            <div class="pad-row">
+              <button class="act is-stack" type="button" data-key="menu"><i data-lucide="corner-up-left" aria-hidden="true"></i>Menu</button>
+              <div class="trackpad" id="trackpad" role="group" aria-label="Nawigacja Apple TV">
+                <div class="trackpad-key up" data-key="up" aria-label="Góra"><i data-lucide="chevron-up" aria-hidden="true"></i></div>
+                <div class="trackpad-key left" data-key="left" aria-label="Lewo"><i data-lucide="chevron-left" aria-hidden="true"></i></div>
+                <div class="trackpad-key right" data-key="right" aria-label="Prawo"><i data-lucide="chevron-right" aria-hidden="true"></i></div>
+                <div class="trackpad-key down" data-key="down" aria-label="Dół"><i data-lucide="chevron-down" aria-hidden="true"></i></div>
+                <div class="trackpad-center" data-key="select">OK</div>
+              </div>
+              <button class="act is-stack" type="button" data-key="atv-home"><i data-lucide="house" aria-hidden="true"></i>Home</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="scr" data-scr="audio" aria-label="Głośniki Z906" hidden>
+          <p class="banner" data-dev="z906" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu Z906. Sterowanie wróci po nowym snapshocie.</p>
+          <!-- Wejście i efekt w jednym rzędzie, jak na ekranie TV: segment pokazuje aktywną
+               opcję, dotknięcie otwiera listę wyboru -->
+          <div class="duo">
+            <div class="group">
+              <i data-lucide="cable" aria-hidden="true"></i>
+              <div class="seg"><button class="seg-item is-sel value-pick" type="button" data-pick="zSource"><span class="opt-value"></span></button></div>
+            </div>
+            <div class="group">
+              <i data-lucide="audio-waveform" aria-hidden="true"></i>
+              <div class="seg"><button class="seg-item is-sel value-pick" type="button" data-pick="zEffect"><span class="opt-value"></span></button></div>
+            </div>
+          </div>
+          <div class="scr-fill">
+            <div class="dial-zone">
+              <!-- −/+ o jeden punkt w wolnym miejscu po bokach tarczy; przytrzymanie powtarza -->
+              <button class="thermo-step vol-step minus" type="button" data-vol="-1" aria-label="Ciszej o 1"><i data-lucide="minus" aria-hidden="true"></i></button>
+              <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Głośność" aria-valuemin="0" aria-valuemax="100" aria-valuenow="42">
+                <div class="dial-read"><b class="dial-value">42</b><span>głośność</span></div>
+              </div>
+              <button class="thermo-step vol-step plus" type="button" data-vol="1" aria-label="Głośniej o 1"><i data-lucide="plus" aria-hidden="true"></i></button>
+              <button class="dial-side" id="mute" type="button" aria-label="Wycisz" aria-pressed="false"><i data-lucide="volume-2" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="levels">
+            <div class="level" data-level="center" role="slider" tabindex="0" aria-label="Center" aria-valuemin="0" aria-valuemax="100" aria-valuenow="56">
+              <span class="level-name">Center</span><span class="level-value">56</span><div class="level-track"></div>
+            </div>
+            <div class="level" data-level="sub" role="slider" tabindex="0" aria-label="Subwoofer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="49">
+              <span class="level-name">Subwoofer</span><span class="level-value">49</span><div class="level-track"></div>
+            </div>
+            <div class="level" data-level="rear" role="slider" tabindex="0" aria-label="Tył" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
+              <span class="level-name">Tył</span><span class="level-value">68</span><div class="level-track"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="scr" data-scr="home" aria-label="Dom" hidden>
+          <p class="cap">Klimat</p>
+          <!-- Kafelek urządzenia: najważniejszy stan na wierzchu, sterowanie piętro niżej -->
+          <button class="device-tile" type="button" data-open="klima" aria-label="Klimatyzacja — otwórz sterowanie">
+            <span class="device-head">
+              <span class="device-mark" data-icon=""><i data-lucide="snowflake" aria-hidden="true"></i></span>
+              <span class="device-name"><b>Klimatyzacja</b><em>SALON</em></span>
+              <i class="device-go" data-lucide="chevron-right" aria-hidden="true"></i>
+            </span>
+            <span class="device-body">
+              <b class="device-temp">22,0<small>°C</small></b>
+              <!-- Tryb wentylatora: temperatura nic nie znaczy, w jej miejscu moc nawiewu -->
+              <span class="device-fan" hidden><em>MOC NAWIEWU</em><b></b></span>
+              <span class="device-meta"><b class="device-mode">Chłodzenie</b><span class="device-now">W pokoju 24,0°</span></span>
+            </span>
+          </button>
+          <p class="cap">Sceny</p>
+          <div class="grid2" data-ctl="scene" role="group" aria-label="Sceny">
+            <button class="tile is-tall" type="button" data-value="film"><i data-lucide="clapperboard" aria-hidden="true"></i><span>Film</span></button>
+            <button class="tile is-tall" type="button" data-value="muzyka"><i data-lucide="music" aria-hidden="true"></i><span>Muzyka</span></button>
+            <button class="tile is-tall" type="button" data-value="noc"><i data-lucide="moon" aria-hidden="true"></i><span>Dobranoc</span></button>
+            <button class="tile is-tall" type="button" data-value="koniec"><i data-lucide="power" aria-hidden="true"></i><span>Wszystko off</span></button>
+          </div>
+          <div class="scr-fill"></div>
+          <p class="readout"><span>Snapshot</span><b class="revision is-on">rewizja 41</b></p>
+        </section>
+
+        <section class="scr" data-scr="settings" aria-label="Ustawienia" hidden>
+          <div class="list">
+            <button class="list-row" type="button"><i data-lucide="wifi" aria-hidden="true"></i><span><b>Wi-Fi</b><em>Połączono · ESP32-C6</em></span><var>-58 dBm</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="radio" aria-hidden="true"></i><span><b>MQTT</b><em>multimedia_remote/v1</em></span><var>online</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="sun" aria-hidden="true"></i><span><b>Jasność</b><em>automatyczna po zmroku</em></span><var>72%</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="moon" aria-hidden="true"></i><span><b>Uśpienie</b><em>po 45 s bezczynności</em></span><var>45 s</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="activity" aria-hidden="true"></i><span><b>Diagnostyka</b><em>logi, metryki, ostatnie polecenie</em></span><var></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button"><i data-lucide="info" aria-hidden="true"></i><span><b>O urządzeniu</b><em>Guition JC4880P443C</em></span><var>v0.1</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Strefa 3: nawigacja. Stała liczba slotów, więc nowy ekran jej nie rozsadza. -->
+      <nav class="tabbar is-pixel" role="tablist" aria-label="Ekrany">
+        <button class="tab" type="button" data-tab="tv" role="tab"><i data-lucide="tv" aria-hidden="true"></i><span class="pix" data-pix="tv"></span>TV</button>
+        <button class="tab" type="button" data-tab="appletv" role="tab"><i data-lucide="airplay" aria-hidden="true"></i><span class="pix" data-pix="appletv"></span>APPLE TV</button>
+        <button class="tab" type="button" data-tab="audio" role="tab"><i data-lucide="audio-lines" aria-hidden="true"></i><span class="pix" data-pix="audio"></span>DŹWIĘK</button>
+        <button class="tab" type="button" data-tab="home" role="tab"><i data-lucide="house" aria-hidden="true"></i><span class="pix" data-pix="home"></span>DOM</button>
+        <button class="tab" type="button" data-tab="settings" role="tab"><i data-lucide="settings" aria-hidden="true"></i><span class="pix" data-pix="settings"></span>WIĘCEJ</button>
+      </nav>
+
+      <!-- Ekran startowy: po starcie i po każdym wybudzeniu. Nie pokazuje stanu sterowania,
+           więc wolno mu wyjść od razu — synchronizacja (ADR 0005) dzieje się w tle, a kafelki
+           dopisują stan, gdy przyjdzie snapshot. Tylko po starcie i wybudzeniu — nawigacja
+           go nie zna, a dotknięcie kafelka zamyka go do następnego wybudzenia. -->
+      <section class="start" aria-label="Start">
+        <header class="start-head">
+          <div class="start-clock"><b class="start-time">21:47</b><span class="start-date">wtorek, 3 listopada · SALON</span></div>
+          <!-- Pogoda z HA (ADR 0011): treść, nie stan — pilot pokazuje ostatnią z pamięci od razu -->
+          <div class="start-weather"><img src="assets/pixel/weather_partly.png" alt=""><span><b>6°C</b><em>przejaśnienia</em></span></div>
+        </header>
+        <div class="start-grid" role="group" aria-label="Urządzenia">
+          <button class="launch" type="button" data-go="tv"><span class="pix" data-pix="tv"></span><span class="launch-text"><b>Telewizor</b><em class="launch-state" data-state="tv"></em></span></button>
+          <button class="launch" type="button" data-go="appletv"><span class="pix" data-pix="appletv"></span><span class="launch-text"><b>Apple TV</b><em class="launch-state" data-state="appletv"></em></span></button>
+          <button class="launch" type="button" data-go="audio"><span class="pix" data-pix="audio"></span><span class="launch-text"><b>Głośniki</b><em class="launch-state" data-state="audio"></em></span></button>
+          <button class="launch" type="button" data-go="home"><span class="pix" data-pix="home"></span><span class="launch-text"><b>Dom</b><em class="launch-state" data-state="home"></em></span></button>
+        </div>
+        <footer class="start-foot" role="status">
+          <span class="start-link"><i class="start-dot"></i><span class="start-link-text">Łączenie z domem…</span></span>
+          <button class="start-retry" type="button" hidden><i data-lucide="rotate-cw" aria-hidden="true"></i>Ponów</button>
+        </footer>
+      </section>
+
+      <!-- Podstrona klimatyzacji: pełny ekran nad paskiem zakładek, wyjście przyciskiem Cofnij.
+           Odpowiada widgets::make_page w firmware. Zakres, krok i listy opcji pochodzą z encji climate. -->
+      <section class="page" data-page="klima" aria-label="Klimatyzacja" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Klimatyzacja</b><span class="page-room">SALON</span></div>
+          </div>
+          <div class="topbar-end">
+            <button class="power klima-power" type="button"><i data-lucide="power" aria-hidden="true"></i></button>
+          </div>
+        </header>
+        <div class="page-body" data-dev="klima">
+          <p class="banner" role="status" hidden><i data-lucide="cloud-off" aria-hidden="true"></i>Brak świeżego stanu klimatyzacji. Sterowanie wróci po nowym snapshocie.</p>
+          <div class="scr-fill">
+            <div class="thermo-zone">
+              <!-- Tarcza 270°: obrót palcem zmienia temperaturę względnie, bez skoku do miejsca dotyku -->
+              <div class="thermo" id="thermo" role="slider" tabindex="0" aria-label="Temperatura docelowa" aria-valuemin="16" aria-valuemax="31">
+                <span class="thermo-knob" aria-hidden="true"></span>
+                <span class="thermo-scale lo" aria-hidden="true">16°</span>
+                <span class="thermo-scale hi" aria-hidden="true">31°</span>
+                <div class="thermo-read">
+                  <span class="thermo-action">Chłodzenie do</span>
+                  <b class="thermo-value">22,0<small>°C</small></b>
+                  <span class="thermo-now"><i data-lucide="thermometer" aria-hidden="true"></i><span>24,0° w pokoju</span></span>
+                </div>
+              </div>
+              <button class="thermo-step minus" type="button" data-step="-1" aria-label="Obniż o 0,5°"><i data-lucide="minus" aria-hidden="true"></i></button>
+              <button class="thermo-step plus" type="button" data-step="1" aria-label="Podnieś o 0,5°"><i data-lucide="plus" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <!-- Tryb pracy. „Wyłączona” nie ma segmentu — to robota przycisku zasilania. -->
+          <div class="seg is-stack" role="group" aria-label="Tryb pracy">
+            <button class="seg-item" type="button" data-hvac="heat_cool"><i data-lucide="sun-snow" aria-hidden="true"></i>Auto</button>
+            <button class="seg-item" type="button" data-hvac="cool"><i data-lucide="snowflake" aria-hidden="true"></i>Chłodzenie</button>
+            <button class="seg-item" type="button" data-hvac="heat"><i data-lucide="flame" aria-hidden="true"></i>Grzanie</button>
+            <button class="seg-item" type="button" data-hvac="dry"><i data-lucide="droplets" aria-hidden="true"></i>Osuszanie</button>
+            <button class="seg-item" type="button" data-hvac="fan_only"><i data-lucide="fan" aria-hidden="true"></i>Wentylator</button>
+          </div>
+          <!-- Opcje z długą listą wartości: kafelek z bieżącą wartością, dotknięcie otwiera listę -->
+          <div class="tiles cols-3" role="group" aria-label="Moc nawiewu i żaluzje">
+            <button class="tile opt-tile" type="button" data-pick="fan"><span class="opt-cap"><i data-lucide="gauge" aria-hidden="true"></i>Moc</span><b class="opt-value"></b></button>
+            <button class="tile opt-tile" type="button" data-pick="swing"><span class="opt-cap"><i data-lucide="move-vertical" aria-hidden="true"></i>Pion</span><b class="opt-value"></b></button>
+            <button class="tile opt-tile" type="button" data-pick="swingH"><span class="opt-cap"><i data-lucide="move-horizontal" aria-hidden="true"></i>Poziom</span><b class="opt-value"></b></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lista wyboru opcji klimatyzacji (moc nawiewu, żaluzje). Zaznaczenie przesuwa dopiero snapshot. -->
+      <div class="scrim picker-scrim" hidden></div>
+      <section class="sheet picker" role="dialog" aria-modal="true" aria-label="Wybór opcji" hidden>
+        <div class="picker-head"><b class="picker-title"></b><button class="back picker-close" type="button" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>
+        <div class="picker-list" role="group"></div>
+      </section>
+
+      <!-- Okno szczegółów pozycji z biblioteki -->
+      <div class="scrim" hidden></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-label="Szczegóły pozycji" hidden>
+        <div class="sheet-head">
+          <img class="sheet-art" src="" alt="">
+          <div><b class="sheet-title"></b><span class="sheet-meta"></span></div>
+        </div>
+        <p class="sheet-desc"></p>
+        <div class="duo">
+          <button class="act sheet-close" type="button"><i data-lucide="x" aria-hidden="true"></i>Zamknij</button>
+          <button class="act is-primary sheet-play" type="button"><i data-lucide="play" aria-hidden="true"></i>Odtwórz</button>
+        </div>
+      </section>
+
+      <!-- Nakładka wybudzenia: do czasu nowego snapshotu nie pokazujemy stanu urządzeń (ADR 0005) -->
+      <section class="wake" aria-live="polite" hidden>
+        <div class="wake-mark" data-icon=""><i data-lucide="house" aria-hidden="true"></i></div>
+        <h1>Łączenie z domem</h1>
+        <p>Pobieram aktualny stan TV i Z906</p>
+        <ol class="wake-steps"><li data-step="0">Wi-Fi</li><li data-step="1">MQTT</li><li data-step="2">Synchronizacja</li></ol>
+        <button class="wake-retry" type="button"><i data-lucide="rotate-cw" aria-hidden="true"></i>Ponów</button>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="lab-panel" role="group" aria-label="Symulacja stanów">
+    <p class="cap">Symulacja stanów</p>
+    <button type="button" data-lab="wake">Wybudzenie po dotyku</button>
+    <button type="button" data-lab="fail">Błąd połączenia</button>
+    <button type="button" data-lab="tv" aria-pressed="false">TV bez świeżego stanu</button>
+    <button type="button" data-lab="z906" aria-pressed="false">Z906 bez świeżego stanu</button>
+    <button type="button" data-lab="appletv" aria-pressed="false">Apple TV bez świeżego stanu</button>
+    <button type="button" data-lab="klima" aria-pressed="false">Klima bez świeżego stanu</button>
+    <button type="button" data-lab="reject" aria-pressed="false">Brak potwierdzenia akcji</button>
+    <button type="button" data-lab="posters" aria-pressed="false">Plakaty jeszcze się ładują</button>
+    <button type="button" data-lab="pixel" aria-pressed="true">Ikony zakładek: pixel art</button>
+    <p class="lab-note">Panel nie należy do produktu. Ekran obok ma rzeczywiste 480 × 800 px, więc rozmiary celów dotyku są tu mierzalne 1 : 1.</p>
+  </div>
+</div>
+
+<script src="pixel-icons.js?v=55"></script>
+<script>
+(() => {
+  // Konfiguracja ekranów. Dodanie ekranu = wpis tutaj + sekcja .scr + zakładka.
+  const SCREENS = {
+    tv:       { name: 'LG OLED',  room: 'SALON',     icon: 'tv',          power: 'tvOn',  dev: 'tv' },
+    appletv:  { name: 'Apple TV', room: 'SALON',     icon: 'airplay',     power: 'atvOn', dev: 'appletv' },
+    audio:    { name: 'Z906',    room: 'SALON',      icon: 'audio-lines', power: 'zOn',  dev: 'z906' },
+    home:     { name: 'Dom',     room: 'SALON',      icon: 'house' },
+    settings: { name: 'Pilot',   room: 'USTAWIENIA', icon: 'settings' },
+  };
+
+  const root = document.getElementById('screen');
+  const lab = document.querySelector('.lab-panel');
+  const icons = () => globalThis.lucide?.createIcons({ attrs: { width: 20, height: 20 } });
+  const clamp = v => Math.min(100, Math.max(0, v));
+  const step2 = v => Math.round(v / 2) * 2;
+
+  // Stan potwierdzony snapshotem. Tylko to wolno pokazywać jako aktualne.
+  const state = {
+    // Ekran startowy przykrywa wszystko; pojawia się wyłącznie po starcie i wybudzeniu.
+    start: true,
+    screen: 'tv', tvOn: true, zOn: true, atvOn: true,
+    source: 'HDMI 1', picture: 'Filmmaker', channel: null, scene: null,
+    atvApp: null, playing: null, lib: 'films',
+    zSource: 'Optical 1', zEffect: 'Stereo 2.1', zMuted: false,
+    volume: 42, center: 56, sub: 49, rear: 68, decode: false,
+    // climate.living_room_ac: `last` to tryb, do którego wraca włączenie zasilaniem.
+    klima: { hvac: 'cool', last: 'cool', target: 22, current: 24, fan: 'medium', swing: 'Full', swingH: 'Full' },
+    page: null,
+  };
+  // Symulowane łącze z Home Assistant. W firmware to stan transportu, nie UI.
+  // `posters` udaje stan pobierania obrazów po HTTP — to osobny kanał niż snapshot MQTT.
+  const link = { phase: 'connecting', step: 0, tv: true, z906: true, appletv: true, klima: true, posters: true, reject: false };
+  // Sekcja klimy powstaje niżej, a render() woła się już wcześniej (karuzela).
+  let klimaReady = false;
+
+  /* ---------- Render ---------- */
+  const setIcon = (host, name) => {
+    if (host.dataset.icon === name) return;
+    host.dataset.icon = name;
+    host.innerHTML = `<i data-lucide="${name}" aria-hidden="true"></i>`;
+    icons();
+  };
+
+  const render = () => {
+    const cfg = SCREENS[state.screen];
+    setIcon(root.querySelector('.ident-mark'), cfg.icon);
+    root.querySelector('.ident-name').textContent = cfg.name;
+    root.querySelector('.ident-room').textContent = cfg.room;
+
+    // Zasilanie dotyczy wyłącznie urządzenia z bieżącego ekranu.
+    const power = root.querySelector('.power');
+    power.hidden = !cfg.power;
+    if (cfg.power) {
+      const on = state[cfg.power];
+      power.classList.toggle('is-on', on);
+      power.disabled = !link[cfg.dev];
+      power.setAttribute('aria-pressed', String(on));
+      power.setAttribute('aria-label', `${on ? 'Wyłącz' : 'Włącz'} ${cfg.name}`);
+    }
+
+    root.querySelectorAll('.scr').forEach(scr => { scr.hidden = scr.dataset.scr !== state.screen; });
+    root.querySelectorAll('.tab').forEach(tab => {
+      const sel = tab.dataset.tab === state.screen;
+      tab.classList.toggle('is-sel', sel);
+      tab.setAttribute('aria-selected', String(sel));
+    });
+
+    // Wybór w grupach: zaznaczenie zawsze pochodzi ze stanu, nigdy z kliknięcia.
+    root.querySelectorAll('[data-ctl]').forEach(group => {
+      const current = state[group.dataset.ctl];
+      group.querySelectorAll('[data-value]').forEach(item => {
+        const sel = item.dataset.value === current;
+        item.classList.toggle('is-sel', sel);
+        item.setAttribute('aria-pressed', String(sel));
+      });
+    });
+
+    const dial = root.querySelector('#dial');
+    dial.style.setProperty('--v', state.volume);
+    dial.setAttribute('aria-valuenow', state.volume);
+    root.querySelector('.dial-value').textContent = state.volume;
+
+    const mute = root.querySelector('#mute');
+    mute.classList.toggle('is-on', state.zMuted);
+    mute.setAttribute('aria-pressed', String(state.zMuted));
+    setIcon(mute, state.zMuted ? 'volume-x' : 'volume-2');
+
+    root.querySelectorAll('.level').forEach(level => {
+      const value = state[level.dataset.level];
+      level.style.setProperty('--v', value);
+      level.setAttribute('aria-valuenow', value);
+      level.querySelector('.level-value').textContent = value;
+    });
+
+    const pill = root.querySelector('.decode-pill');
+    pill.hidden = state.screen !== 'audio' || !link.z906 || state.start;
+    pill.classList.toggle('is-on', state.decode);
+
+    // Brak świeżego stanu: wyłączamy sterowanie zamiast zgadywać wartości.
+    root.querySelectorAll('.scr[data-scr]').forEach(scr => {
+      const dev = SCREENS[scr.dataset.scr]?.dev;
+      const ok = !dev || link[dev];
+      scr.classList.toggle('is-unavailable', !ok);
+      const banner = scr.querySelector('.banner');
+      if (banner) banner.hidden = ok;
+    });
+
+    root.querySelectorAll('[data-lib-value]').forEach(button => {
+      const sel = button.dataset.libValue === state.lib;
+      button.classList.toggle('is-sel', sel);
+      button.setAttribute('aria-pressed', String(sel));
+    });
+
+    // Plakat bez pobranego obrazu pokazuje szkielet, nigdy pustego miejsca.
+    root.querySelectorAll('.poster').forEach(poster =>
+      poster.classList.toggle('is-loading', !link.posters || poster.dataset.loaded !== '1'));
+
+    [['tv', !link.tv], ['appletv', !link.appletv], ['z906', !link.z906], ['klima', !link.klima], ['posters', !link.posters], ['reject', link.reject]]
+      .forEach(([key, on]) => lab.querySelector(`[data-lab="${key}"]`)?.setAttribute('aria-pressed', String(on)));
+
+    if (klimaReady) { renderKlima(); renderStart(); }
+  };
+
+  /* ---------- Stan oczekujący ---------- */
+  // Każda akcja czeka na snapshot. Do tego czasu kontrolka pulsuje, a wybór się nie przesuwa.
+  const timers = new Map();
+  const settle = (el, apply, revert = () => {}) => {
+    clearTimeout(timers.get(el));
+    el.classList.remove('is-failed');
+    el.classList.add('is-pending');
+    const rejected = link.reject;
+    timers.set(el, setTimeout(() => {
+      timers.delete(el);
+      el.classList.remove('is-pending');
+      if (rejected) {
+        revert();
+        el.classList.add('is-failed');
+        setTimeout(() => el.classList.remove('is-failed'), 900);
+      } else apply();
+      render();
+    }, rejected ? 2200 : 650));
+  };
+
+  /* ---------- Wartości ciągłe: zmiana względna, bez skoku do miejsca dotyku ---------- */
+  const dragValue = (host, key, factory) => {
+    let drag = null;
+    host.addEventListener('pointerdown', event => {
+      drag = { prev: state[key], value: state[key], moved: false, delta: factory(event) };
+      host.setPointerCapture(event.pointerId);
+      host.classList.add('is-dragging');
+    });
+    host.addEventListener('pointermove', event => {
+      if (!drag) return;
+      drag.value = clamp(drag.value + drag.delta(event));
+      const next = step2(drag.value);
+      if (next !== state[key]) { drag.moved = true; state[key] = next; host.classList.add('is-pending'); render(); }
+    });
+    const end = () => {
+      if (!drag) return;
+      const { prev, moved } = drag;
+      drag = null;
+      host.classList.remove('is-dragging');
+      if (moved) settle(host, () => {}, () => { state[key] = prev; });
+    };
+    host.addEventListener('pointerup', end);
+    host.addEventListener('pointercancel', end);
+    host.addEventListener('keydown', event => {
+      const dir = { ArrowUp: 2, ArrowRight: 2, ArrowDown: -2, ArrowLeft: -2 }[event.key];
+      if (dir === undefined) return;
+      event.preventDefault();
+      const prev = state[key];
+      state[key] = clamp(prev + dir);
+      render();
+      settle(host, () => {}, () => { state[key] = prev; });
+    });
+  };
+
+  // Tarcza: pełny obrót wokół środka = 100 punktów.
+  const dial = root.querySelector('#dial');
+  dragValue(dial, 'volume', event => {
+    const polar = e => {
+      const r = dial.getBoundingClientRect();
+      const x = e.clientX - (r.left + r.width / 2);
+      const y = e.clientY - (r.top + r.height / 2);
+      return { angle: Math.atan2(y, x) * 180 / Math.PI, dist: Math.hypot(x, y) };
+    };
+    let last = polar(event).angle;
+    return next => {
+      const { angle, dist } = polar(next);
+      if (dist < 30) return 0; // środek tarczy: kąt jest tam niestabilny
+      let delta = angle - last;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      last = angle;
+      return delta / 360 * 100;
+    };
+  });
+
+  // Kolumny kanałów: 120 px ruchu w pionie = pełny zakres.
+  root.querySelectorAll('.level').forEach(level => {
+    dragValue(level, level.dataset.level, event => {
+      let last = event.clientY;
+      return next => { const delta = last - next.clientY; last = next.clientY; return delta / 120 * 100; };
+    });
+  });
+
+  // −/+ przy tarczy: krok o jeden punkt, przytrzymanie powtarza co 150 ms.
+  root.querySelectorAll('[data-vol]').forEach(button => {
+    let timer = 0;
+    const step = () => {
+      const next = clamp(state.volume + Number(button.dataset.vol));
+      if (next === state.volume) return;
+      const prev = state.volume;
+      state.volume = next;
+      render();
+      settle(dial, () => {}, () => { state.volume = prev; });
+    };
+    const stop = () => { clearInterval(timer); timer = 0; };
+    button.addEventListener('pointerdown', () => { step(); stop(); timer = setInterval(step, 150); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(name => button.addEventListener(name, stop));
+  });
+
+  /* ---------- Wejścia dyskretne ---------- */
+  root.querySelectorAll('[data-ctl]').forEach(group => {
+    const key = group.dataset.ctl;
+    group.querySelectorAll('[data-value]').forEach(item => {
+      item.addEventListener('click', () => { const value = item.dataset.value; settle(item, () => { state[key] = value; }); });
+    });
+  });
+
+  root.querySelector('.power').addEventListener('click', event => {
+    const key = SCREENS[state.screen].power;
+    const value = !state[key];
+    settle(event.currentTarget, () => { state[key] = value; });
+  });
+
+  root.querySelector('#mute').addEventListener('click', event => {
+    const value = !state.zMuted;
+    settle(event.currentTarget, () => { state.zMuted = value; });
+  });
+
+  // Nawigacja i skróty to polecenia chwilowe: brak stanu do potwierdzenia, tylko odzew dotyku.
+  root.querySelectorAll('[data-key]').forEach(button => {
+    const flash = () => { button.classList.add('is-down'); setTimeout(() => button.classList.remove('is-down'), 160); };
+    button.addEventListener('pointerdown', flash);
+  });
+
+  // Zmiana zakładki nie odpytuje sieci: pokazuje potwierdzony AppState.
+  root.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => { state.screen = tab.dataset.tab; render(); }));
+
+  /* ---------- Biblioteka Emby ---------- */
+  // Dane symulowane. Docelowo metadane przychodzą osobnym tematem MQTT,
+  // a plakaty pobiera się po HTTP w rozmiarze docelowym (Emby skaluje po swojej stronie).
+  const LIBRARY = {
+    films: [
+      { id: 'diuna',       title: 'Diuna: Część druga', meta: 'Film · 2024 · 2 h 46 min', desc: 'Paul Atryda łączy siły z Fremenami, by pomścić rodzinę i powstrzymać przyszłość, którą widzi w wizjach.' },
+      { id: 'oppenheimer', title: 'Oppenheimer',        meta: 'Film · 2023 · 3 h 0 min',  desc: 'Historia fizyka, który kierował pracami nad pierwszą bombą atomową, i ceny, jaką za to zapłacił.' },
+      { id: 'blade',       title: 'Blade Runner 2049',  meta: 'Film · 2017 · 2 h 44 min', desc: 'Łowca androidów odkrywa tajemnicę, która może wywrócić porządek świata, i rusza śladem poprzednika.' },
+      { id: 'furiosa',     title: 'Furiosa',            meta: 'Film · 2024 · 2 h 28 min', desc: 'Porwana z Zielonego Miejsca dziewczyna przemierza pustkowia, szukając drogi powrotnej do domu.' },
+      { id: 'nikt',        title: 'Nikt',               meta: 'Film · 2021 · 1 h 32 min', desc: 'Spokojny ojciec rodziny okazuje się kimś zupełnie innym, niż sądzili włamywacze.' },
+      { id: 'wyspa',       title: 'Wyspa tajemnic',     meta: 'Film · 2010 · 2 h 18 min', desc: 'Śledczy bada zniknięcie pacjentki ze szpitala na odciętej od świata wyspie.' },
+    ],
+    series: [
+      { id: 'shogun',       title: 'Shōgun',       meta: 'Serial · 2024 · Sezon 1',   desc: 'Rozbitek z Anglii trafia do feudalnej Japonii i staje się pionkiem w grze o władzę nad krajem.' },
+      { id: 'fallout',      title: 'Fallout',      meta: 'Serial · 2024 · Sezon 1',   desc: 'Dwieście lat po zagładzie mieszkanka podziemnego schronu wychodzi na powierzchnię i poznaje jej zasady.' },
+      { id: 'sukcesja',     title: 'Sukcesja',     meta: 'Serial · 2023 · Sezon 4',   desc: 'Rodzeństwo walczy o kontrolę nad imperium medialnym ojca, nie przebierając w środkach.' },
+      { id: 'silos',        title: 'Silos',        meta: 'Serial · 2025 · Sezon 2',   desc: 'Tysiące ludzi żyją w podziemnym silosie, a pytanie o to, co jest na zewnątrz, bywa wyrokiem.' },
+      { id: 'rozdzielenie', title: 'Rozdzielenie', meta: 'Serial · 2025 · Sezon 2',   desc: 'Pracownicy poddali się zabiegowi, który oddziela ich pamięć służbową od prywatnej.' },
+      { id: 'czarnobyl',    title: 'Czarnobyl',    meta: 'Serial · 2019 · Miniserial', desc: 'Rekonstrukcja katastrofy i kosztu kłamstw, które ją poprzedziły oraz po niej nastąpiły.' },
+    ],
+  };
+  const findItem = id => [...LIBRARY.films, ...LIBRARY.series].find(item => item.id === id);
+  // Adres obrazu udaje Emby: serwer oddaje gotowy rozmiar, pilot nie skaluje niczego u siebie.
+  const posterUrl = id => `https://picsum.photos/seed/${id}/200/300`;
+
+  const rail = root.querySelector('#rail');
+  const renderRail = () => {
+    rail.scrollLeft = 0;
+    rail.innerHTML = LIBRARY[state.lib].map(item =>
+      `<button class="poster is-loading" type="button" data-id="${item.id}" aria-label="${item.title}">` +
+      `<span class="poster-art"><img alt="" src="${posterUrl(item.id)}">` +
+      `<b class="poster-name">${item.title}</b></span></button>`).join('');
+    rail.querySelectorAll('img').forEach(img => {
+      const poster = img.closest('.poster');
+      // Obraz doszedł — zdejmujemy szkielet. Nie doszedł — pokazujemy lokalny zapas.
+      img.addEventListener('load', () => { poster.dataset.loaded = '1'; render(); }, { once: true });
+      img.addEventListener('error', () => { img.src = `assets/posters/${poster.dataset.id}.svg`; }, { once: true });
+    });
+    requestAnimationFrame(() => { rail.scrollLeft = 0; });
+    render();
+  };
+  rail.addEventListener('click', event => {
+    const poster = event.target.closest('.poster');
+    if (poster) openSheet(poster.dataset.id);
+  });
+  root.querySelectorAll('[data-lib-value]').forEach(button => button.addEventListener('click', () => {
+    // Przełączenie rodzaju nie sięga do sieci — obie listy przyszły w tym samym komunikacie.
+    state.lib = button.dataset.libValue;
+    renderRail();
+  }));
+
+  const sheet = root.querySelector('.sheet:not(.picker)');
+  const scrim = root.querySelector('.scrim:not(.picker-scrim)');
+  let openId = null;
+  const openSheet = id => {
+    const item = findItem(id);
+    if (!item) return;
+    openId = id;
+    const art = sheet.querySelector('.sheet-art');
+    art.onerror = () => { art.onerror = null; art.src = `assets/posters/${item.id}.svg`; };
+    art.src = posterUrl(item.id);
+    sheet.querySelector('.sheet-title').textContent = item.title;
+    sheet.querySelector('.sheet-meta').textContent = item.meta;
+    sheet.querySelector('.sheet-desc').textContent = item.desc;
+    sheet.hidden = false;
+    scrim.hidden = false;
+  };
+  const closeSheet = () => { openId = null; sheet.hidden = true; scrim.hidden = true; };
+
+  renderRail();
+  scrim.addEventListener('click', closeSheet);
+  sheet.querySelector('.sheet-close').addEventListener('click', closeSheet);
+  // Odtworzenie to zwykłe polecenie: czeka na potwierdzenie, dopiero potem zamykamy okno.
+  sheet.querySelector('.sheet-play').addEventListener('click', event => {
+    const id = openId;
+    settle(event.currentTarget, () => { state.playing = id; closeSheet(); });
+  });
+
+  /* ---------- Gładzik Apple TV ---------- */
+  // Przesunięcie palcem nawiguje, dotknięcie strefy działa jak klawisz kierunku.
+  const pad = root.querySelector('#trackpad');
+  const flashKey = dir => {
+    const key = pad.querySelector(`[data-key="${dir}"]`);
+    if (!key) return;
+    key.classList.add('is-down');
+    setTimeout(() => key.classList.remove('is-down'), 150);
+  };
+  // Pole jest kołem, więc strefę wyznacza odległość od środka i kąt, nie prostokąty.
+  const zoneAt = event => {
+    const r = pad.getBoundingClientRect();
+    const dx = event.clientX - (r.left + r.width / 2);
+    const dy = event.clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < r.width * 0.22) return 'select';
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI; // 0° na prawo, rośnie w dół
+    if (angle >= -45 && angle < 45) return 'right';
+    if (angle >= 45 && angle < 135) return 'down';
+    if (angle >= -135 && angle < -45) return 'up';
+    return 'left';
+  };
+  const SWIPE = 26; // po tylu pikselach ruch liczymy jako gest i wysyłamy kolejny krok
+  let padDrag = null;
+  pad.addEventListener('pointerdown', event => {
+    padDrag = { x: event.clientX, y: event.clientY, x0: event.clientX, y0: event.clientY, far: 0 };
+    try { pad.setPointerCapture(event.pointerId); } catch { /* wskaźnik już zwolniony */ }
+  });
+  pad.addEventListener('pointermove', event => {
+    if (!padDrag) return;
+    padDrag.far = Math.max(padDrag.far, Math.hypot(event.clientX - padDrag.x0, event.clientY - padDrag.y0));
+    const dx = event.clientX - padDrag.x;
+    const dy = event.clientY - padDrag.y;
+    if (Math.abs(dx) < SWIPE && Math.abs(dy) < SWIPE) return;
+    flashKey(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    padDrag.x = event.clientX;
+    padDrag.y = event.clientY;
+  });
+  pad.addEventListener('pointerup', event => {
+    if (!padDrag) return;
+    const far = padDrag.far;
+    padDrag = null;
+    if (far > 12) return; // to był gest, nie dotknięcie strefy
+    flashKey(zoneAt(event));
+  });
+  pad.addEventListener('pointercancel', () => { padDrag = null; });
+
+  /* ---------- Klimatyzacja ---------- */
+  // Odwzorowuje climate.living_room_ac z HA. Zakres, krok i listy opcji przychodzą w atrybutach encji
+  // (min_temp, max_temp, target_temp_step, hvac_modes, fan_modes, swing_modes, swing_horizontal_modes) —
+  // tu są wpisane na sztywno, w firmware przyjdą ze snapshotu.
+  const KLIMA = {
+    min: 16, max: 31, step: 0.5,
+    modes: {
+      off:       { label: 'Wyłączona',  action: 'Wyłączona',     icon: 'power' },
+      heat_cool: { label: 'Auto',       action: 'Auto do',       icon: 'sun-snow' },
+      cool:      { label: 'Chłodzenie', action: 'Chłodzenie do', icon: 'snowflake' },
+      heat:      { label: 'Grzanie',    action: 'Grzanie do',    icon: 'flame' },
+      dry:       { label: 'Osuszanie',  action: 'Osuszanie do',  icon: 'droplets' },
+      // Wentylator nie używa temperatury docelowej, więc tarcza jest wtedy nieczynna.
+      fan_only:  { label: 'Wentylator', action: 'Sam nawiew',    icon: 'fan' },
+    },
+    pick: {
+      // Moc nawiewu: osiem biegów fan_modes, z ikonami, żeby kolejność była czytelna bez podpisu.
+      fan: { title: 'Moc nawiewu', options: [['auto', 'Auto', 'fan'], ['quiet', 'Cicha', 'moon-star'], ['low', 'Niska', 'gauge'],
+        ['medlow', 'Średnio niska', 'signal-low'], ['medium', 'Średnia', 'signal-medium'], ['medhigh', 'Średnio wysoka', 'signal-high'],
+        ['high', 'Wysoka', 'signal'], ['strong', 'Maksymalna', 'tornado']] },
+      swing: { title: 'Żaluzje — pion', options: [['off', 'Stałe'], ['Full', 'Ruch'], ['Upper', 'Góra'], ['Lower', 'Dół']] },
+      zSource: { title: 'Źródło dźwięku', options: [['PC - analog 5.1', 'PC - analog 5.1'], ['RCA - stereo', 'RCA - stereo'],
+        ['Optical 1', 'Optical 1'], ['Optical 2', 'Optical 2'], ['Coaxial', 'Coaxial'], ['AUX', 'AUX']] },
+      zEffect: { title: 'Efekt', options: [['Stereo 3D', 'Stereo 3D'], ['Stereo 2.1', 'Stereo 2.1'], ['Stereo 4.1', 'Stereo 4.1'], ['No effect', 'Bez efektu']] },
+      swingH: { title: 'Żaluzje — poziom', options: [['off', 'Stałe'], ['Full', 'Ruch'], ['Left', 'Lewo'], ['Center', 'Środek'], ['Right', 'Prawo']] },
+    },
+  };
+  const k = state.klima;
+  const page = root.querySelector('[data-page="klima"]');
+  const thermo = root.querySelector('#thermo');
+  const tile = root.querySelector('.device-tile');
+  const picker = root.querySelector('.picker');
+  const pickerScrim = root.querySelector('.picker-scrim');
+  const fmt = v => v.toFixed(1).replace('.', ',');
+  const usesTarget = hvac => hvac !== 'off' && hvac !== 'fan_only';
+  // Lista wyboru jest wspólna: opcje klimy żyją w `k`, wejście i efekt Z906 w `state`.
+  const pickHost = key => (key in k ? k : state);
+  const optLabel = (key, value) => KLIMA.pick[key].options.find(([v]) => v === value)?.[1] ?? value;
+  let pickKey = null;
+
+  function renderKlima() {
+    const mode = KLIMA.modes[k.hvac];
+    const on = k.hvac !== 'off';
+    const ok = link.klima;
+
+    // Kafelek na ekranie Dom: tryb i temperatura docelowa, bez żadnego sterowania.
+    tile.classList.toggle('is-on', ok && on);
+    tile.classList.toggle('is-stale', !ok);
+    setIcon(tile.querySelector('.device-mark'), ok ? mode.icon : 'cloud-off');
+    tile.querySelector('.device-temp').innerHTML = ok && usesTarget(k.hvac) ? `${fmt(k.target)}<small>°C</small>` : '—';
+    const fanOnly = ok && k.hvac === 'fan_only';
+    tile.querySelector('.device-temp').hidden = fanOnly;
+    tile.querySelector('.device-fan').hidden = !fanOnly;
+    tile.querySelector('.device-fan b').textContent = optLabel('fan', k.fan);
+    tile.querySelector('.device-mode').textContent = ok ? mode.label : 'Brak świeżego stanu';
+    tile.querySelector('.device-now').textContent = ok ? `W pokoju ${fmt(k.current)}°` : 'czekam na snapshot';
+
+    page.hidden = state.page !== 'klima';
+
+    const power = page.querySelector('.klima-power');
+    power.classList.toggle('is-on', on);
+    power.disabled = !ok;
+    power.setAttribute('aria-pressed', String(on));
+    power.setAttribute('aria-label', on ? 'Wyłącz klimatyzację' : 'Włącz klimatyzację');
+
+    const body = page.querySelector('.page-body');
+    body.classList.toggle('is-unavailable', !ok);
+    body.querySelector('.banner').hidden = ok;
+
+    const f = (k.target - KLIMA.min) / (KLIMA.max - KLIMA.min);
+    thermo.style.setProperty('--f', f);
+    thermo.setAttribute('aria-valuenow', k.target);
+    page.querySelector('.thermo-zone').classList.toggle('is-idle', !usesTarget(k.hvac));
+    page.querySelector('.thermo-action').textContent = mode.action;
+    page.querySelector('.thermo-value').innerHTML = `${fmt(k.target)}<small>°C</small>`;
+    page.querySelector('.thermo-now span').textContent = `${fmt(k.current)}° w pokoju`;
+    page.querySelector('.thermo-step.minus').disabled = k.target <= KLIMA.min;
+    page.querySelector('.thermo-step.plus').disabled = k.target >= KLIMA.max;
+
+    page.querySelectorAll('[data-hvac]').forEach(item => {
+      const sel = item.dataset.hvac === k.hvac;
+      item.classList.toggle('is-sel', sel);
+      item.setAttribute('aria-pressed', String(sel));
+    });
+    root.querySelectorAll('[data-pick]').forEach(item => {
+      item.querySelector('.opt-value').textContent = optLabel(item.dataset.pick, pickHost(item.dataset.pick)[item.dataset.pick]);
+    });
+
+    picker.hidden = pickerScrim.hidden = pickKey === null;
+    if (pickKey) {
+      picker.querySelectorAll('[data-opt]').forEach(row => {
+        const sel = row.dataset.opt === pickHost(pickKey)[pickKey];
+        row.classList.toggle('is-sel', sel);
+        row.setAttribute('aria-pressed', String(sel));
+      });
+    }
+  }
+
+  tile.addEventListener('click', () => { state.page = 'klima'; render(); });
+  page.querySelector('[data-back]').addEventListener('click', () => { pickKey = null; state.page = null; render(); });
+
+  // Zasilanie: włączenie wraca do ostatniego trybu, jak climate.turn_on w HA.
+  page.querySelector('.klima-power').addEventListener('click', event => {
+    const next = k.hvac === 'off' ? k.last : 'off';
+    settle(event.currentTarget, () => { if (next !== 'off') k.last = next; k.hvac = next; });
+  });
+
+  // Wybór trybu przy wyłączonej klimie zarazem ją włącza (climate.set_hvac_mode).
+  page.querySelectorAll('[data-hvac]').forEach(item => item.addEventListener('click', () => {
+    const value = item.dataset.hvac;
+    settle(item, () => { k.hvac = value; k.last = value; });
+  }));
+
+  // Temperatura: zmiana lokalna od razu, wysyłka dopiero po chwili bez dotyku.
+  // Kilka stuknięć w plus to jedno polecenie, nie seria — tak samo robi karta termostatu w HA.
+  const clampT = v => Math.min(KLIMA.max, Math.max(KLIMA.min, v));
+  const snapT = v => Math.round(v / KLIMA.step) * KLIMA.step;
+  let tempFrom = null;
+  let tempTimer = 0;
+  const commitTemp = () => {
+    clearTimeout(tempTimer);
+    tempTimer = setTimeout(() => {
+      const prev = tempFrom;
+      tempFrom = null;
+      if (prev === k.target) { thermo.classList.remove('is-pending'); return; }
+      settle(thermo, () => {}, () => { k.target = prev; });
+    }, 700);
+  };
+  const nudgeTemp = next => {
+    next = clampT(snapT(next));
+    if (next === k.target) return;
+    if (tempFrom === null) tempFrom = k.target;
+    k.target = next;
+    thermo.classList.add('is-pending');
+    render();
+  };
+
+  page.querySelectorAll('[data-step]').forEach(button => button.addEventListener('click', () => {
+    nudgeTemp(k.target + Number(button.dataset.step) * KLIMA.step);
+    commitTemp();
+  }));
+
+  // Tarcza: 270° łuku = cały zakres 16–31 °C. Liczy się zmiana kąta, nie miejsce dotyku.
+  let tDrag = null;
+  const polarT = e => {
+    const r = thermo.getBoundingClientRect();
+    const x = e.clientX - (r.left + r.width / 2);
+    const y = e.clientY - (r.top + r.height / 2);
+    return { angle: Math.atan2(y, x) * 180 / Math.PI, dist: Math.hypot(x, y) };
+  };
+  thermo.addEventListener('pointerdown', event => {
+    tDrag = { last: polarT(event).angle, value: k.target };
+    thermo.setPointerCapture(event.pointerId);
+    thermo.classList.add('is-dragging');
+    clearTimeout(tempTimer);
+  });
+  thermo.addEventListener('pointermove', event => {
+    if (!tDrag) return;
+    const { angle, dist } = polarT(event);
+    if (dist < 40) return; // środek tarczy: kąt jest tam niestabilny
+    let delta = angle - tDrag.last;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    tDrag.last = angle;
+    tDrag.value = clampT(tDrag.value + delta / 270 * (KLIMA.max - KLIMA.min));
+    nudgeTemp(tDrag.value);
+  });
+  const endT = () => {
+    if (!tDrag) return;
+    tDrag = null;
+    thermo.classList.remove('is-dragging');
+    if (tempFrom !== null) commitTemp();
+  };
+  thermo.addEventListener('pointerup', endT);
+  thermo.addEventListener('pointercancel', endT);
+  thermo.addEventListener('keydown', event => {
+    const dir = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[event.key];
+    if (dir === undefined) return;
+    event.preventDefault();
+    nudgeTemp(k.target + dir * KLIMA.step);
+    commitTemp();
+  });
+
+  // Lista wyboru: nawiew i żaluzje. Okno zamyka się dopiero po potwierdzeniu.
+  const openPicker = key => {
+    pickKey = key;
+    picker.querySelector('.picker-title').textContent = KLIMA.pick[key].title;
+    const list = picker.querySelector('.picker-list');
+    const withIcons = KLIMA.pick[key].options.some(option => option[2]);
+    list.innerHTML = KLIMA.pick[key].options.map(([value, label, icon]) =>
+      `<button class="opt" type="button" data-opt="${value}">` +
+      (icon ? `<i class="opt-icon" data-lucide="${icon}" aria-hidden="true"></i>` : '') +
+      `<span>${label}</span><i data-lucide="check" aria-hidden="true"></i></button>`).join('');
+    list.classList.toggle('is-two', !withIcons && KLIMA.pick[key].options.length > 5);
+    list.querySelectorAll('[data-opt]').forEach(row => row.addEventListener('click', () => {
+      const value = row.dataset.opt;
+      if (value === pickHost(key)[key]) { pickKey = null; render(); return; }
+      settle(row, () => { pickHost(key)[key] = value; pickKey = null; });
+    }));
+    icons();
+    render();
+  };
+  const closePicker = () => { pickKey = null; render(); };
+  root.querySelectorAll('[data-pick]').forEach(item => item.addEventListener('click', () => openPicker(item.dataset.pick)));
+  pickerScrim.addEventListener('click', closePicker);
+  picker.querySelector('.picker-close').addEventListener('click', closePicker);
+
+  /* ---------- Ekran startowy ---------- */
+  // Jedno zdanie stanu na kafelek. Dopóki nie ma świeżego snapshotu, mówi „łączenie…”
+  // zamiast pokazywać stan z pamięci (ADR 0005).
+  const startEl = root.querySelector('.start');
+  const DAYS = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
+  const MONTHS = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+  const ATV_APPS = { infuse: 'Infuse', youtube: 'YouTube', wppilot: 'WP Pilot' };
+  function launchState(key) {
+    const dev = { tv: 'tv', appletv: 'appletv', audio: 'z906', home: 'klima' }[key];
+    if (link.phase !== 'ready') return { text: link.phase === 'error' ? 'brak połączenia' : 'łączenie…', on: false, wait: link.phase !== 'error' };
+    if (!link[dev]) return { text: 'brak świeżego stanu', on: false, bad: true };
+    if (key === 'tv') return state.tvOn ? { text: `${state.source} · ${state.picture}`, on: true } : { text: 'wyłączony', on: false };
+    if (key === 'appletv') return state.atvOn ? { text: ATV_APPS[state.atvApp] ?? 'ekran główny', on: true } : { text: 'uśpiony', on: false };
+    if (key === 'audio') return state.zOn ? { text: state.zMuted ? `wyciszone · ${state.zSource}` : `głośność ${state.volume} · ${state.zSource}`, on: true } : { text: 'wyłączone', on: false };
+    const mode = KLIMA.modes[k.hvac];
+    if (k.hvac === 'off') return { text: 'klima wyłączona', on: false };
+    return { text: usesTarget(k.hvac) ? `klima ${fmt(k.target)}° · ${mode.label.toLowerCase()}` : `klima · ${mode.label.toLowerCase()}`, on: true };
+  }
+  function renderStart() {
+    startEl.hidden = !state.start;
+    const now = new Date();
+    startEl.querySelector('.start-time').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+    startEl.querySelector('.start-date').textContent = `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} · SALON`;
+    // Pogoda udawana: `partlycloudy` w nocy to księżyc za chmurą (pole `night` z HA, ADR 0011).
+    const night = now.getHours() < 7 || now.getHours() >= 17;
+    startEl.querySelector('.start-weather img').src = `assets/pixel/weather_${night ? 'partly_night' : 'partly'}.png`;
+    startEl.querySelector('.start-weather em').textContent = night ? 'częściowe zachmurzenie' : 'przejaśnienia';
+    startEl.querySelectorAll('[data-go]').forEach(tile => {
+      const st = launchState(tile.dataset.go);
+      tile.classList.toggle('is-on', st.on);
+      tile.classList.toggle('is-wait', !!st.wait);
+      tile.classList.toggle('is-stale', !!st.bad);
+      tile.querySelector('.launch-state').textContent = st.text;
+    });
+    const foot = startEl.querySelector('.start-foot');
+    foot.classList.toggle('is-ready', link.phase === 'ready');
+    foot.classList.toggle('is-error', link.phase === 'error');
+    foot.querySelector('.start-link-text').textContent =
+      link.phase === 'ready' ? 'Połączono z domem' : link.phase === 'error' ? 'Brak połączenia z domem' : 'Łączenie z domem…';
+    foot.querySelector('.start-retry').hidden = link.phase !== 'error';
+  }
+  // Kafelek otwiera ekran od razu. Jeśli stan jeszcze nie przyszedł, ekran urządzenia
+  // pokazuje nakładkę łączenia — tylko wtedy, nie przy każdym wybudzeniu.
+  startEl.querySelectorAll('[data-go]').forEach(tile => tile.addEventListener('click', () => {
+    state.start = false; state.screen = tile.dataset.go; render(); renderWake();
+  }));
+  startEl.querySelector('.start-retry').addEventListener('click', () => wake());
+  setInterval(() => { if (state.start) renderStart(); }, 15000);
+
+  klimaReady = true;
+
+  /* ---------- Wybudzenie ---------- */
+  const wakeEl = root.querySelector('.wake');
+  let wakeTimers = [];
+  const renderWake = () => {
+    const bad = link.phase === 'error';
+    // Ekran startowy nie pokazuje stanu sterowania, więc nakładka go nie zasłania.
+    wakeEl.hidden = link.phase === 'ready' || state.start;
+    wakeEl.classList.toggle('is-error', bad);
+    wakeEl.querySelector('h1').textContent = bad ? 'Brak połączenia z domem' : 'Łączenie z domem';
+    wakeEl.querySelector('p').textContent = bad
+      ? 'Nie pokazuję zapamiętanego stanu. Spróbuj ponownie.'
+      : 'Pobieram aktualny stan TV i Z906';
+    wakeEl.querySelector('.wake-retry').hidden = !bad;
+    wakeEl.querySelectorAll('[data-step]').forEach(li => {
+      const i = Number(li.dataset.step);
+      li.classList.toggle('is-done', i < link.step);
+      li.classList.toggle('is-now', !bad && i === link.step);
+      li.classList.toggle('is-bad', bad && i === link.step);
+    });
+    setIcon(wakeEl.querySelector('.wake-mark'), bad ? 'wifi-off' : 'house');
+  };
+  const wake = (fail = false) => {
+    wakeTimers.forEach(clearTimeout);
+    wakeTimers = [];
+    const at = (ms, fn) => wakeTimers.push(setTimeout(() => { fn(); renderWake(); render(); }, ms));
+    link.phase = 'connecting'; link.step = 0; state.start = true; render(); renderWake();
+    at(600, () => { link.step = 1; });
+    if (fail) { at(3000, () => { link.phase = 'error'; }); return; }
+    at(1300, () => { link.step = 2; });
+    at(2300, () => { link.phase = 'ready'; });
+  };
+  wakeEl.querySelector('.wake-retry').addEventListener('click', () => wake());
+
+  lab.querySelectorAll('[data-lab]').forEach(button => button.addEventListener('click', () => {
+    const what = button.dataset.lab;
+    if (what === 'wake') wake();
+    else if (what === 'fail') wake(true);
+    else if (what === 'reject') link.reject = !link.reject;
+    else if (what === 'pixel') button.setAttribute('aria-pressed', String(root.querySelector('.tabbar').classList.toggle('is-pixel')));
+    else link[what] = !link[what];
+    render();
+  }));
+
+  render();
+  icons();
+  wake();
+})();
+</script>
+</body>
+</html>

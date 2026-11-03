@@ -1,0 +1,138 @@
+#pragma once
+
+// Obraz stanu urządzeń tak, jak opisuje go kontrakt MQTT v1
+// (docs/architecture/mqtt-contract.md, temat `state`).
+//
+// Składa go `application::LiveSource` z klientów transportu: każdy dostarcza
+// wyłącznie sekcję swojego urządzenia.
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+
+#include "core/text.hpp"
+
+namespace domain {
+
+// Pilot nigdy nie zgaduje stanu zasilania: brak świeżej informacji to `Unknown`.
+enum class Power : uint8_t { Unknown, Off, On };
+
+using Label = core::Text<28>;
+
+inline constexpr std::size_t kMaxOptions = 8;
+
+// Lista opcji przychodzi w snapshocie; firmware nie zaszywa nazw na stałe.
+class OptionList {
+public:
+    void clear() { count_ = 0; }
+
+    void add(const char* value) {
+        if (count_ >= kMaxOptions) {
+            return;
+        }
+        items_[count_].assign(value);
+        ++count_;
+    }
+
+    std::size_t size() const { return count_; }
+    bool empty() const { return count_ == 0; }
+    const Label& operator[](std::size_t index) const { return items_[index]; }
+
+private:
+    std::array<Label, kMaxOptions> items_{};
+    std::size_t count_ = 0;
+};
+
+struct TvState {
+    bool available = false;
+    Power power = Power::Unknown;
+    Label label;
+    Label source;
+    OptionList source_options;
+    Label picture_mode;
+    OptionList picture_mode_options;
+    // Identyfikatory opcji w tej samej kolejności co listy wyżej: `hdmi1`,
+    // `livetv`, `dolbyHdrCinema`. Nazwy zależą od TV i języka, polecenie idzie
+    // po identyfikatorze (ADR 0008). Puste, gdy źródło nie rozróżnia jednych od drugich.
+    OptionList source_ids;
+    OptionList picture_mode_ids;
+};
+
+struct Z906State {
+    bool available = false;
+    Power power = Power::Unknown;
+    bool muted = false;
+    uint8_t volume_percent = 0;
+    Label source;                 // jedna z `z906_sources()` (domain/z906_options.hpp)
+    uint8_t center_percent = 0;
+    uint8_t subwoofer_percent = 0;
+    uint8_t rear_percent = 0;
+    Label effect;                 // jedna z `z906_effects()`
+    bool decode_5_1 = false;
+};
+
+// Bundle id aplikacji Apple TV. Bywa dłuższy niż etykieta, np. `com.google.ios.youtube`.
+using AppId = core::Text<64>;
+
+struct AppleTvApp {
+    AppId id;
+    Label label;   // nazwa z `source_list`, wyłącznie do wyświetlania
+};
+
+// Sekcja `appletv` kontraktu v1 (ADR 0007). Aplikację identyfikuje bundle id,
+// bo nazwy zależą od wersji aplikacji i języka systemu.
+struct AppleTvState {
+    bool available = false;
+    Power power = Power::Unknown;
+    AppId app_id;   // pusty na ekranie głównym i w uśpieniu
+    std::array<AppleTvApp, kMaxOptions> apps{};
+    std::size_t app_count = 0;
+    bool keyboard_active = false;
+
+    bool has_app(const char* id) const {
+        for (std::size_t i = 0; i < app_count; ++i) {
+            if (apps[i].id == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+// Klimatyzacja — encja `climate` w Home Assistancie. Tryby i opcje to
+// identyfikatory HA (`cool`, `medlow`, `Full`), nazwy do pokazania dobiera ekran.
+// Temperatury w dziesiątych częściach stopnia, żeby krok 0,5 nie wymagał liczb
+// zmiennoprzecinkowych. Zakres i krok przychodzą z encji (`min_temp`, `max_temp`,
+// `target_temp_step`), nie są zaszyte w firmware.
+struct ClimateState {
+    bool available = false;
+    Label hvac_mode;              // `off`, gdy wyłączona
+    OptionList hvac_modes;
+    int16_t target_tenths = 0;
+    int16_t current_tenths = 0;
+    bool has_current = false;     // czujnik w pokoju bywa niedostępny osobno
+    int16_t min_tenths = 160;
+    int16_t max_tenths = 300;
+    int16_t step_tenths = 5;
+    Label fan_mode;
+    OptionList fan_modes;
+    Label swing_mode;             // żaluzje w pionie
+    OptionList swing_modes;
+    Label swing_horizontal_mode;  // żaluzje w poziomie
+    OptionList swing_horizontal_modes;
+
+    bool is_on() const { return !hvac_mode.empty() && hvac_mode != "off"; }
+    // Temperatura docelowa nie działa po wyłączeniu ani w trybie samego nawiewu.
+    bool uses_target() const { return is_on() && hvac_mode != "fan_only"; }
+};
+
+struct DeviceSnapshot {
+    // Pilot ignoruje snapshot o rewizji nie większej niż ostatnio przetworzona.
+    uint32_t revision = 0;
+    TvState tv;
+    Z906State z906;
+    AppleTvState appletv;
+    ClimateState climate;
+};
+
+}  // namespace domain

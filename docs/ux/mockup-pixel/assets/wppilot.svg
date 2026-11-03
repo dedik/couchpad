@@ -1,0 +1,8 @@
+<!-- ZNAK ZASTĘPCZY. Oficjalnego pliku WP Pilot nie znaleziono w czystej postaci.
+     Do podmiany na prawdziwy logotyp przed jakimkolwiek użyciem poza makietą. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
+  <title>WP Pilot (znak zastępczy)</title>
+  <rect x="1.5" y="4" width="21" height="16" rx="4.5" fill="none" stroke="#C9CFDA" stroke-width="1.6"/>
+  <text x="12" y="15.4" text-anchor="middle" fill="#C9CFDA"
+        font-family="system-ui, -apple-system, sans-serif" font-size="7.4" font-weight="700" letter-spacing=".04em">wp</text>
+</svg>
