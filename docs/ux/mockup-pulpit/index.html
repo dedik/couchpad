@@ -175,7 +175,7 @@
           <div class="list">
             <button class="list-row" type="button"><i data-lucide="wifi" aria-hidden="true"></i><span><b>Wi-Fi</b><em>Połączono · ESP32-C6</em></span><var>-58 dBm</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
             <button class="list-row" type="button"><i data-lucide="radio" aria-hidden="true"></i><span><b>MQTT</b><em>multimedia_remote/v1</em></span><var>online</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-            <button class="list-row" type="button"><i data-lucide="sun" aria-hidden="true"></i><span><b>Jasność</b><em>automatyczna po zmroku</em></span><var>72%</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+            <button class="list-row" type="button" data-open="ekran"><i data-lucide="sun" aria-hidden="true"></i><span><b>Ekran</b><em>styl, jasność, wygaszanie</em></span><var class="theme-now">ciemny</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
             <button class="list-row" type="button"><i data-lucide="moon" aria-hidden="true"></i><span><b>Uśpienie</b><em>po 45 s bezczynności</em></span><var>45 s</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
             <button class="list-row" type="button"><i data-lucide="activity" aria-hidden="true"></i><span><b>Diagnostyka</b><em>logi, metryki, ostatnie polecenie</em></span><var></var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
             <button class="list-row" type="button"><i data-lucide="info" aria-hidden="true"></i><span><b>O urządzeniu</b><em>Guition JC4880P443C</em></span><var>v0.1</var><i data-lucide="chevron-right" aria-hidden="true"></i></button>
@@ -263,6 +263,61 @@
         </div>
       </section>
 
+
+      <!-- Podstrona „Ekran” z ustawień pilota (screen_device.cpp). Styl: ciemny, jasny albo
+           wg godzin — ciemny w wybranym oknie, jasny poza nim (Pref::ThemeMode, ThemeHours). -->
+      <section class="page" data-page="ekran" aria-label="Ekran" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-ekran aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title">Ekran</b><span class="page-room">USTAWIENIA</span></div>
+          </div>
+        </header>
+        <div class="page-body">
+          <p class="cap">Styl</p>
+          <div class="group">
+            <i data-lucide="image" aria-hidden="true"></i>
+            <div class="seg" data-pref="theme" role="group" aria-label="Styl">
+              <button class="seg-item" type="button" data-value="dark">ciemny</button>
+              <button class="seg-item" type="button" data-value="light">jasny</button>
+              <button class="seg-item" type="button" data-value="auto">wg godzin</button>
+            </div>
+          </div>
+          <p class="cap theme-hours">Styl ciemny w godzinach</p>
+          <div class="group theme-hours">
+            <i data-lucide="clock" aria-hidden="true"></i>
+            <div class="seg" data-pref="hours" role="group" aria-label="Godziny stylu ciemnego">
+              <button class="seg-item" type="button" data-value="17-7">17–7</button>
+              <button class="seg-item" type="button" data-value="18-8">18–8</button>
+              <button class="seg-item" type="button" data-value="19-7">19–7</button>
+              <button class="seg-item" type="button" data-value="21-7">21–7</button>
+            </div>
+          </div>
+          <p class="cap">Jasność</p>
+          <div class="group">
+            <i data-lucide="eye" aria-hidden="true"></i>
+            <div class="seg" data-pref="bright" role="group" aria-label="Jasność">
+              <button class="seg-item" type="button" data-value="20">20%</button>
+              <button class="seg-item" type="button" data-value="40">40%</button>
+              <button class="seg-item" type="button" data-value="60">60%</button>
+              <button class="seg-item" type="button" data-value="80">80%</button>
+              <button class="seg-item" type="button" data-value="100">100%</button>
+            </div>
+          </div>
+          <p class="cap">Wygaszanie po bezczynności</p>
+          <div class="group">
+            <i data-lucide="power" aria-hidden="true"></i>
+            <div class="seg" data-pref="sleep" role="group" aria-label="Wygaszanie">
+              <button class="seg-item" type="button" data-value="15">15 s</button>
+              <button class="seg-item" type="button" data-value="30">30 s</button>
+              <button class="seg-item" type="button" data-value="60">1 min</button>
+              <button class="seg-item" type="button" data-value="120">2 min</button>
+              <button class="seg-item" type="button" data-value="0">nigdy</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Lista wyboru opcji klimatyzacji (moc nawiewu, żaluzje). Zaznaczenie przesuwa dopiero snapshot. -->
       <div class="scrim picker-scrim" hidden></div>
       <section class="sheet picker" role="dialog" aria-modal="true" aria-label="Wybór opcji" hidden>
@@ -307,6 +362,13 @@
     <button type="button" data-lab="reject" aria-pressed="false">Brak potwierdzenia akcji</button>
     <button type="button" data-lab="posters" aria-pressed="false">Plakaty jeszcze się ładują</button>
     <button type="button" data-lab="pixel" aria-pressed="true">Ikony zakładek: pixel art</button>
+    <p class="cap lab-sep">Styl (skrót)</p>
+    <button type="button" data-theme-lab="dark">Ciemny</button>
+    <button type="button" data-theme-lab="light">Jasny</button>
+    <button type="button" data-theme-lab="auto">Wg godzin</button>
+    <label class="lab-hour">Udawana godzina: <b class="lab-hour-value">teraz</b>
+      <input type="range" min="0" max="23" step="1" class="lab-hour-input" aria-label="Udawana godzina">
+    </label>
     <p class="lab-note">Panel nie należy do produktu. Ekran obok ma rzeczywiste 480 × 800 px, więc rozmiary celów dotyku są tu mierzalne 1 : 1.</p>
   </div>
 </div>
@@ -914,7 +976,7 @@
   }
   function renderStart() {
     startEl.hidden = !state.start;
-    const now = new Date();
+    const now = globalThis.pilotNow?.() ?? new Date();
     startEl.querySelector('.start-time').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
     startEl.querySelector('.start-date').textContent = `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} · SALON`;
     // Pogoda udawana: `partlycloudy` w nocy to księżyc za chmurą (pole `night` z HA, ADR 0011).
@@ -991,6 +1053,59 @@
   render();
   icons();
   wake();
+})();
+</script>
+<script>
+// Styl jasny/ciemny — odpowiednik effective_theme() i theme::apply() w firmware.
+(() => {
+  const screen = document.getElementById('screen');
+  const page = screen.querySelector('[data-page="ekran"]');
+  const lab = document.querySelector('.lab-panel');
+  const pref = { theme: 'dark', hours: '18-8', bright: '100', sleep: '30' };
+  let fakeHour = null;  // null = prawdziwa godzina
+
+  globalThis.pilotNow = () => {
+    const now = new Date();
+    if (fakeHour !== null) now.setHours(fakeHour, 0);
+    return now;
+  };
+
+  function effective() {
+    if (pref.theme !== 'auto') return pref.theme;
+    const [from, to] = pref.hours.split('-').map(Number);
+    const hour = globalThis.pilotNow().getHours();
+    return hour >= from || hour < to ? 'dark' : 'light';
+  }
+
+  function render() {
+    const mode = effective();
+    screen.dataset.theme = mode;
+    page.querySelectorAll('[data-pref]').forEach(seg => seg.querySelectorAll('.seg-item').forEach(item =>
+      item.classList.toggle('is-sel', item.dataset.value === pref[seg.dataset.pref])));
+    page.querySelectorAll('.theme-hours').forEach(el => { el.hidden = pref.theme !== 'auto'; });
+    const label = { dark: 'ciemny', light: 'jasny' }[mode];
+    screen.querySelector('.theme-now').textContent = pref.theme === 'auto' ? `wg godzin · ${label}` : label;
+    lab.querySelectorAll('[data-theme-lab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeLab === pref.theme)));
+    const now = globalThis.pilotNow();
+    lab.querySelector('.lab-hour-value').textContent = fakeHour === null ? `teraz (${now.getHours()}:00)` : `${fakeHour}:00`;
+    const clock = screen.querySelector('.start-time');
+    if (clock) clock.textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+  }
+
+  screen.querySelector('[data-open="ekran"]').addEventListener('click', () => { page.hidden = false; render(); });
+  page.querySelector('[data-back-ekran]').addEventListener('click', () => { page.hidden = true; });
+  page.querySelectorAll('[data-pref]').forEach(seg => seg.addEventListener('click', event => {
+    const item = event.target.closest('.seg-item');
+    if (!item) return;
+    pref[seg.dataset.pref] = item.dataset.value;
+    render();
+  }));
+  lab.querySelectorAll('[data-theme-lab]').forEach(b => b.addEventListener('click', () => { pref.theme = b.dataset.themeLab; render(); }));
+  const hour = lab.querySelector('.lab-hour-input');
+  hour.value = new Date().getHours();
+  hour.addEventListener('input', () => { fakeHour = Number(hour.value); render(); });
+  setInterval(render, 1000);  // jak on_tick: granica godziny przełącza styl sama
+  render();
 })();
 </script>
 </body>

@@ -35,6 +35,9 @@ TAB_Y = 760
 # Budzenie: na ekranie startowym w tym miejscu jest napis o połączeniu, na pozostałych
 # zakładka Głośniki. Ani jedno, ani drugie niczego nie przełącza w domu.
 WAKE = (240, 760)
+# Ekran startowy (ADR 0010) leży nad zakładkami. Kafelek Telewizor tylko go zamyka
+# i pokazuje ekran TV — niczego nie wysyła.
+START_TILE_TV = (120, 300)
 
 # Zrzuty do README. Pilot po wybudzeniu pokazuje ekran startowy (ADR 0010), więc
 # `tour` najlepiej uruchomić, gdy ekran jest wygaszony.
@@ -148,6 +151,9 @@ def main() -> int:
             remote.tap(*WAKE)
             time.sleep(3)  # świeży stan po wybudzeniu (ADR 0005)
             for name, tab in TOUR:
+                if tab is not None and name == TOUR[1][0]:
+                    remote.tap(*START_TILE_TV)
+                    time.sleep(1.2)
                 if tab is not None:
                     remote.tap(TABS[tab], TAB_Y)
                     time.sleep(1.2)  # animacja przejścia

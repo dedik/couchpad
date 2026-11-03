@@ -17,6 +17,18 @@ two seconds and reacts immediately.
 | **Apple TV keyboard — QWERTY** | **Apple TV keyboard — Apple TV layout** | |
 | ![QWERTY keyboard](docs/screenshots/07-keyboard-qwerty.png) | ![Apple TV layout keyboard](docs/screenshots/08-keyboard-alt.png) | |
 
+### Light theme
+
+The same interface in the light theme — permanently, or during the day when the theme follows the clock.
+
+![All screens — light theme](docs/screenshots/overview-light.png)
+
+| Keyboard — QWERTY | Keyboard — Apple TV layout |
+| --- | --- |
+| ![QWERTY keyboard, light theme](docs/screenshots/light/07-keyboard-qwerty.png) | ![Apple TV layout keyboard, light theme](docs/screenshots/light/08-keyboard-alt.png) |
+
+Individual light-theme screens are in [`docs/screenshots/light/`](docs/screenshots/light/).
+
 The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
 
 ## What it does
@@ -38,7 +50,10 @@ The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
   effect, Decode 5.1 indicator.
 - **Home** — air conditioner (mode, temperature, fan, swing) and scenes.
 - **Start screen** after wake-up — clock, weather and the state of every device.
-- **Settings on the device** — Wi-Fi, MQTT broker, screen, sound limit, room and time zone,
+- **Light and dark theme** — chosen in the settings: fixed or by hours (dark from 18 to 8 by
+  default). Switches at runtime, without a restart
+  ([ADR 0012](docs/architecture/adr/0012-light-and-dark-theme.en.md)).
+- **Settings on the device** — Wi-Fi, MQTT broker, screen and theme, sound limit, room and time zone,
   keyboard and trackpad, diagnostics. Credentials are entered on the panel and kept in its
   NVS, never in the repository.
 
@@ -99,6 +114,7 @@ Open **Settings** (gear tab):
    `multimedia_remote/v1/<identifier>`), the Z906 controller id (`z906_<mac>`) and the
    Glasshouse topic prefix.
 3. **Room and time** — room name shown in headers, time zone.
+4. **Display** (optional) — dark, light or by-hours theme, brightness, screen timeout.
 
 Create a separate MQTT user for the remote.
 

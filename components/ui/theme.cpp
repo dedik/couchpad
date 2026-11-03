@@ -1,5 +1,10 @@
 #include "ui/theme.hpp"
 
+#include <cstddef>
+#include <initializer_list>
+
+#include "lvgl_private.h"
+
 extern "C" {
 LV_FONT_DECLARE(ubuntu_r_11)
 LV_FONT_DECLARE(ubuntu_r_13)
@@ -17,8 +22,99 @@ LV_FONT_DECLARE(ubuntu_b_64_num)
 namespace ui::theme {
 namespace {
 
+// Wartości ciemnej palety pochodzą z pulpit.css. Jasna ma te same role i zachowuje
+// kontrast tekstu: akcent, zieleń i czerwień są ciemniejsze, bo leżą na bieli.
+// Żadne dwie role jednej palety nie mają tego samego koloru — `apply()` rozpoznaje
+// rolę po wartości.
+const Palette kDark = {
+    .bg = lv_color_hex(0x0a0b0e),
+    .surface = lv_color_hex(0x14161b),
+    .surface2 = lv_color_hex(0x1c1f26),
+    .surface3 = lv_color_hex(0x282c35),
+    .line = lv_color_hex(0x30353f),
+    .text = lv_color_hex(0xf3f5f9),
+    .dim = lv_color_hex(0x98a0ae),
+    .faint = lv_color_hex(0x626a78),
+    .accent = lv_color_hex(0xf2a93b),
+    .accent_pressed = lv_color_hex(0xf4b25a),
+    .accent_ink = lv_color_hex(0x17120a),
+    .ok = lv_color_hex(0x56d6a0),
+    .danger = lv_color_hex(0xff5f5f),
+};
+
+const Palette kLight = {
+    .bg = lv_color_hex(0xeef0f3),
+    .surface = lv_color_hex(0xffffff),
+    .surface2 = lv_color_hex(0xe4e7ec),
+    .surface3 = lv_color_hex(0xcfd4dc),
+    .line = lv_color_hex(0xd9dde4),
+    .text = lv_color_hex(0x15171c),
+    .dim = lv_color_hex(0x586070),
+    .faint = lv_color_hex(0x878f9d),
+    .accent = lv_color_hex(0xe08a12),
+    .accent_pressed = lv_color_hex(0xb86f0a),
+    .accent_ink = lv_color_hex(0x1a1206),
+    .ok = lv_color_hex(0x1c9a68),
+    .danger = lv_color_hex(0xe03a3a),
+};
+
+constexpr std::size_t kRoles = sizeof(Palette) / sizeof(lv_color_t);
+static_assert(sizeof(Palette) == kRoles * sizeof(lv_color_t), "paleta to same kolory");
+
+// Właściwości stylu niosące kolor. Wszystkie, których używa LVGL 9.2.
+constexpr lv_style_prop_t kColorProps[] = {
+    LV_STYLE_BG_COLOR,     LV_STYLE_BG_GRAD_COLOR, LV_STYLE_BG_IMAGE_RECOLOR,
+    LV_STYLE_BORDER_COLOR, LV_STYLE_OUTLINE_COLOR, LV_STYLE_SHADOW_COLOR,
+    LV_STYLE_IMAGE_RECOLOR, LV_STYLE_LINE_COLOR,   LV_STYLE_ARC_COLOR,
+    LV_STYLE_TEXT_COLOR,
+};
+
+Mode g_mode = Mode::Dark;
+const Palette* g_palette = &kDark;
+
 Styles g_styles;
 bool g_ready = false;
+
+const lv_color_t* roles(const Palette& palette) {
+    return reinterpret_cast<const lv_color_t*>(&palette);
+}
+
+// Zamienia w stylu każdy kolor roli ze starej palety na tę samą rolę z nowej.
+// Kolory spoza palety (czerń zasłony, obrazy) zostają.
+void remap(lv_style_t* style, const Palette& from, const Palette& to) {
+    const lv_color_t* old_roles = roles(from);
+    const lv_color_t* new_roles = roles(to);
+    for (lv_style_prop_t prop : kColorProps) {
+        lv_style_value_t value;
+        if (lv_style_get_prop(style, prop, &value) != LV_STYLE_RES_FOUND) {
+            continue;
+        }
+        for (std::size_t i = 0; i < kRoles; ++i) {
+            if (lv_color_eq(value.color, old_roles[i])) {
+                value.color = new_roles[i];
+                lv_style_set_prop(style, prop, value);
+                break;
+            }
+        }
+    }
+}
+
+struct RemapWalk {
+    const Palette* from;
+    const Palette* to;
+};
+
+// Style wspólne poprawia `apply()` raz; tu tylko lokalne, których każdy obiekt ma własne.
+lv_obj_tree_walk_res_t remap_object(lv_obj_t* obj, void* raw) {
+    const auto& walk = *static_cast<RemapWalk*>(raw);
+    for (uint32_t i = 0; i < obj->style_cnt; ++i) {
+        lv_obj_style_t& entry = obj->styles[i];
+        if (entry.is_local) {
+            remap(const_cast<lv_style_t*>(entry.style), *walk.from, *walk.to);
+        }
+    }
+    return LV_OBJ_TREE_WALK_NEXT;
+}
 
 // Kroje klawiatury: Ubuntu z zapasowym Montserratem, żeby ⇧ i ⌫ (symbole LVGL)
 // mogły leżeć w tej samej macierzy co litery. Kopie, bo wygenerowane kroje są stałe.
@@ -55,6 +151,33 @@ const lv_font_t* font_icon_sm() { return &lv_font_montserrat_20; }
 const lv_font_t* font_icon_xs() { return &lv_font_montserrat_14; }
 
 const Styles& styles() { return g_styles; }
+const Palette& palette() { return *g_palette; }
+Mode mode() { return g_mode; }
+
+void apply(Mode mode) {
+    if (mode == g_mode) {
+        return;
+    }
+    const Palette& from = *g_palette;
+    const Palette& to = mode == Mode::Light ? kLight : kDark;
+    g_mode = mode;
+    g_palette = &to;
+    if (!g_ready) {
+        return;  // style powstaną już z nowej palety
+    }
+
+    lv_style_t* shared = reinterpret_cast<lv_style_t*>(&g_styles);
+    for (std::size_t i = 0; i < sizeof(Styles) / sizeof(lv_style_t); ++i) {
+        remap(&shared[i], from, to);
+    }
+    RemapWalk walk{&from, &to};
+    for (lv_obj_t* root : {lv_layer_bottom(), lv_screen_active(), lv_layer_top(), lv_layer_sys()}) {
+        if (root != nullptr) {
+            lv_obj_tree_walk(root, &remap_object, &walk);
+        }
+    }
+    lv_obj_report_style_change(nullptr);
+}
 
 void init() {
     if (g_ready) {

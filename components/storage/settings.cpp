@@ -45,6 +45,8 @@ constexpr PrefSpec kPrefs[] = {
     {"tz", 0},         // Pref::TimeZone — Polska
     {"pad_step", 26},  // Pref::TrackpadStep
     {"kb_auto", 1},    // Pref::KeyboardAutoOpen
+    {"theme", 0},      // Pref::ThemeMode — ciemny, jak przed jasnym stylem
+    {"theme_hrs", 1},  // Pref::ThemeHours — ciemny od 18 do 8
 };
 static_assert(sizeof(kPrefs) / sizeof(kPrefs[0]) == static_cast<std::size_t>(Pref::Count),
               "kazda preferencja potrzebuje klucza i wartosci domyslnej");

@@ -219,6 +219,7 @@ Tiles make_tiles(lv_obj_t* parent, const TileSpec* specs, std::size_t count, int
                               LV_FLEX_ALIGN_CENTER);
 
         if (specs[i].image != nullptr) {
+            lv_obj_set_style_bg_color(tile, theme::logo_plate(), LV_PART_MAIN);
             lv_obj_t* image = lv_image_create(tile);
             lv_image_set_src(image, specs[i].image);
         } else if (specs[i].symbol != nullptr) {
