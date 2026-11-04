@@ -276,22 +276,9 @@ void init() {
     lv_style_set_pad_hor(&g_styles.list_row, kS4);
     lv_style_set_pad_gap(&g_styles.list_row, kS3);
 
-    // Polecenia chwilowe nie mają stanu do potwierdzenia, więc jedyną odpowiedzią
-    // na dotknięcie jest ten odzew.
-    reset_box(&g_styles.pressed_soft);
-    lv_style_set_bg_opa(&g_styles.pressed_soft, kAccentSoftOpa);
-    lv_style_set_bg_color(&g_styles.pressed_soft, accent());
-    lv_style_set_text_color(&g_styles.pressed_soft, accent());
-
-    // Czeka na snapshot — obwódka w kolorze akcentu.
-    reset_box(&g_styles.pending);
-    lv_style_set_outline_width(&g_styles.pending, 3);
-    lv_style_set_outline_color(&g_styles.pending, accent());
-    lv_style_set_outline_opa(&g_styles.pending, kAccentSoftOpa + 60);
-    lv_style_set_outline_pad(&g_styles.pending, 0);
-
-    // Brak potwierdzenia — obwódka w kolorze błędu.
-    reset_box(&g_styles.failed);
+    // Brak potwierdzenia — obwódka w kolorze błędu. Bez reset_box: styl dokładany
+    // na wierzch nie może zerować promienia ani wypełnienia elementu.
+    lv_style_init(&g_styles.failed);
     lv_style_set_outline_width(&g_styles.failed, 2);
     lv_style_set_outline_color(&g_styles.failed, danger());
     lv_style_set_outline_opa(&g_styles.failed, LV_OPA_COVER);

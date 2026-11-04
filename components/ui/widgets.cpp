@@ -118,7 +118,6 @@ Segmented make_segmented(lv_obj_t* parent, const char* leading_symbol, std::size
         lv_obj_t* item = lv_button_create(segmented.box);
         lv_obj_remove_style_all(item);
         lv_obj_add_style(item, &styles().seg_item, LV_PART_MAIN);
-        lv_obj_add_style(item, &styles().pressed_soft, LV_STATE_PRESSED);
         lv_obj_set_height(item, kSegItemHeight);
         lv_obj_set_flex_grow(item, 1);
         lv_obj_set_flex_flow(item, LV_FLEX_FLOW_ROW);
@@ -211,7 +210,6 @@ Tiles make_tiles(lv_obj_t* parent, const TileSpec* specs, std::size_t count, int
         lv_obj_t* tile = lv_button_create(tiles.root);
         lv_obj_remove_style_all(tile);
         lv_obj_add_style(tile, &styles().tile, LV_PART_MAIN);
-        lv_obj_add_style(tile, &styles().pressed_soft, LV_STATE_PRESSED);
         lv_obj_set_grid_cell(tile, LV_GRID_ALIGN_STRETCH, static_cast<int32_t>(i) % columns, 1,
                              LV_GRID_ALIGN_STRETCH, static_cast<int32_t>(i) / columns, 1);
         lv_obj_set_flex_flow(tile, LV_FLEX_FLOW_COLUMN);
@@ -257,7 +255,6 @@ lv_obj_t* make_action(lv_obj_t* parent, const char* symbol, const char* text, bo
     if (primary) {
         lv_obj_add_style(button, &styles().act_primary, LV_PART_MAIN);
     } else {
-        lv_obj_add_style(button, &styles().pressed_soft, LV_STATE_PRESSED);
     }
     lv_obj_set_flex_flow(button,
                          layout == ActionLayout::Stacked ? LV_FLEX_FLOW_COLUMN : LV_FLEX_FLOW_ROW);
@@ -376,7 +373,6 @@ ListRow make_list_row(lv_obj_t* parent, const char* symbol, const char* title, c
     row.root = lv_button_create(parent);
     lv_obj_remove_style_all(row.root);
     lv_obj_add_style(row.root, &styles().list_row, LV_PART_MAIN);
-    lv_obj_add_style(row.root, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_width(row.root, LV_PCT(100));
     lv_obj_set_height(row.root, 76);
     theme::make_row(row.root, theme::kS3);
@@ -598,7 +594,6 @@ Page make_page(const char* title, PlainHandler on_back, void* context) {
     lv_obj_set_style_bg_opa(back, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(back, theme::surface(), LV_PART_MAIN);
     lv_obj_set_style_text_color(back, theme::dim(), LV_PART_MAIN);
-    lv_obj_add_style(back, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_flex_flow(back, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(back, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     inherited_icon(back, LV_SYMBOL_LEFT);
@@ -761,11 +756,8 @@ void dismiss_confirm() {
 // ============================= narzędzia =============================
 
 void set_status_outline(lv_obj_t* obj, domain::ControlStatus status) {
-    lv_obj_remove_style(obj, &styles().pending, LV_PART_MAIN);
     lv_obj_remove_style(obj, &styles().failed, LV_PART_MAIN);
-    if (status == domain::ControlStatus::Pending) {
-        lv_obj_add_style(obj, &styles().pending, LV_PART_MAIN);
-    } else if (status == domain::ControlStatus::Failed) {
+    if (status == domain::ControlStatus::Failed) {
         lv_obj_add_style(obj, &styles().failed, LV_PART_MAIN);
     }
 }

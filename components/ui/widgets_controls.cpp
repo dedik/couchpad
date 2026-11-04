@@ -277,7 +277,6 @@ lv_obj_t* thermo_step_button(lv_obj_t* parent, const char* symbol, int32_t side)
     lv_obj_set_style_border_width(button, 1, LV_PART_MAIN);
     lv_obj_set_style_border_color(button, theme::line(), LV_PART_MAIN);
     lv_obj_set_style_text_color(button, theme::text(), LV_PART_MAIN);
-    lv_obj_add_style(button, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_flex_flow(button, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(button, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     inherited_icon(button, symbol);

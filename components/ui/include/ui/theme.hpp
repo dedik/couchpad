@@ -136,8 +136,6 @@ struct Styles {
     lv_style_t act;           // .act
     lv_style_t act_primary;   // .act.is-primary
     lv_style_t list_row;      // .list-row
-    lv_style_t pressed_soft;  // odzew dotyku dla przycisków bez stanu
-    lv_style_t pending;       // czeka na snapshot
     lv_style_t failed;        // brak potwierdzenia
     lv_style_t cap;           // etykieta sekcji, wersaliki
 };

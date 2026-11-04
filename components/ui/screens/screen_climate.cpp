@@ -181,7 +181,6 @@ ClimateScreen::Option make_option(lv_obj_t* row, const char* caption, lv_event_c
     option.root = lv_button_create(row);
     lv_obj_remove_style_all(option.root);
     lv_obj_add_style(option.root, &theme::styles().tile, LV_PART_MAIN);
-    lv_obj_add_style(option.root, &theme::styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_height(option.root, kOptionHeight);
     lv_obj_set_width(option.root, 0);
     lv_obj_set_flex_grow(option.root, 1);
@@ -438,7 +437,6 @@ void build_climate_tile(Context& context, lv_obj_t* parent) {
     screen.tile = lv_button_create(parent);
     lv_obj_remove_style_all(screen.tile);
     lv_obj_add_style(screen.tile, &theme::styles().tile, LV_PART_MAIN);
-    lv_obj_add_style(screen.tile, &theme::styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_size(screen.tile, LV_PCT(100), kTileHeight);
     lv_obj_set_style_radius(screen.tile, theme::kR4, LV_PART_MAIN);
     lv_obj_set_style_pad_hor(screen.tile, theme::kS5, LV_PART_MAIN);
