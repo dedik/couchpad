@@ -26,11 +26,14 @@ void wake(Context& context) {
     }
     context.asleep = false;
     lv_obj_add_flag(context.sleep_blocker, LV_OBJ_FLAG_HIDDEN);
+    // ADR 0010: wybudzenie zawsze wraca na ekran startowy, a stan dociera w tle.
+    // Klatka rysuje się, zanim zapali się podświetlenie — panel trzyma ostatni
+    // obraz, więc inaczej na chwilę mignąłby ekran sprzed uśpienia.
+    show_start(context, true);
+    lv_refr_now(nullptr);
     if (context.display_power != nullptr) {
         context.display_power(true);
     }
-    // ADR 0010: wybudzenie zawsze wraca na ekran startowy, a stan dociera w tle.
-    show_start(context, true);
 
     domain::UiIntent refresh;
     refresh.kind = domain::IntentKind::RequestSync;
@@ -42,6 +45,10 @@ void doze(Context& context) {
         return;
     }
     context.asleep = true;
+    // Ekran startowy rysuje się już w ciemności, żeby pobudka nie czekała na pełną
+    // klatkę. Wchodzi przed warstwą snu — obie leżą w lv_layer_sys, a wierzch
+    // musi należeć do warstwy, inaczej dotyk w ciemno trafiłby w kafelek.
+    show_start(context, true);
     // Warstwa wchodzi przed zgaszeniem, żeby dotyk w ciemno nie nacisnął niczego.
     lv_obj_remove_flag(context.sleep_blocker, LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(context.sleep_blocker);
