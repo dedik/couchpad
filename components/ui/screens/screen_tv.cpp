@@ -98,7 +98,6 @@ void make_channel_row(Context& context, std::size_t index) {
     row.root = lv_button_create(context.tv.channel_page.body);
     lv_obj_remove_style_all(row.root);
     lv_obj_add_style(row.root, &theme::styles().list_row, LV_PART_MAIN);
-    lv_obj_add_style(row.root, &theme::styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_size(row.root, LV_PCT(100), 76);
     theme::make_row(row.root, theme::kS3);
 

@@ -375,7 +375,6 @@ lv_obj_t* head_chip(lv_obj_t* parent, const char* symbol) {
     lv_obj_set_style_bg_opa(chip, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(chip, theme::surface2(), LV_PART_MAIN);
     lv_obj_set_style_text_color(chip, theme::dim(), LV_PART_MAIN);
-    lv_obj_add_style(chip, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_flex_flow(chip, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(chip, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_pad_column(chip, theme::kS2, LV_PART_MAIN);
@@ -488,7 +487,6 @@ TextEditor* make_text_editor() {
     lv_obj_set_style_bg_opa(editor->reveal, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(editor->reveal, theme::surface2(), LV_PART_MAIN);
     lv_obj_set_style_text_color(editor->reveal, theme::dim(), LV_PART_MAIN);
-    lv_obj_add_style(editor->reveal, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_flex_flow(editor->reveal, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(editor->reveal, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
                           LV_FLEX_ALIGN_CENTER);

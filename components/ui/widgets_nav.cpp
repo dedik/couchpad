@@ -40,7 +40,6 @@ lv_obj_t* pad_key(lv_obj_t* parent, const char* symbol, domain::NavKey key, KeyH
     lv_obj_remove_style_all(button);
     lv_obj_set_size(button, size, size);
     lv_obj_set_style_radius(button, radius, LV_PART_MAIN);
-    lv_obj_add_style(button, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_style_text_color(button, theme::dim(), LV_PART_MAIN);
     lv_obj_set_flex_flow(button, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(button, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -150,7 +149,6 @@ lv_obj_t* rocker_key(lv_obj_t* parent, const char* symbol, bool repeat, PlainHan
     lv_obj_remove_style_all(button);
     lv_obj_set_size(button, kRockerWidth - 4, kRockerKey);
     lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_add_style(button, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_style_text_color(button, theme::dim(), LV_PART_MAIN);
     lv_obj_set_flex_flow(button, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(button, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -172,7 +170,6 @@ lv_obj_t* make_step_button(lv_obj_t* parent, const char* symbol, bool repeat,
     lv_obj_set_style_border_width(button, 1, LV_PART_MAIN);
     lv_obj_set_style_border_color(button, theme::line(), LV_PART_MAIN);
     lv_obj_set_style_text_color(button, theme::text(), LV_PART_MAIN);
-    lv_obj_add_style(button, &styles().pressed_soft, LV_STATE_PRESSED);
     lv_obj_set_flex_flow(button, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(button, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     inherited_icon(button, symbol);

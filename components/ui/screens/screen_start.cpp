@@ -346,7 +346,6 @@ void build_start(Context& context) {
         tile.root = lv_button_create(grid);
         lv_obj_remove_style_all(tile.root);
         lv_obj_add_style(tile.root, &theme::styles().tile, LV_PART_MAIN);
-        lv_obj_add_style(tile.root, &theme::styles().pressed_soft, LV_STATE_PRESSED);
         lv_obj_set_size(tile.root, kTileW, kTileH);
         lv_obj_set_style_radius(tile.root, theme::kR4, LV_PART_MAIN);
         lv_obj_set_style_pad_all(tile.root, theme::kS5, LV_PART_MAIN);
