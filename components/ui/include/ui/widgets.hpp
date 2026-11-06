@@ -54,6 +54,17 @@ Segmented make_segmented(lv_obj_t* parent, const char* leading_symbol, std::size
 // Jeden segment z bieżącą wartością w połowie rzędu (`make_duo`). Dotknięcie otwiera
 // listę wyboru — dla opcji, których jest za dużo albo mają za długie nazwy na rząd
 // segmentów (źródło i tryb obrazu TV, wejście i efekt Z906). Długą nazwę kończy wielokropek.
+// ---------- Układ poziomy (ADR 0013) ----------
+// Sekcja ekranu jako wiersz kolumn zamiast kolumny wierszy.
+void make_split(lv_obj_t* section, int32_t gap);
+// Kolumna na pełną wysokość: stałej szerokości (`width` > 0) albo dzieląca resztę wiersza.
+lv_obj_t* make_pane(lv_obj_t* parent, int32_t width, int32_t gap);
+// Pusta przestrzeń w kolumnie: dopycha następne elementy do dołu.
+lv_obj_t* make_spacer(lv_obj_t* column);
+
+// Niższy segment z wartością, do 64-pikselowego wiersza nagłówka (poziom: TV, Z906).
+void make_header_segment(Segmented& segmented);
+
 Segmented make_value_segment(lv_obj_t* row, const char* leading_symbol,
                              IndexHandler on_press, void* context);
 
@@ -263,6 +274,10 @@ struct Page {
 };
 
 Page make_page(const char* title, PlainHandler on_back, void* context);
+// Poziom: lista wyboru jako panel 380 px przy prawej krawędzi nad przyciemnionym
+// ekranem (makieta docs/ux/mockup-landscape). Dotknięcie obok panelu działa jak Cofnij.
+// W pionie nic nie zmienia.
+void dock_sheet(const Page& page);
 void show_page(const Page& page, bool visible);
 
 // ---------- Pytanie o potwierdzenie ----------

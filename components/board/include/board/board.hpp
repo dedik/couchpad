@@ -11,12 +11,32 @@
 namespace board {
 
 // Natywna rozdzielczość panelu w pionie. Makieta Pulpitu jest projektowana
-// dokładnie w tych pikselach, bez skalowania.
+// dokładnie w tych pikselach, bez skalowania. To wymiary bufora ramki DPI —
+// po obrocie interfejs widzi je zamienione (`screen_width()`, `screen_height()`).
 inline constexpr int32_t kScreenWidth = 480;
 inline constexpr int32_t kScreenHeight = 800;
 
+// Orientacja interfejsu. Panel DPI nie obraca obrazu sam (brak swap_xy), więc
+// poziom to obrót w esp_lvgl_port przy każdym odświeżeniu, procesorem. PPA jest
+// wyłączone: zawieszało zadanie LVGL przy przewijaniu (ADR 0013). Dotyk GT911 przelicza LVGL
+// według obrotu ekranu. Wartości są zapisane w NVS (storage::Pref::Orientation).
+enum class Rotation : uint8_t {
+    Portrait = 0,      // natywnie, 480 x 800
+    Landscape90 = 1,   // 800 x 480, obrót o 90°
+    Landscape270 = 2,  // 800 x 480, obrót o 270° (pilot odwrócony)
+};
+
+// Wartość z NVS albo spoza zakresu daje pion.
+Rotation rotation_from(uint8_t stored);
+
 // Uruchamia MIPI-DSI, ST7701, GT911 i zadanie LVGL. Zwraca false, gdy ekran nie ruszył.
-bool start();
+// Orientację ustala się tylko tutaj: ekrany budowane są raz, pod jeden rozmiar.
+bool start(Rotation rotation = Rotation::Portrait);
+
+// Orientacja i logiczny rozmiar ekranu po obrocie (to, co widzi LVGL).
+Rotation rotation();
+int32_t screen_width();
+int32_t screen_height();
 
 // Jasność podświetlenia w procentach (LEDC na GPIO 23).
 // Ustawia i zapamiętuje jasność; `set_display_on(true)` wraca do tej wartości.

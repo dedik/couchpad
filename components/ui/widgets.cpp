@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <initializer_list>
 
 #include "core/config.hpp"
 
@@ -152,6 +153,37 @@ Segmented make_value_segment(lv_obj_t* row, const char* leading_symbol,
     lv_obj_set_width(label, LV_PCT(100));
     lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
     return segmented;
+}
+
+void make_split(lv_obj_t* section, int32_t gap) {
+    lv_obj_set_flex_flow(section, LV_FLEX_FLOW_ROW);
+    lv_obj_set_style_pad_column(section, gap, LV_PART_MAIN);
+}
+
+lv_obj_t* make_pane(lv_obj_t* parent, int32_t width, int32_t gap) {
+    lv_obj_t* pane = plain(parent);
+    lv_obj_set_height(pane, LV_PCT(100));
+    if (width > 0) {
+        lv_obj_set_width(pane, width);
+    } else {
+        lv_obj_set_flex_grow(pane, 1);
+    }
+    theme::make_column(pane, gap);
+    return pane;
+}
+
+lv_obj_t* make_spacer(lv_obj_t* column) {
+    lv_obj_t* spacer = plain(column);
+    lv_obj_set_width(spacer, LV_PCT(100));
+    lv_obj_set_flex_grow(spacer, 1);
+    return spacer;
+}
+
+void make_header_segment(Segmented& segmented) {
+    constexpr int32_t kHeaderItemH = 44;
+    lv_obj_set_height(segmented.box, kHeaderItemH + 2 * theme::kS1);
+    lv_obj_set_height(segmented.items[0], kHeaderItemH);
+    lv_obj_set_style_pad_column(segmented.root, theme::kS2, LV_PART_MAIN);
 }
 
 // ============================= kafelki =============================
@@ -400,6 +432,14 @@ ListRow make_list_row(lv_obj_t* parent, const char* symbol, const char* title, c
     lv_obj_add_style(row.note, &styles().cap, LV_PART_MAIN);
     lv_obj_set_style_text_letter_space(row.note, 0, LV_PART_MAIN);
     lv_label_set_text(row.note, note != nullptr ? note : "");
+    // Stała szerokość i jedna linia. Etykieta „wg treści” w kolumnie rozciąganej przez
+    // flex_grow zawijała się w węższym miejscu (zadokowana podstrona w poziomie), a wtedy
+    // szerokość i wysokość zależały od siebie nawzajem i LVGL przeliczał układ bez końca —
+    // pilot zawieszał się na „Pokój i czas”.
+    for (lv_obj_t* label : {row.title, row.note}) {
+        lv_obj_set_width(label, LV_PCT(100));
+        lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+    }
 
     row.value = lv_label_create(row.root);
     lv_obj_remove_style_all(row.value);
@@ -534,8 +574,14 @@ void set_unavailable(lv_obj_t* section, const Banner& banner, bool unavailable) 
 lv_obj_t* make_power_button(lv_obj_t* parent, PlainHandler on_press, void* context) {
     lv_obj_t* button = lv_button_create(parent);
     lv_obj_remove_style_all(button);
-    lv_obj_set_size(button, 64, 64);
+    // 48 px na ekranie, 64 px pod palcem (2026-11-06): pełne koło 64 px dominowało każdy
+    // nagłówek, choć to najrzadziej używany przycisk. Rodzic musi mieć co najmniej 64 px
+    // wysokości, inaczej LVGL nie dowiezie dotyku do poszerzonego pola.
+    lv_obj_set_size(button, 48, 48);
+    lv_obj_set_ext_click_area(button, 8);
     lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_border_color(button, theme::accent(), LV_PART_MAIN);
+    lv_obj_set_style_border_opa(button, 90, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(button, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(button, theme::surface2(), LV_PART_MAIN);
     lv_obj_set_flex_flow(button, LV_FLEX_FLOW_ROW);
@@ -554,9 +600,14 @@ lv_obj_t* make_power_button(lv_obj_t* parent, PlainHandler on_press, void* conte
 }
 
 void set_power_state(lv_obj_t* button, bool on, bool enabled) {
+    // Włączone: miękkie bursztynowe tło, ikona i cienka obwódka w akcencie, jak wybrany
+    // kafel. Wyłączone: neutralne tło i przygaszona ikona.
     lv_obj_set_style_bg_color(button, on ? theme::accent() : theme::surface2(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(button, on ? theme::kAccentSoftOpa : static_cast<lv_opa_t>(LV_OPA_COVER),
+                            LV_PART_MAIN);
+    lv_obj_set_style_border_width(button, on ? 1 : 0, LV_PART_MAIN);
     lv_obj_t* icon = lv_obj_get_child(button, 0);
-    lv_obj_set_style_text_color(icon, on ? theme::accent_ink() : theme::dim(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(icon, on ? theme::accent() : theme::dim(), LV_PART_MAIN);
     lv_obj_set_style_opa(button, enabled ? LV_OPA_COVER : 77, LV_PART_MAIN);
     if (enabled) {
         lv_obj_add_flag(button, LV_OBJ_FLAG_CLICKABLE);
@@ -633,6 +684,38 @@ Page make_page(const char* title, PlainHandler on_back, void* context) {
             LV_EVENT_CLICKED, callback);
     }
     return page;
+}
+
+void dock_sheet(const Page& page) {
+    if (!theme::landscape()) {
+        return;
+    }
+    constexpr int32_t kSheetWidth = 380;
+    const int32_t width = lv_display_get_horizontal_resolution(lv_display_get_default());
+    // Korzeń zostaje na cały ekran jako przyciemnienie; nagłówek i lista zajmują pas
+    // przy prawej krawędzi dzięki lewemu marginesowi wewnętrznemu.
+    lv_obj_set_style_bg_color(page.root, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(page.root, LV_OPA_50, LV_PART_MAIN);
+    lv_obj_set_style_pad_left(page.root, width - kSheetWidth, LV_PART_MAIN);
+    lv_obj_t* bar = lv_obj_get_child(page.root, 0);
+    for (lv_obj_t* part : {bar, page.body}) {
+        lv_obj_set_style_bg_opa(part, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(part, theme::surface(), LV_PART_MAIN);
+    }
+    lv_obj_set_style_pad_left(bar, theme::kS5, LV_PART_MAIN);
+    lv_obj_set_style_pad_hor(page.body, theme::kS4, LV_PART_MAIN);
+    lv_obj_set_style_pad_bottom(page.body, theme::kS4, LV_PART_MAIN);
+    // Kliknięcie w samo przyciemnienie (nie w panel) zamyka listę jak Cofnij.
+    lv_obj_t* back = lv_obj_get_child(bar, 0);
+    lv_obj_add_event_cb(
+        page.root,
+        [](lv_event_t* event) {
+            if (lv_event_get_target(event) == lv_event_get_current_target(event)) {
+                lv_obj_send_event(static_cast<lv_obj_t*>(lv_event_get_user_data(event)),
+                                  LV_EVENT_CLICKED, nullptr);
+            }
+        },
+        LV_EVENT_CLICKED, back);
 }
 
 void show_page(const Page& page, bool visible) {

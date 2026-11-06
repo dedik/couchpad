@@ -303,18 +303,49 @@ void build_start(Context& context) {
     lv_obj_set_size(screen.root, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_opa(screen.root, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(screen.root, theme::bg(), LV_PART_MAIN);
-    lv_obj_set_style_pad_hor(screen.root, theme::kGutter, LV_PART_MAIN);
-    lv_obj_set_style_pad_bottom(screen.root, theme::kS5, LV_PART_MAIN);
-    theme::make_column(screen.root, 0);
+    // Poziom (makieta docs/ux/mockup-landscape): po lewej kolumna z zegarem, pogodą
+    // i stanem łącza, po prawej kafelki 2 × 2 na całą wysokość.
+    const bool wide = theme::landscape();
+    int32_t tile_w = kTileW;
+    int32_t tile_h = kTileH;
+    lv_obj_t* info = screen.root;
+    if (wide) {
+        constexpr int32_t kInfoW = 260;
+        const int32_t width = lv_display_get_horizontal_resolution(lv_display_get_default());
+        const int32_t height = lv_display_get_vertical_resolution(lv_display_get_default());
+        lv_obj_set_style_pad_all(screen.root, theme::kS6, LV_PART_MAIN);
+        theme::make_row(screen.root, theme::kS6);
+        lv_obj_set_flex_align(screen.root, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START,
+                              LV_FLEX_ALIGN_START);
+        info = box(screen.root);
+        lv_obj_set_size(info, kInfoW, LV_PCT(100));
+        theme::make_column(info, 0);
+        tile_w = (width - 2 * theme::kS6 - kInfoW - theme::kS6 - kTileGap) / 2;
+        tile_h = (height - 2 * theme::kS6 - kTileGap) / 2;
+    } else {
+        lv_obj_set_style_pad_hor(screen.root, theme::kGutter, LV_PART_MAIN);
+        lv_obj_set_style_pad_bottom(screen.root, theme::kS5, LV_PART_MAIN);
+        theme::make_column(screen.root, 0);
+    }
 
     // Nagłówek: zegar i data z nazwą pokoju po lewej, pogoda po prawej.
-    lv_obj_t* head = box(screen.root);
-    lv_obj_set_size(head, LV_PCT(100), kHeadHeight);
-    theme::make_row(head, theme::kS3);
+    // W poziomie pogoda stoi pod zegarem.
+    lv_obj_t* head = box(info);
+    if (wide) {
+        lv_obj_set_size(head, LV_PCT(100), LV_SIZE_CONTENT);
+        theme::make_column(head, theme::kS6);
+    } else {
+        lv_obj_set_size(head, LV_PCT(100), kHeadHeight);
+        theme::make_row(head, theme::kS3);
+    }
 
     lv_obj_t* clock = box(head);
     lv_obj_set_height(clock, LV_SIZE_CONTENT);
-    lv_obj_set_flex_grow(clock, 1);
+    if (wide) {
+        lv_obj_set_width(clock, LV_PCT(100));
+    } else {
+        lv_obj_set_flex_grow(clock, 1);
+    }
     theme::make_column(clock, theme::kS2);
     screen.time = text_label(clock, theme::font_b64num(), theme::text());
     screen.date = text_label(clock, theme::font_r13(), theme::dim());
@@ -326,17 +357,31 @@ void build_start(Context& context) {
     lv_obj_t* weather_texts = box(screen.weather);
     lv_obj_set_size(weather_texts, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     theme::make_column(weather_texts, 4);
-    lv_obj_set_flex_align(weather_texts, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_END,
-                          LV_FLEX_ALIGN_END);
+    lv_obj_set_flex_align(weather_texts, LV_FLEX_ALIGN_CENTER,
+                          wide ? LV_FLEX_ALIGN_START : LV_FLEX_ALIGN_END,
+                          wide ? LV_FLEX_ALIGN_START : LV_FLEX_ALIGN_END);
     screen.weather_temp = text_label(weather_texts, theme::font_b26(), theme::text());
     screen.weather_text = text_label(weather_texts, theme::font_r13(), theme::dim());
-    lv_obj_set_style_max_width(screen.weather_text, 140, LV_PART_MAIN);
+    // Stała szerokość: przy szerokości „wg treści” LVGL liczył etykiecie z wielokropkiem
+    // zero miejsca i zamiast opisu pogody było samo „…”.
+    lv_obj_set_width(screen.weather_text, 140);
+    lv_obj_set_style_text_align(screen.weather_text, wide ? LV_TEXT_ALIGN_LEFT : LV_TEXT_ALIGN_RIGHT,
+                                LV_PART_MAIN);
     lv_label_set_long_mode(screen.weather_text, LV_LABEL_LONG_DOT);
     lv_obj_add_flag(screen.weather, LV_OBJ_FLAG_HIDDEN);
 
     // Cztery kafelki 2 × 2.
+    // W poziomie stopka idzie na dół lewej kolumny, więc powstaje przed siatką.
+    lv_obj_t* foot = nullptr;
+    if (wide) {
+        lv_obj_t* spacer = box(info);
+        lv_obj_set_width(spacer, LV_PCT(100));
+        lv_obj_set_flex_grow(spacer, 1);
+        foot = box(info);
+    }
+
     lv_obj_t* grid = box(screen.root);
-    lv_obj_set_size(grid, LV_PCT(100), 2 * kTileH + kTileGap);
+    lv_obj_set_size(grid, wide ? 2 * tile_w + kTileGap : LV_PCT(100), 2 * tile_h + kTileGap);
     lv_obj_set_flex_flow(grid, LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_style_pad_column(grid, kTileGap, LV_PART_MAIN);
     lv_obj_set_style_pad_row(grid, kTileGap, LV_PART_MAIN);
@@ -346,7 +391,7 @@ void build_start(Context& context) {
         tile.root = lv_button_create(grid);
         lv_obj_remove_style_all(tile.root);
         lv_obj_add_style(tile.root, &theme::styles().tile, LV_PART_MAIN);
-        lv_obj_set_size(tile.root, kTileW, kTileH);
+        lv_obj_set_size(tile.root, tile_w, tile_h);
         lv_obj_set_style_radius(tile.root, theme::kR4, LV_PART_MAIN);
         lv_obj_set_style_pad_all(tile.root, theme::kS5, LV_PART_MAIN);
         theme::make_column(tile.root, 0);
@@ -383,9 +428,11 @@ void build_start(Context& context) {
     }
 
     // Stopka: stan łącza z domem i Ponów po błędzie.
-    lv_obj_t* foot = box(screen.root);
+    if (foot == nullptr) {
+        foot = box(screen.root);
+        lv_obj_set_style_margin_top(foot, theme::kS3, LV_PART_MAIN);
+    }
     lv_obj_set_size(foot, LV_PCT(100), kFootHeight);
-    lv_obj_set_style_margin_top(foot, theme::kS3, LV_PART_MAIN);
     lv_obj_set_style_pad_hor(foot, theme::kS1, LV_PART_MAIN);
     theme::make_row(foot, theme::kS2);
     screen.link_dot = dot(foot);

@@ -538,12 +538,35 @@ uvx --with pyserial --with pillow python tools/remote.py tour docs/screenshots/
 Około 2,5 s na zrzut, bez restartu pilota. `tour` dotyka wyłącznie paska zakładek i kafelka Telewizor na ekranie startowym — zdalny
 dotyk w kontrolkę naprawdę steruje domem. Ekran ustawień pokazuje nazwę sieci Wi-Fi: przed
 publikacją zrzutu trzeba ją zamaskować. Zrzuty do dokumentacji robi się w obu stylach
-(`docs/screenshots/` i `docs/screenshots/light/`, plus `overview.png` i `overview-light.png`).
+(`docs/screenshots/` i `docs/screenshots/light/`, plus `overview.png` i `overview-light.png`)
+oraz w obu orientacjach (`docs/screenshots/landscape/` i `landscape/light/`, plus
+`overview-landscape*.png`). `tour` zna tylko pion; poziom zrzuca się ręcznie (`shot`, `tap`
+w zakładki bocznego paska x = 44, y = 64/152/240/328/416). Zdalny dotyk w poziomie przyjmuje
+współrzędne logiczne 800 × 480. Przed serią stuknięć zrób zrzut: po wygaszeniu ekranu pilot
+wraca na ekran startowy i stuknięcia trafiają w inne miejsca.
 
 Pułapka: macOS podnosi DTR i RTS przy otwarciu portu, a USB-Serial-JTAG resetuje układ przy
 RTS=1 i DTR=0 — RTS trzeba opuścić przed DTR (tak robi skrypt). Zwykłe otwarcie portu
 z `dtr=False, rts=False` ustawionymi przed `open()` restartuje pilota, a zrzut łapie wtedy
 ramkę z rozruchu.
+
+## Orientacja pozioma — 2026-11-06
+
+[ADR 0013](../architecture/adr/0013-landscape-orientation.md), makieta
+`docs/ux/mockup-landscape/`. Ustawienie *Ekran → Orientacja* (pion / poziom / poziom odwrócony),
+NVS `orient`, restart po zmianie. Każdy ekran i podstrona mają układ poziomy; wzorce w
+`ui-architecture.md` („Orientacja pozioma”).
+
+- Obrót robi procesor (`sw_rotate`). PPA wyłączone: zawieszało interfejs przy przewijaniu.
+- Klient MQTT czeka na adres IP (`MqttBus::start`). Wcześniej łączył się przed Wi-Fi i każdy
+  start pokazywał przez kilka sekund „Brak połączenia z domem”.
+- Przy słabym Wi-Fi (−90 dBm, powód 201) połączenie potrafi przyjść po minucie; nakładka
+  pokazuje wtedy krok MQTT, choć czeka Wi-Fi — do poprawy.
+- Ikony trybów klimatyzacji to pięć znaków Lucide 0.460.0 (`lucide_modes_24/36.c`,
+  `tools/gen-fonts.sh` z `LUCIDE_TTF`).
+- Zasilanie: koło 48 px, pole dotyku 64 px (`ext_click_area`) — rodzic musi mieć 64 px wysokości.
+- Nie sprawdzone na płytce: dotyk palcem w nowych układach, obrót 270°, przyciski −/+, tryb
+  i zasilanie na karcie klimatyzacji.
 
 ## Następny bezpieczny krok
 

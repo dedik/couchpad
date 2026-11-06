@@ -538,12 +538,35 @@ uvx --with pyserial --with pillow python tools/remote.py tour docs/screenshots/
 About 2.5 s per screenshot, without restarting the remote. `tour` touches only the tab bar and the TV tile on the start screen — remote
 touch on a control really does control the home. The settings screen shows the Wi-Fi network name: before
 publishing a screenshot it must be masked. Documentation screenshots are taken in both styles
-(`docs/screenshots/` and `docs/screenshots/light/`, plus `overview.png` and `overview-light.png`).
+(`docs/screenshots/` and `docs/screenshots/light/`, plus `overview.png` and `overview-light.png`)
+and in both orientations (`docs/screenshots/landscape/` and `landscape/light/`, plus
+`overview-landscape*.png`). `tour` only knows portrait; landscape is captured by hand (`shot`, `tap`
+on the side-rail tabs x = 44, y = 64/152/240/328/416). Remote touch in landscape takes logical
+800 × 480 coordinates. Take a screenshot before a series of taps: after the screen blanks the remote
+returns to the start screen and taps land elsewhere.
 
 Pitfall: macOS raises DTR and RTS when the port is opened, and USB-Serial-JTAG resets the chip on
 RTS=1 and DTR=0 — RTS must be lowered before DTR (the script does this). A plain port open
 with `dtr=False, rts=False` set before `open()` restarts the remote, and the screenshot then captures
 a frame from the boot.
+
+## Landscape orientation — 2026-11-06
+
+[ADR 0013](../architecture/adr/0013-landscape-orientation.en.md), mockup
+`docs/ux/mockup-landscape/`. Setting *Display → Orientation* (portrait / landscape / landscape
+flipped), NVS `orient`, restart after a change. Every screen and sub-page has a landscape layout;
+patterns in `ui-architecture.en.md` ("Landscape orientation").
+
+- Rotation is done on the CPU (`sw_rotate`). PPA disabled: it hung the UI while scrolling.
+- The MQTT client waits for an IP address (`MqttBus::start`). It used to connect before Wi-Fi and
+  every boot showed "no connection to home" for a few seconds.
+- On weak Wi-Fi (−90 dBm, reason 201) the connection can take a minute; the overlay then shows the
+  MQTT step although it is waiting for Wi-Fi — to fix.
+- Climate mode icons are five Lucide 0.460.0 glyphs (`lucide_modes_24/36.c`,
+  `tools/gen-fonts.sh` with `LUCIDE_TTF`).
+- Power: 48 px circle, 64 px touch area (`ext_click_area`) — the parent must be 64 px tall.
+- Not checked on the board: finger touch in the new layouts, 270° rotation, the −/+, mode and power
+  buttons on the climate card.
 
 ## Next safe step
 

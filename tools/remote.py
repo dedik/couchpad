@@ -9,7 +9,11 @@ się bez restartu pilota.
     uvx --with pyserial --with pillow python tools/remote.py drag 240 600 240 300 300
     uvx --with pyserial --with pillow python tools/remote.py tour katalog/
 
-`tour` przechodzi przez zakładki i podstrony i zapisuje zrzut każdej z nich.
+`tour` przechodzi przez zakładki i podstrony i zapisuje zrzut każdej z nich
+(tylko w pionie — współrzędne zakładek są pionowe).
+
+Przy orientacji poziomej (Ekran → Orientacja) `shot` zapisuje obraz obrócony tak,
+jak widzi go użytkownik, a `tap`/`drag` przyjmują współrzędne logiczne 800 x 480.
 Port domyślnie `/dev/cu.usbmodem101`; inny podaje zmienna PILOT_PORT.
 """
 
@@ -93,7 +97,10 @@ class Remote:
             line = self._line(deadline)
             if line.startswith(b"@@SHOT "):
                 break
-        _, width, height, fmt, size = line.split()
+        fields = line.split()
+        _, width, height, fmt, size = fields[:5]
+        # Szóste pole (obrót interfejsu) dodał firmware z orientacją poziomą.
+        degrees = int(fields[5]) if len(fields) > 5 else 0
         if fmt != b"RGB565":
             raise ValueError(f"nieznany format {fmt!r}")
         width, height, size = int(width), int(height), int(size)
@@ -114,7 +121,23 @@ class Remote:
             raise ValueError(f"odebrano {len(data)} z {size} bajtów")
         if zlib.crc32(data) != crc:
             raise ValueError("CRC się nie zgadza — ramka uszkodzona po drodze")
-        return to_image(data, width, height)
+        return rotate(to_image(data, width, height), degrees)
+
+
+# Bufor ramki DPI jest zawsze pionowy. LVGL przy obrocie o 90° kładzie piksel logiczny
+# (x, y) w (y, 799 - x) bufora, więc obraz dla oka to obrót bufora zgodnie z zegarem.
+ROTATIONS = {
+    0: None,
+    90: Image.Transpose.ROTATE_270,
+    270: Image.Transpose.ROTATE_90,
+}
+
+
+def rotate(image: Image.Image, degrees: int) -> Image.Image:
+    if degrees not in ROTATIONS:
+        raise ValueError(f"nieznany obrót {degrees}")
+    method = ROTATIONS[degrees]
+    return image if method is None else image.transpose(method)
 
 
 def to_image(data: bytes, width: int, height: int) -> Image.Image:

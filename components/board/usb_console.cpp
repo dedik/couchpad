@@ -6,8 +6,10 @@
 //   tap <x> <y>                  krótkie dotknięcie
 //   drag <x1> <y1> <x2> <y2> <ms>  przeciągnięcie palcem
 //
+// Współrzędne dotyku są logiczne, takie jak widzi interfejs po obrocie ekranu.
 // Zrzut to kopia bufora ramki panelu DPI — dokładnie to, co widać, razem z nakładkami
-// z lv_layer_top i lv_layer_sys. Dotyk idzie przez osobne wejście LVGL obok GT911,
+// z lv_layer_top i lv_layer_sys. Bufor jest zawsze pionowy (480 x 800); nagłówek
+// podaje obrót, a remote.py odwraca go na obraz taki, jaki widzi użytkownik. Dotyk idzie przez osobne wejście LVGL obok GT911,
 // więc ekran reaguje na niego tak jak na palec. Obsługuje to tools/remote.py.
 //
 // Na czas wysyłki ramki log milknie: linie ESP_LOG idą tym samym portem i rozbiłyby ją.
@@ -50,9 +52,26 @@ struct Finger {
 };
 Finger g_finger;
 
+// LVGL obraca punkty każdego wskaźnika jak surowy odczyt GT911 (lv_indev.c,
+// indev_pointer_proc). Zdalny palec podaje punkt logiczny, więc odwracamy ten obrót.
 void finger_read(lv_indev_t*, lv_indev_data_t* data) {
-    data->point.x = g_finger.x;
-    data->point.y = g_finger.y;
+    const int32_t x = g_finger.x;
+    const int32_t y = g_finger.y;
+    switch (rotation()) {
+        case Rotation::Landscape90:
+            data->point.x = y;
+            data->point.y = kScreenHeight - 1 - x;
+            break;
+        case Rotation::Landscape270:
+            data->point.x = kScreenWidth - 1 - y;
+            data->point.y = x;
+            break;
+        case Rotation::Portrait:
+        default:
+            data->point.x = x;
+            data->point.y = y;
+            break;
+    }
     data->state = g_finger.pressed ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
 }
 
@@ -143,9 +162,13 @@ void send_frame() {
     static char line[kChunk / 3 * 4 + 2];
     const vprintf_like_t previous = esp_log_set_vprintf(&mute);
 
-    int length = snprintf(line, sizeof(line), "\n@@SHOT %d %d RGB565 %u\n",
+    // Piąte pole: obrót interfejsu w stopniach (0, 90, 270). Starsze remote.py go pomijają.
+    const int degrees = rotation() == Rotation::Landscape90    ? 90
+                        : rotation() == Rotation::Landscape270 ? 270
+                                                               : 0;
+    int length = snprintf(line, sizeof(line), "\n@@SHOT %d %d RGB565 %u %d\n",
                           static_cast<int>(kScreenWidth), static_cast<int>(kScreenHeight),
-                          static_cast<unsigned>(kFrameBytes));
+                          static_cast<unsigned>(kFrameBytes), degrees);
     bool ok = write_all(line, static_cast<std::size_t>(length));
     for (std::size_t offset = 0; ok && offset < kFrameBytes; offset += kChunk) {
         const std::size_t size = kFrameBytes - offset < kChunk ? kFrameBytes - offset : kChunk;

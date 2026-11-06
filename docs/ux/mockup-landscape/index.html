@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilot — poziom 800×480</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+/* Makieta orientacji poziomej. Tokeny 1:1 z mockup-pulpit/pulpit.css (i theme.cpp).
+   Wszystkie wymiary w pikselach panelu po obrocie: 800 × 480. */
+:root {
+  --bg: #0a0b0e; --surface: #14161b; --surface-2: #1c1f26; --surface-3: #282c35; --line: #30353f;
+  --text: #f3f5f9; --dim: #98a0ae; --faint: #626a78;
+  --accent: #f2a93b; --accent-ink: #17120a; --accent-soft: rgba(242,169,59,.14); --accent-down: #f4b25a;
+  --ok: #56d6a0; --ok-soft: rgba(86,214,160,.15); --ok-line: rgba(86,214,160,.45);
+  --danger: #ff5f5f; --danger-soft: rgba(255,95,95,.13);
+  --r1: 10px; --r2: 14px; --r3: 18px; --r4: 24px; --rf: 999px;
+  --font: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
+  --rail: 88px; --head: 64px; --gut: 20px; --touch: 68px;
+  --page: #050608; --page-text: #c9ced8; --panel: #101217; --panel-line: #23262d;
+}
+[data-theme="light"] {
+  --bg: #eef0f3; --surface: #ffffff; --surface-2: #e4e7ec; --surface-3: #cfd4dc; --line: #d9dde4;
+  --text: #15171c; --dim: #586070; --faint: #878f9d;
+  --accent: #e08a12; --accent-ink: #1a1206; --accent-soft: rgba(224,138,18,.14); --accent-down: #b86f0a;
+  --ok: #1c9a68; --ok-soft: rgba(28,154,104,.15); --ok-line: rgba(28,154,104,.45);
+  --danger: #e03a3a; --danger-soft: rgba(224,58,58,.13);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--page); color: var(--page-text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+[hidden] { display: none !important; }
+svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
+
+/* ---------- Strona ---------- */
+.wrap { max-width: 1500px; margin: 0 auto; padding: 24px 16px 48px; }
+.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
+.top h1 { margin: 0; font-size: 22px; font-weight: 700; color: #f3f5f9; }
+.top p { margin: 0; color: #8a92a0; font-size: 14px; }
+.stage { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+.col-dev { display: flex; flex-direction: column; gap: 16px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px; padding: 12px 14px; font-size: 13px; }
+.controls .grp { display: flex; gap: 6px; align-items: center; }
+.controls .lbl { color: #7d8594; margin-right: 4px; }
+.chip { padding: 7px 12px; border-radius: 999px; background: #1a1d24; color: #c9ced8; border: 1px solid #2a2e37; font-size: 13px; }
+.chip[aria-pressed="true"] { background: #f2a93b; color: #17120a; border-color: #f2a93b; font-weight: 500; }
+
+.notes { width: 380px; max-width: 100%; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px; padding: 16px 18px; font-size: 14px; line-height: 1.5; }
+.notes h2 { margin: 0 0 4px; font-size: 16px; color: #f3f5f9; }
+.notes h3 { margin: 14px 0 4px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #7d8594; }
+.notes ul { margin: 0; padding-left: 18px; }
+.notes li { margin: 3px 0; }
+.notes .plus li::marker { content: "+  "; color: #56d6a0; }
+.notes .minus li::marker { content: "−  "; color: #ff5f5f; }
+.portrait { margin-top: 14px; display: none; }
+.portrait img { width: 100%; max-width: 240px; border-radius: 16px; border: 1px solid #23262d; display: block; }
+.portrait.on { display: block; }
+
+/* ---------- Urządzenie ---------- */
+.bezel { padding: 14px; border-radius: 40px; background: linear-gradient(90deg, #1b1e24, #0e1014); box-shadow: 0 30px 70px rgba(0,0,0,.55); width: max-content; }
+.screen { position: relative; width: 800px; height: 480px; overflow: hidden; border-radius: 22px; background: var(--bg); color: var(--text); display: flex; user-select: none; }
+.bezel.right .screen { flex-direction: row-reverse; }
+.scale-box { transform-origin: top left; }
+
+.rail { width: var(--rail); flex: none; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 0 10px; background: var(--surface); border-right: 1px solid var(--line); }
+.bezel.right .rail { border-right: 0; border-left: 1px solid var(--line); }
+.tab { height: 80px; border-radius: var(--r3); display: grid; place-items: center; position: relative; }
+.tab img { width: 48px; height: 48px; image-rendering: pixelated; opacity: .7; }
+.tab[aria-selected="true"] { background: var(--accent-soft); }
+.tab[aria-selected="true"] img { opacity: 1; }
+.tab[aria-selected="true"]::before { content: ""; position: absolute; left: -10px; top: 22px; bottom: 22px; width: 4px; border-radius: 0 4px 4px 0; background: var(--accent); }
+.bezel.right .tab[aria-selected="true"]::before { left: auto; right: -10px; border-radius: 4px 0 0 4px; }
+
+.content { flex: 1; position: relative; min-width: 0; }
+.scr { position: absolute; inset: 0; padding: 0 var(--gut) var(--gut); display: flex; flex-direction: column; }
+.head { height: var(--head); flex: none; display: flex; align-items: center; gap: 12px; }
+.mark { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; color: var(--accent); flex: none; }
+.mark svg.lucide { width: 20px; height: 20px; }
+.title b { display: block; font-size: 19px; font-weight: 700; }
+.title em { display: block; font-style: normal; font-size: 11px; letter-spacing: .16em; color: var(--faint); margin-top: 2px; }
+.head .spacer { flex: 1; }
+.power { width: 52px; height: 52px; border-radius: 50%; background: var(--surface-2); color: var(--faint); display: grid; place-items: center; }
+.power[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.pill { height: 36px; padding: 0 14px; border-radius: var(--rf); background: var(--surface-2); color: var(--dim); font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.body { flex: 1; display: flex; gap: var(--gut); min-height: 0; }
+.colL { display: flex; flex-direction: column; gap: 12px; }
+.colR { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; min-width: 0; }
+
+.seg { height: 56px; border-radius: var(--r2); background: var(--surface-2); display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 15px; font-weight: 500; min-width: 0; }
+.seg svg.lucide { color: var(--faint); width: 18px; height: 18px; flex: none; }
+.seg .v { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.seg .k { font-size: 11px; color: var(--faint); letter-spacing: .12em; display: block; font-weight: 400; }
+.seg.pending { box-shadow: 0 0 0 2px var(--accent); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 2px transparent; } }
+.row { display: flex; gap: 12px; }
+.row > * { flex: 1; }
+
+.btn { height: var(--touch); border-radius: var(--r2); background: var(--surface-2); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 500; }
+.btn:active, .tile:active, .key:active { background: var(--surface-3); }
+
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tile { height: 72px; border-radius: var(--r2); background: var(--surface-2); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+.tile img { max-width: 64px; max-height: 34px; }
+.tiles.apps .tile { height: 96px; }
+.tiles.apps .tile img { max-width: 72px; max-height: 44px; }
+.tile.flash { box-shadow: 0 0 0 2px var(--accent); }
+
+/* TV: źródło i tryb obrazu w nagłówku (propozycja) albo w kolumnie (firmware) */
+.hsegs { display: none; gap: 8px; flex: 1; min-width: 0; margin-left: 8px; }
+.hsegs .seg { height: 48px; flex: 1; min-width: 0; }
+.tvsel { display: flex; flex-direction: column; gap: 12px; }
+.bezel.tv-head [data-scr="tv"] .hsegs { display: flex; }
+.bezel.tv-head [data-scr="tv"] .head .spacer { display: none; }
+.bezel.tv-head .tvsel { display: none; }
+.bezel.tv-head .tvcol .tiles .tile { height: 88px; }
+
+/* Z906: źródło i efekt w nagłówku (propozycja) albo nad suwakami (firmware) */
+.bezel.z-head .zsegs { display: flex; }
+.bezel.z-head [data-scr="audio"] .head .spacer { display: none; }
+.bezel.z-head .zsel { display: none; }
+.bezel:not(.z-head) .zsegs { display: none; }
+.bezel.z-head [data-scr="audio"] .pill { padding: 0 10px; }
+
+/* Zasilanie: „teraz” = jak w firmware (pełne koło 64 px), „mniejsze” = propozycja
+   (koło 48 px, cel dotyku nadal 64 px; włączone miękkim tłem zamiast pełnego) */
+.bezel .power { width: 64px !important; height: 64px !important; }
+.bezel .power svg.lucide { width: 26px; height: 26px; }
+.bezel.pw-soft .power { width: 48px !important; height: 48px !important; position: relative; }
+.bezel.pw-soft .power::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; }
+.bezel.pw-soft .power svg.lucide { width: 22px; height: 22px; }
+.bezel.pw-soft .power[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px rgba(242,169,59,.35); }
+.show-touch .bezel.pw-soft .power::after { outline: 1px dashed rgba(86,214,160,.7); }
+
+/* Krzyżak */
+.navpad { display: flex; align-items: center; gap: 12px; }
+.rocker { width: 64px; height: 230px; border-radius: 32px; background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 8px 0; }
+.rocker button { width: 56px; height: 76px; border-radius: 28px; display: grid; place-items: center; }
+.rocker button:active { background: var(--surface-3); }
+.rocker span { font-size: 11px; letter-spacing: .14em; color: var(--faint); }
+.dpad { width: 240px; height: 240px; border-radius: 50%; background: var(--surface-2); position: relative; }
+.dpad .arr { position: absolute; width: 72px; height: 72px; display: grid; place-items: center; color: var(--dim); border-radius: 50%; }
+.dpad .arr:active { color: var(--accent); }
+.dpad .up { top: 4px; left: 84px; } .dpad .down { bottom: 4px; left: 84px; }
+.dpad .left { left: 4px; top: 84px; } .dpad .right { right: 4px; top: 84px; }
+.dpad .ok { position: absolute; inset: 74px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 17px; }
+.dpad .ok:active { background: var(--accent-down); }
+
+/* Gładzik Apple TV */
+.pad { width: 330px; height: 330px; border-radius: 50%; background: var(--surface-2); position: relative; overflow: hidden; touch-action: none; }
+.pad .ring { position: absolute; inset: 105px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-size: 11px; letter-spacing: .14em; color: var(--faint); }
+.pad .ar { position: absolute; color: var(--faint); }
+.pad .ar.u { top: 16px; left: 154px; } .pad .ar.d { bottom: 16px; left: 154px; }
+.pad .ar.l { left: 16px; top: 154px; } .pad .ar.r { right: 16px; top: 154px; }
+.ripple { position: absolute; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: var(--accent); opacity: .35; pointer-events: none; animation: rip .5s ease-out forwards; }
+@keyframes rip { to { transform: scale(2.4); opacity: 0; } }
+.nowplay { display: flex; gap: 12px; background: var(--surface); border-radius: var(--r3); padding: 10px; border: 1px solid var(--line); }
+.nowplay img { width: 66px; height: 98px; border-radius: 8px; object-fit: cover; background: var(--surface-3); }
+.nowplay b { display: block; font-size: 15px; } .nowplay em { font-style: normal; font-size: 12px; color: var(--dim); }
+.prog { height: 4px; background: var(--surface-3); border-radius: 4px; margin: 10px 0 6px; overflow: hidden; } .prog i { display: block; height: 100%; width: 38%; background: var(--accent); }
+.np-ctl { display: flex; gap: 6px; margin-top: 4px; }
+.np-ctl button { width: 40px; height: 36px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; }
+.np-ctl svg.lucide { width: 18px; height: 18px; }
+
+/* Z906 */
+.dialwrap { width: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.dial { width: 260px; height: 260px; position: relative; touch-action: none; cursor: grab; }
+.dial svg { position: absolute; inset: 0; }
+.dial .read { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.dial .read b { font-size: 64px; font-weight: 700; line-height: 1; }
+.dial .read span { font-size: 12px; color: var(--faint); letter-spacing: .1em; margin-top: 4px; }
+.dial.muted .read b { color: var(--danger); }
+.dialbtns { display: flex; gap: 14px; }
+.round { width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; }
+.round[aria-pressed="true"] { background: var(--danger-soft); color: var(--danger); }
+.levels { flex: 1; display: flex; gap: 12px; }
+.lvl { flex: 1; border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 8px; touch-action: none; cursor: ns-resize; }
+.lvl .n { font-size: 12px; color: var(--faint); letter-spacing: .06em; }
+.lvl .val { font-size: 19px; font-weight: 700; }
+.lvl .track { flex: 1; width: 40px; border-radius: 14px; background: var(--surface-3); position: relative; overflow: hidden; }
+.lvl .track i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); border-radius: 14px; }
+.chips { display: flex; gap: 8px; }
+.chips button { flex: 1; height: 48px; border-radius: 12px; background: var(--surface-2); font-size: 13px; font-weight: 500; }
+.chips button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cap { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 2px 0 -4px; }
+
+/* Dom */
+.klima { width: 300px; border-radius: var(--r4); background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; }
+.klima .row { margin-top: auto; }
+.kh { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.kdot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); }
+.kdot.on { background: var(--ok); }
+.kname { flex: 1; } .kname b { display: block; font-size: 15px; font-weight: 500; } .kname em { font-style: normal; font-size: 11px; letter-spacing: .16em; color: var(--faint); }
+.kgo { color: var(--faint); }
+/* teraz */
+.know { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; }
+.kt { font-size: 46px; font-weight: 700; line-height: 1; } .kt small { font-size: 19px; color: var(--faint); }
+.kmeta { text-align: right; display: flex; flex-direction: column; gap: 4px; } .kmeta b { font-size: 15px; font-weight: 500; color: var(--dim); } .kmeta span { font-size: 13px; color: var(--faint); }
+/* A */
+.kring { position: relative; width: 200px; height: 200px; margin: auto; }
+.kring svg { position: absolute; inset: 0; }
+.kin { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.kin b { font-size: 46px; font-weight: 700; line-height: 1; } .kin b small { font-size: 26px; color: var(--dim); }
+.kin span { font-size: 13px; color: var(--dim); }
+.kcap { font-size: 11px !important; letter-spacing: .16em; color: var(--accent) !important; }
+.kchips { display: flex; gap: 8px; justify-content: center; }
+.kchips span { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 999px; background: var(--surface-2); font-size: 13px; color: var(--dim); }
+.kchips svg.lucide { width: 16px; height: 16px; }
+/* B, C */
+.kcenter { margin: auto 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.kmode { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 14px; font-weight: 500; }
+.kmode svg.lucide { width: 18px; height: 18px; }
+.kbig { font-size: 72px; font-weight: 700; line-height: 1; } .kbig small { font-size: 26px; color: var(--dim); font-weight: 500; }
+.kroom { font-size: 13px; color: var(--dim); }
+.kinfo { display: flex; gap: 8px; } .kinfo div { flex: 1; background: var(--surface-2); border-radius: var(--r2); padding: 10px 12px; }
+.kinfo em { display: block; font-style: normal; font-size: 11px; letter-spacing: .14em; color: var(--faint); } .kinfo b { font-size: 15px; font-weight: 500; }
+.scenes { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.scene { border-radius: var(--r3); background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 500; }
+.scene svg.lucide { width: 28px; height: 28px; color: var(--dim); }
+.scene[aria-pressed="true"] { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.scene[aria-pressed="true"] svg.lucide { color: var(--accent); }
+
+/* Ustawienia: lista + szczegół */
+.mlist { width: 290px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; scrollbar-width: none; }
+.mrow { min-height: 56px; border-radius: var(--r2); padding: 0 14px; display: flex; align-items: center; gap: 12px; text-align: left; background: transparent; }
+.mrow svg.lucide { color: var(--dim); width: 20px; height: 20px; flex: none; }
+.mrow b { flex: 1; font-size: 15px; font-weight: 500; }
+.mrow em { font-style: normal; font-size: 12px; color: var(--faint); }
+.mrow[aria-current="true"] { background: var(--surface-2); }
+.mrow[aria-current="true"] svg.lucide { color: var(--accent); }
+.detail { flex: 1; border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); padding: 18px; overflow-y: auto; scrollbar-width: none; }
+.detail h3 { margin: 0 0 12px; font-size: 19px; }
+.drow { display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); font-size: 15px; gap: 12px; }
+.drow:last-child { border-bottom: 0; }
+.drow em { font-style: normal; color: var(--dim); font-size: 14px; }
+.drow .ok { color: var(--ok); }
+.opts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.opts button { height: 40px; padding: 0 14px; border-radius: 10px; background: var(--surface-2); font-size: 13px; font-weight: 500; }
+.opts button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.slider { width: 200px; accent-color: var(--accent); }
+
+/* Start */
+.start { position: absolute; inset: 0; z-index: 5; background: var(--bg); display: flex; padding: 28px; gap: 28px; }
+.start .left { width: 300px; display: flex; flex-direction: column; }
+.clock { font-size: 96px; font-weight: 700; line-height: .95; letter-spacing: -.02em; }
+.date { color: var(--dim); font-size: 15px; margin-top: 8px; }
+.weather { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-size: 32px; font-weight: 700; }
+.weather img { width: 64px; height: 64px; image-rendering: pixelated; }
+.weather span { font-size: 13px; color: var(--dim); font-weight: 400; display: block; }
+.conn { margin-top: auto; display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13px; }
+.conn i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.start .grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.dev { border-radius: var(--r4); background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; text-align: left; }
+.dev img { width: 72px; height: 72px; image-rendering: pixelated; }
+.dev b { font-size: 21px; margin-top: auto; }
+.dev em { font-style: normal; font-size: 12px; color: var(--dim); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.dev em i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.dev em i.off { background: var(--faint); }
+.dev:active { background: var(--surface-2); }
+
+/* Panel boczny wyboru (zamiast pełnoekranowej listy w pionie) */
+.scrim { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.45); }
+.sheet { position: absolute; top: 0; bottom: 0; width: 380px; z-index: 7; background: var(--surface); border-left: 1px solid var(--line); display: flex; flex-direction: column; animation: slideR .18s ease-out; }
+.bezel:not(.right) .sheet { right: 0; }
+.bezel.right .sheet { left: 0; border-left: 0; border-right: 1px solid var(--line); animation-name: slideL; }
+@keyframes slideR { from { transform: translateX(40px); } }
+@keyframes slideL { from { transform: translateX(-40px); } }
+.sheet .shead { height: var(--head); display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--line); flex: none; }
+.sheet .shead b { flex: 1; font-size: 17px; }
+.sheet .shead button { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); }
+.sheet .slist { overflow-y: auto; padding: 8px; scrollbar-width: none; }
+.sheet .opt { width: 100%; min-height: 56px; border-radius: 12px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; text-align: left; }
+.sheet .opt:active { background: var(--surface-2); }
+.sheet .opt[aria-selected="true"] { color: var(--accent); font-weight: 700; }
+.sheet .opt small { color: var(--faint); font-size: 13px; margin-right: 12px; min-width: 22px; display: inline-block; }
+
+/* Klawiatura */
+/* Podstrona klimatyzacji */
+.kpage { position: absolute; inset: 0; z-index: 6; background: var(--bg); display: flex; flex-direction: column; padding: 5px 24px 16px; }
+.khead { height: 64px; display: flex; align-items: center; gap: 12px; flex: none; }
+.khead b { font-size: 19px; }
+.khead .spacer { flex: 1; }
+.tin .tval { font-size: inherit; color: inherit; }
+.kback { width: 56px; height: 56px; border-radius: 50%; background: var(--surface); color: var(--dim); display: grid; place-items: center; }
+.kp { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.kpRow { flex: 1; display: flex; gap: 20px; align-items: center; min-height: 0; }
+.tring { position: relative; width: 300px; height: 300px; flex: none; }
+.tring > svg { position: absolute; inset: 0; }
+.tin { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding-bottom: 30px; }
+.tin b { font-size: 64px; font-weight: 700; line-height: 1; } .tin b small { font-size: 26px; color: var(--dim); }
+.tin span { font-size: 13px; color: var(--dim); }
+.tbtn { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 24px; }
+.tbtn .round { width: 64px; height: 64px; }
+.tmin, .tmax { position: absolute; bottom: 22px; font-size: 11px; color: var(--faint); } .tmin { left: 30px; } .tmax { right: 30px; }
+.seg-row { display: flex; gap: 4px; background: var(--surface); border-radius: var(--r3); padding: 4px; flex: none; }
+.seg-row button { flex: 1; height: 56px; border-radius: var(--r2); font-size: 14px; color: var(--dim); }
+.seg-row button[aria-pressed="true"] { background: var(--surface-3); color: var(--text); font-weight: 500; box-shadow: inset 0 -3px 0 var(--accent); }
+/* teraz: trzy wysokie karty dosunięte pod zasilanie */
+[data-kp="now"] .kpRow { align-items: stretch; }
+.kpCards { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.kcard { flex: 1; border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); text-align: left; padding: 0 16px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.kcard em { font-style: normal; font-size: 11px; letter-spacing: .16em; color: var(--faint); } .kcard b { font-size: 15px; font-weight: 500; }
+/* P1: tryby jako kafle z ikoną, nawiew jako trzy pola w rzędzie */
+.kpSide { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 16px; }
+.kmodeTiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kmodeTiles button { height: 76px; border-radius: var(--r2); background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: var(--dim); }
+.kmodeTiles button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+/* Jeden duży kafel po lewej (dwa rzędy wysokości), pozostałe 2 × 2 obok */
+.kmodeTiles.big { grid-template-columns: 1.2fr 1fr 1fr; grid-template-rows: 76px 76px; grid-auto-flow: column dense; }
+.kmodeTiles.big button.big { grid-column: 1; grid-row: 1 / span 2; height: auto; font-size: 15px; font-weight: 500; gap: 10px; }
+.kmodeTiles.big button.big svg.lucide { width: 36px; height: 36px; }
+.kmodeTiles.big button:not(.big) { grid-column: auto; }
+.kchipsRow { display: flex; gap: 8px; }
+.kchipsRow button { flex: 1; height: 68px; border-radius: var(--r2); background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.kchipsRow em { font-style: normal; font-size: 11px; letter-spacing: .14em; color: var(--faint); } .kchipsRow b { font-size: 14px; font-weight: 500; }
+/* P2: nawiew jako wiersze listy, wyśrodkowane w pionie, z odstępem pod zasilaniem */
+.kpList { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.klrow { height: 68px; border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); display: flex; align-items: center; gap: 12px; padding: 0 14px; text-align: left; }
+.klrow b { flex: 1; font-size: 15px; font-weight: 500; } .klrow .val { font-size: 14px; color: var(--dim); }
+.klrow svg.lucide { color: var(--dim); width: 20px; height: 20px; } .klrow svg.lucide:last-child { color: var(--faint); }
+
+.editor { position: absolute; inset: 0; z-index: 8; background: var(--bg); display: flex; flex-direction: column; padding: 16px 20px 18px; gap: 10px; }
+.ehead { display: flex; gap: 12px; align-items: center; }
+.ehead .field { flex: 1; height: 56px; border-radius: var(--r2); background: var(--surface); border: 1px solid var(--accent); display: flex; align-items: center; padding: 0 16px; font-size: 19px; }
+.ehead .field .caret { width: 2px; height: 26px; background: var(--accent); margin-left: 2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.ehead .ph { color: var(--faint); }
+.ehead button { width: 56px; height: 56px; border-radius: var(--r2); background: var(--surface-2); display: grid; place-items: center; }
+.ehead .send { width: auto; padding: 0 20px; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: flex; gap: 8px; }
+.krow { display: flex; gap: 7px; justify-content: center; }
+.key { width: 69px; height: 66px; border-radius: 12px; background: var(--surface-2); font-size: 21px; font-weight: 500; display: grid; place-items: center; }
+.key.w { width: 110px; font-size: 15px; } .key.sp { width: 380px; font-size: 13px; color: var(--dim); }
+.key.on { background: var(--accent-soft); color: var(--accent); }
+
+/* Wybudzanie */
+.wake { position: absolute; inset: 0; z-index: 9; background: var(--bg); display: flex; align-items: center; justify-content: center; gap: 40px; }
+.orbit { width: 140px; height: 140px; border-radius: 50%; border: 1px dashed var(--line); display: grid; place-items: center; position: relative; animation: spin 6s linear infinite; }
+.orbit::after { content: ""; position: absolute; top: -5px; left: 65px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.orbit img { width: 64px; height: 64px; image-rendering: pixelated; animation: spin 6s linear infinite reverse; }
+.wake h2 { margin: 0 0 14px; font-size: 26px; }
+.steps { display: flex; flex-direction: column; gap: 10px; font-size: 15px; color: var(--dim); }
+.steps div { display: flex; align-items: center; gap: 10px; }
+.steps i { width: 10px; height: 10px; border-radius: 50%; background: var(--surface-3); }
+.steps .done i { background: var(--ok); } .steps .done { color: var(--text); }
+.steps .now i { background: var(--accent); animation: pulse2 .8s infinite; }
+@keyframes pulse2 { 50% { opacity: .3; } }
+
+.toast { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; background: var(--surface-3); color: var(--text); padding: 10px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+
+/* Nakładka celów dotyku */
+.show-touch .screen button { outline: 1px dashed rgba(86,214,160,.7); outline-offset: -1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Pilot w poziomie — makieta 800 × 480</h1>
+      <p>Wszystko klikalne. Ekrany i podstrony te same co w pionie, układ przemyślany pod szeroki ekran.</p>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="col-dev">
+      <div class="controls" role="group" aria-label="Opcje makiety">
+        <div class="grp"><span class="lbl">Pasek</span>
+          <button class="chip" data-rail="left" aria-pressed="true">po lewej</button>
+          <button class="chip" data-rail="right" aria-pressed="false">po prawej</button></div>
+        <div class="grp"><span class="lbl">Styl</span>
+          <button class="chip" data-th="dark" aria-pressed="true">ciemny</button>
+          <button class="chip" data-th="light" aria-pressed="false">jasny</button></div>
+        <div class="grp"><span class="lbl">TV: wybór</span>
+          <button class="chip" data-tvsel="head" aria-pressed="true">w nagłówku</button>
+          <button class="chip" data-tvsel="col" aria-pressed="false">w kolumnie</button></div>
+        <div class="grp"><span class="lbl">Z906: wybór</span>
+          <button class="chip" data-zsel="head" aria-pressed="true">w nagłówku</button>
+          <button class="chip" data-zsel="col" aria-pressed="false">nad suwakami (teraz)</button></div>
+        <div class="grp"><span class="lbl">Klima</span>
+          <button class="chip" data-kvsel="now" aria-pressed="false">teraz</button>
+          <button class="chip" data-kvsel="ring" aria-pressed="true">A tarcza</button>
+          <button class="chip" data-kvsel="center" aria-pressed="false">B środek</button>
+          <button class="chip" data-kvsel="quick" aria-pressed="false">C szybkie</button></div>
+        <div class="grp"><span class="lbl">Podstrona klimy</span>
+          <button class="chip" data-kpsel="now" aria-pressed="false">teraz</button>
+          <button class="chip" data-kpsel="p1" aria-pressed="true">P1 kafle trybów</button>
+          <button class="chip" data-kpsel="p2" aria-pressed="false">P2 lista</button>
+          <button class="chip" id="kpOpen" aria-pressed="false">otwórz</button></div>
+        <div class="grp"><span class="lbl">Kafle trybu</span>
+          <button class="chip" data-mt="grid" aria-pressed="false">3 × 2</button>
+          <button class="chip" data-mt="sel" aria-pressed="true">duży = wybrany</button>
+          <button class="chip" data-mt="cool" aria-pressed="false">duży = Chłodzenie</button></div>
+        <div class="grp"><span class="lbl">Zasilanie</span>
+          <button class="chip" data-pw="now" aria-pressed="false">teraz</button>
+          <button class="chip" data-pw="soft" aria-pressed="true">mniejsze</button></div>
+        <div class="grp"><button class="chip" id="cmp" aria-pressed="false">porównaj z pionem</button>
+          <button class="chip" id="touchmap" aria-pressed="false">cele dotyku</button>
+          <button class="chip" id="wakeBtn" aria-pressed="false">symuluj wybudzenie</button></div>
+      </div>
+
+      <div class="scale-box" id="scaleBox">
+      <div class="bezel tv-head z-head pw-soft" id="bezel">
+        <div class="screen" id="screen">
+          <nav class="rail" role="tablist" aria-label="Ekrany">
+            <button class="tab" role="tab" data-go="tv" aria-label="Telewizor"><img src="../mockup-pulpit/assets/pixel/tv.png" alt=""></button>
+            <button class="tab" role="tab" data-go="appletv" aria-label="Apple TV"><img src="../mockup-pulpit/assets/pixel/appletv.png" alt=""></button>
+            <button class="tab" role="tab" data-go="audio" aria-label="Głośniki"><img src="../mockup-pulpit/assets/pixel/audio.png" alt=""></button>
+            <button class="tab" role="tab" data-go="home" aria-label="Dom"><img src="../mockup-pulpit/assets/pixel/home.png" alt=""></button>
+            <button class="tab" role="tab" data-go="settings" aria-label="Ustawienia"><img src="../mockup-pulpit/assets/pixel/settings.png" alt=""></button>
+          </nav>
+
+          <main class="content">
+            <!-- TV -->
+            <section class="scr" data-scr="tv">
+              <div class="head">
+                <span class="mark"><i data-lucide="tv"></i></span>
+                <span class="title"><b>LG OLED</b><em>SALON</em></span>
+                <span class="hsegs">
+                  <button class="seg" data-pick="src"><i data-lucide="log-in"></i><span class="v"><span class="k">ŹRÓDŁO</span><span class="val">Apple TV</span></span></button>
+                  <button class="seg" data-pick="pic"><i data-lucide="image"></i><span class="v"><span class="k">OBRAZ</span><span class="val">Filmmaker</span></span></button>
+                </span>
+                <span class="spacer"></span>
+                <button class="power" aria-pressed="true" aria-label="Zasilanie TV"><i data-lucide="power"></i></button>
+              </div>
+              <div class="body">
+                <div class="colL tvcol" style="width:260px">
+                  <div class="tvsel">
+                    <button class="seg" data-pick="src"><i data-lucide="log-in"></i><span class="v"><span class="k">ŹRÓDŁO</span><span class="val">Apple TV</span></span></button>
+                    <button class="seg" data-pick="pic"><i data-lucide="image"></i><span class="v"><span class="k">OBRAZ</span><span class="val">Filmmaker</span></span></button>
+                  </div>
+                  <div class="tiles">
+                    <button class="tile ch"><img src="../mockup-pulpit/assets/polsat.svg" alt="Polsat"></button>
+                    <button class="tile ch"><img src="../mockup-pulpit/assets/tvn.svg" alt="TVN"></button>
+                    <button class="tile ch"><img src="../mockup-pulpit/assets/tvp1.svg" alt="TVP 1"></button>
+                    <button class="tile ch"><img src="../mockup-pulpit/assets/tvp2.svg" alt="TVP 2"></button>
+                    <button class="tile ch"><img src="../mockup-pulpit/assets/wppilot.svg" alt="WP Pilot"></button>
+                    <button class="tile" data-pick="ch" aria-label="Wszystkie kanały"><i data-lucide="list"></i></button>
+                  </div>
+                  <div class="row" style="margin-top:auto">
+                    <button class="btn"><i data-lucide="chevron-left"></i>Cofnij</button>
+                    <button class="btn"><i data-lucide="sliders-horizontal"></i>Menu TV</button>
+                  </div>
+                </div>
+                <div class="colR">
+                  <div class="navpad">
+                    <div class="rocker"><button aria-label="Głośniej"><i data-lucide="plus"></i></button><span>VOL</span><button aria-label="Ciszej"><i data-lucide="minus"></i></button></div>
+                    <div class="dpad">
+                      <button class="arr up" aria-label="Góra"><i data-lucide="chevron-up"></i></button>
+                      <button class="arr left" aria-label="Lewo"><i data-lucide="chevron-left"></i></button>
+                      <button class="ok">OK</button>
+                      <button class="arr right" aria-label="Prawo"><i data-lucide="chevron-right"></i></button>
+                      <button class="arr down" aria-label="Dół"><i data-lucide="chevron-down"></i></button>
+                    </div>
+                    <div class="rocker"><button aria-label="Program w górę"><i data-lucide="plus"></i></button><span>P</span><button aria-label="Program w dół"><i data-lucide="minus"></i></button></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Apple TV -->
+            <section class="scr" data-scr="appletv" hidden>
+              <div class="head">
+                <span class="mark"><i data-lucide="play"></i></span>
+                <span class="title"><b>Apple TV</b><em>SALON</em></span>
+                <span class="spacer"></span>
+                <button class="power" aria-pressed="true" aria-label="Zasilanie Apple TV"><i data-lucide="power"></i></button>
+              </div>
+              <div class="body">
+                <div class="colL" style="width:300px">
+                  <p class="cap" style="margin:4px 0 0">Aplikacje</p>
+                  <div class="tiles apps">
+                    <button class="tile"><img src="../mockup-pulpit/assets/infuse.svg" alt="Infuse"></button>
+                    <button class="tile"><img src="../mockup-pulpit/assets/youtube.svg" alt="YouTube"></button>
+                    <button class="tile"><img src="../mockup-pulpit/assets/wppilot.svg" alt="WP Pilot"></button>
+                  </div>
+                  <div class="row" style="margin-top:auto">
+                    <button class="btn"><i data-lucide="chevron-left"></i>Menu</button>
+                    <button class="btn"><i data-lucide="house"></i>Home</button>
+                    <button class="btn" id="openKb"><i data-lucide="keyboard"></i>Tekst</button>
+                  </div>
+                </div>
+                <div class="colR">
+                  <div class="pad" id="pad">
+                    <i class="ar u" data-lucide="chevron-up"></i><i class="ar d" data-lucide="chevron-down"></i>
+                    <i class="ar l" data-lucide="chevron-left"></i><i class="ar r" data-lucide="chevron-right"></i>
+                    <div class="ring">OK</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Z906 -->
+            <section class="scr" data-scr="audio" hidden>
+              <div class="head">
+                <span class="mark"><i data-lucide="music"></i></span>
+                <span class="title"><b>Z906</b><em>SALON</em></span>
+                <span class="hsegs zsegs">
+                  <button class="seg" data-pick="zsrc"><i data-lucide="cable"></i><span class="v"><span class="k">ŹRÓDŁO</span><span class="val">Optical 1</span></span></button>
+                  <button class="seg" data-pick="fx"><i data-lucide="audio-lines"></i><span class="v"><span class="k">EFEKT</span><span class="val">Bez efektu</span></span></button>
+                </span>
+                <span class="spacer"></span>
+                <span class="pill"><span class="dot"></span>Decode</span>
+                <button class="power" aria-pressed="true" aria-label="Zasilanie Z906"><i data-lucide="power"></i></button>
+              </div>
+              <div class="body">
+                <div class="dialwrap">
+                  <div class="dial" id="dial" role="slider" aria-label="Głośność" aria-valuenow="35">
+                    <svg viewBox="0 0 260 260"><circle cx="130" cy="130" r="112" fill="none" stroke="var(--surface-3)" stroke-width="18" stroke-linecap="round" stroke-dasharray="527.8 703.7" transform="rotate(135 130 130)"/>
+                      <circle id="dialArc" cx="130" cy="130" r="112" fill="none" stroke="var(--accent)" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 703.7" transform="rotate(135 130 130)"/>
+                      <circle id="dialKnob" r="11" fill="#fff"/></svg>
+                    <div class="read"><b id="dialVal">35</b><span>GŁOŚNOŚĆ</span></div>
+                  </div>
+                  <div class="dialbtns">
+                    <button class="round" data-vol="-2" aria-label="Ciszej"><i data-lucide="minus"></i></button>
+                    <button class="round" id="mute" aria-pressed="false" aria-label="Wycisz"><i data-lucide="volume-2"></i></button>
+                    <button class="round" data-vol="2" aria-label="Głośniej"><i data-lucide="plus"></i></button>
+                  </div>
+                </div>
+                <div class="colL zcol" style="flex:1">
+                  <div class="row zsel">
+                    <button class="seg" data-pick="zsrc"><i data-lucide="cable"></i><span class="v"><span class="k">ŹRÓDŁO</span><span class="val">Optical 1</span></span></button>
+                    <button class="seg" data-pick="fx"><i data-lucide="audio-lines"></i><span class="v"><span class="k">EFEKT</span><span class="val">Bez efektu</span></span></button>
+                  </div>
+                  <p class="cap">Scena dźwiękowa</p>
+                  <div class="levels">
+                    <div class="lvl" data-v="100"><span class="n">Center</span><span class="val">100</span><span class="track"><i></i></span></div>
+                    <div class="lvl" data-v="48"><span class="n">Subwoofer</span><span class="val">48</span><span class="track"><i></i></span></div>
+                    <div class="lvl" data-v="70"><span class="n">Tył</span><span class="val">70</span><span class="track"><i></i></span></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Dom -->
+            <section class="scr" data-scr="home" hidden>
+              <div class="head">
+                <span class="mark"><i data-lucide="house"></i></span>
+                <span class="title"><b>Dom</b><em>SALON</em></span>
+              </div>
+              <div class="body">
+                <div class="klima kv" data-kv="now">
+                  <!-- Teraz w firmware: nagłówek u góry, wartości przyklejone do dołu -->
+                  <div class="kh"><i class="kdot on"></i><span class="kname"><b>Klimatyzacja</b><em>SALON</em></span><i data-lucide="chevron-right" class="kgo"></i></div>
+                  <div class="know">
+                    <div class="kt">22,0<small>°C</small></div>
+                    <div class="kmeta"><b>Chłodzenie</b><span>W pokoju 24,0°</span></div>
+                  </div>
+                </div>
+
+                <div class="klima kv" data-kv="ring" hidden>
+                  <!-- A: mała tarcza jak na podstronie, tylko do podglądu -->
+                  <div class="kh"><i class="kdot on"></i><span class="kname"><b>Klimatyzacja</b><em>SALON</em></span><i data-lucide="chevron-right" class="kgo"></i></div>
+                  <div class="kring">
+                    <svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="84" fill="none" stroke="var(--surface-3)" stroke-width="14" stroke-linecap="round" stroke-dasharray="395.8 527.8" transform="rotate(135 100 100)"/>
+                      <circle cx="100" cy="100" r="84" fill="none" stroke="var(--accent)" stroke-width="14" stroke-linecap="round" stroke-dasharray="169.6 527.8" transform="rotate(135 100 100)"/></svg>
+                    <div class="kin"><span class="kcap">CHŁODZENIE</span><b>22,0<small>°</small></b><span>w pokoju 24,0°</span></div>
+                  </div>
+                  <div class="kchips"><span><i data-lucide="fan"></i>Auto</span><span><i data-lucide="move-vertical"></i>Ruch</span></div>
+                </div>
+
+                <div class="klima kv" data-kv="center" hidden>
+                  <!-- B: wszystko wyśrodkowane, tryb jako ikona nad temperaturą -->
+                  <div class="kh"><i class="kdot on"></i><span class="kname"><b>Klimatyzacja</b><em>SALON</em></span><i data-lucide="chevron-right" class="kgo"></i></div>
+                  <div class="kcenter">
+                    <span class="kmode"><i data-lucide="snowflake"></i>Chłodzenie</span>
+                    <div class="kbig">22,0<small>°C</small></div>
+                    <span class="kroom">w pokoju 24,0° · chłodzi o 2°</span>
+                  </div>
+                  <div class="kinfo"><div><em>NAWIEW</em><b>Auto</b></div><div><em>LAMELE</em><b>Ruch</b></div></div>
+                </div>
+
+                <div class="klima kv" data-kv="quick" hidden>
+                  <!-- C: szybkie sterowanie bez wchodzenia na podstronę -->
+                  <div class="kh"><i class="kdot on"></i><span class="kname"><b>Klimatyzacja</b><em>SALON</em></span>
+                    <button class="power" id="klPow" aria-pressed="true" style="width:44px;height:44px" aria-label="Zasilanie klimatyzacji"><i data-lucide="power"></i></button></div>
+                  <div class="kcenter">
+                    <button class="kmode" data-pick="mode"><i data-lucide="snowflake"></i><span id="klMeta">Chłodzenie</span><i data-lucide="chevron-down"></i></button>
+                    <div class="kbig"><span id="klT">22,0</span><small>°C</small></div>
+                    <span class="kroom">w pokoju 24,0°</span>
+                  </div>
+                  <div class="row">
+                    <button class="btn" data-kl="-0.5"><i data-lucide="minus"></i></button>
+                    <button class="btn" data-kl="0.5"><i data-lucide="plus"></i></button>
+                  </div>
+                </div>
+                <div class="scenes">
+                  <button class="scene" aria-pressed="false"><i data-lucide="film"></i>Film</button>
+                  <button class="scene" aria-pressed="false"><i data-lucide="music"></i>Muzyka</button>
+                  <button class="scene" aria-pressed="false"><i data-lucide="moon"></i>Dobranoc</button>
+                  <button class="scene" aria-pressed="false"><i data-lucide="power"></i>Wszystko off</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Ustawienia -->
+            <section class="scr" data-scr="settings" hidden>
+              <div class="head">
+                <span class="mark"><i data-lucide="settings"></i></span>
+                <span class="title"><b>Pilot</b><em>USTAWIENIA</em></span>
+              </div>
+              <div class="body">
+                <div class="mlist" id="mlist">
+                  <button class="mrow" data-d="wifi"><i data-lucide="wifi"></i><b>Wi-Fi</b><em>połączono</em></button>
+                  <button class="mrow" data-d="mqtt"><i data-lucide="repeat"></i><b>MQTT</b><em>połączono</em></button>
+                  <button class="mrow" data-d="ekran" aria-current="true"><i data-lucide="monitor"></i><b>Ekran</b><em>poziom</em></button>
+                  <button class="mrow" data-d="dzwiek"><i data-lucide="volume-2"></i><b>Dźwięk</b></button>
+                  <button class="mrow" data-d="pokoj"><i data-lucide="navigation"></i><b>Pokój i czas</b></button>
+                  <button class="mrow" data-d="wejscie"><i data-lucide="keyboard"></i><b>Klawiatura</b></button>
+                  <button class="mrow" data-d="diag"><i data-lucide="activity"></i><b>Diagnostyka</b></button>
+                  <button class="mrow" data-d="info"><i data-lucide="info"></i><b>O urządzeniu</b></button>
+                </div>
+                <div class="detail" id="detail"></div>
+              </div>
+            </section>
+          </main>
+
+          <!-- Start: pełny ekran bez paska -->
+          <section class="start" id="start">
+            <div class="left">
+              <div class="clock" id="clock">21:40</div>
+              <div class="date">czwartek, 6 listopada · SALON</div>
+              <div class="weather"><img src="../mockup-pulpit/assets/pixel/weather_partly_night.png" alt=""><div>7°C<span>częściowe zachmurzenie</span></div></div>
+              <div class="conn"><i></i>Połączono z domem</div>
+            </div>
+            <div class="grid">
+              <button class="dev" data-go="tv"><img src="../mockup-pulpit/assets/pixel/tv.png" alt=""><b>Telewizor</b><em><i></i>TV · Standard</em></button>
+              <button class="dev" data-go="appletv"><img src="../mockup-pulpit/assets/pixel/appletv.png" alt=""><b>Apple TV</b><em><i></i>Infuse · Diuna</em></button>
+              <button class="dev" data-go="audio"><img src="../mockup-pulpit/assets/pixel/audio.png" alt=""><b>Głośniki</b><em><i></i>głośność 35 · Optical 1</em></button>
+              <button class="dev" data-go="home"><img src="../mockup-pulpit/assets/pixel/home.png" alt=""><b>Dom</b><em><i class="off"></i>klima wyłączona</em></button>
+            </div>
+          </section>
+
+          <!-- Podstrona klimatyzacji: trzy warianty (przełącznik „Podstrona klimy”) -->
+          <section class="kpage" id="kpage" hidden>
+            <div class="khead">
+              <button class="kback" id="kpBack" aria-label="Cofnij"><i data-lucide="chevron-left"></i></button>
+              <b>Klimatyzacja</b><span class="spacer"></span>
+              <button class="power" aria-pressed="true" aria-label="Zasilanie klimatyzacji"><i data-lucide="power"></i></button>
+            </div>
+
+            <div class="kp" data-kp="now">
+              <div class="kpRow">
+                <div class="tring">
+                  <svg viewBox="0 0 300 300"><circle cx="150" cy="150" r="138" fill="none" stroke="var(--surface-3)" stroke-width="20" stroke-linecap="round" stroke-dasharray="650.3 867.1" transform="rotate(135 150 150)"/>
+                    <circle class="tarc" cx="150" cy="150" r="138" fill="none" stroke="var(--accent)" stroke-width="20" stroke-linecap="round" stroke-dasharray="394 867.1" transform="rotate(135 150 150)"/></svg>
+                  <div class="tin"><span class="kcap">CHŁODZENIE DO</span><b><span class="tval">24,5</span><small>°C</small></b><span>23,0° w pokoju</span></div>
+                  <div class="tbtn"><button class="round" data-tk="-0.5" aria-label="Chłodniej"><i data-lucide="minus"></i></button><button class="round" data-tk="0.5" aria-label="Cieplej"><i data-lucide="plus"></i></button></div>
+                  <span class="tmin">16,0°</span><span class="tmax">31,0°</span>
+                </div>
+                <div class="kpCards">
+                  <button class="kcard" data-pick="fan"><em>MOC</em><b class="val">Wysoka</b></button>
+                  <button class="kcard" data-pick="swing"><em>PION</em><b class="val">Ruch</b></button>
+                  <button class="kcard" data-pick="swingh"><em>POZIOM</em><b class="val">Ruch</b></button>
+                </div>
+              </div>
+              <div class="kmodes seg-row">
+                <button>Auto</button><button aria-pressed="true">Chłodzenie</button><button>Grzanie</button><button>Wentylator</button><button>Osuszanie</button>
+              </div>
+            </div>
+
+            <div class="kp" data-kp="p1" hidden>
+              <div class="kpRow">
+                <div class="tring">
+                  <svg viewBox="0 0 300 300"><circle cx="150" cy="150" r="138" fill="none" stroke="var(--surface-3)" stroke-width="20" stroke-linecap="round" stroke-dasharray="650.3 867.1" transform="rotate(135 150 150)"/>
+                    <circle class="tarc" cx="150" cy="150" r="138" fill="none" stroke="var(--accent)" stroke-width="20" stroke-linecap="round" stroke-dasharray="394 867.1" transform="rotate(135 150 150)"/></svg>
+                  <div class="tin"><span class="kcap">CHŁODZENIE DO</span><b><span class="tval">24,5</span><small>°C</small></b><span>23,0° w pokoju</span></div>
+                  <div class="tbtn"><button class="round" data-tk="-0.5" aria-label="Chłodniej"><i data-lucide="minus"></i></button><button class="round" data-tk="0.5" aria-label="Cieplej"><i data-lucide="plus"></i></button></div>
+                  <span class="tmin">16,0°</span><span class="tmax">31,0°</span>
+                </div>
+                <div class="kpSide">
+                  <p class="cap">Tryb</p>
+                  <div class="kmodeTiles">
+                    <button><i data-lucide="sparkles"></i>Auto</button>
+                    <button aria-pressed="true"><i data-lucide="snowflake"></i>Chłodzenie</button>
+                    <button><i data-lucide="sun"></i>Grzanie</button>
+                    <button><i data-lucide="fan"></i>Wentylator</button>
+                    <button><i data-lucide="droplets"></i>Osuszanie</button>
+                  </div>
+                  <p class="cap">Nawiew</p>
+                  <div class="kchipsRow">
+                    <button data-pick="fan"><em>MOC</em><b class="val">Wysoka</b></button>
+                    <button data-pick="swing"><em>PION</em><b class="val">Ruch</b></button>
+                    <button data-pick="swingh"><em>POZIOM</em><b class="val">Ruch</b></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="kp" data-kp="p2" hidden>
+              <div class="kpRow">
+                <div class="tring">
+                  <svg viewBox="0 0 300 300"><circle cx="150" cy="150" r="138" fill="none" stroke="var(--surface-3)" stroke-width="20" stroke-linecap="round" stroke-dasharray="650.3 867.1" transform="rotate(135 150 150)"/>
+                    <circle class="tarc" cx="150" cy="150" r="138" fill="none" stroke="var(--accent)" stroke-width="20" stroke-linecap="round" stroke-dasharray="394 867.1" transform="rotate(135 150 150)"/></svg>
+                  <div class="tin"><span class="kcap">CHŁODZENIE DO</span><b><span class="tval">24,5</span><small>°C</small></b><span>23,0° w pokoju</span></div>
+                  <div class="tbtn"><button class="round" data-tk="-0.5" aria-label="Chłodniej"><i data-lucide="minus"></i></button><button class="round" data-tk="0.5" aria-label="Cieplej"><i data-lucide="plus"></i></button></div>
+                  <span class="tmin">16,0°</span><span class="tmax">31,0°</span>
+                </div>
+                <div class="kpList">
+                  <button class="klrow" data-pick="fan"><i data-lucide="fan"></i><b>Moc nawiewu</b><span class="val">Wysoka</span><i data-lucide="chevron-right"></i></button>
+                  <button class="klrow" data-pick="swing"><i data-lucide="move-vertical"></i><b>Lamele w pionie</b><span class="val">Ruch</span><i data-lucide="chevron-right"></i></button>
+                  <button class="klrow" data-pick="swingh"><i data-lucide="move-horizontal"></i><b>Lamele w poziomie</b><span class="val">Ruch</span><i data-lucide="chevron-right"></i></button>
+                </div>
+              </div>
+              <div class="kmodes seg-row">
+                <button>Auto</button><button aria-pressed="true">Chłodzenie</button><button>Grzanie</button><button>Wentylator</button><button>Osuszanie</button>
+              </div>
+            </div>
+          </section>
+
+          <div class="scrim" id="scrim" hidden></div>
+          <section class="sheet" id="sheet" hidden>
+            <div class="shead"><b id="sheetTitle">Wybierz</b><button id="sheetClose" aria-label="Zamknij"><i data-lucide="x"></i></button></div>
+            <div class="slist" id="sheetList"></div>
+          </section>
+
+          <section class="editor" id="editor" hidden>
+            <div class="ehead">
+              <button id="kbBack" aria-label="Cofnij"><i data-lucide="chevron-left"></i></button>
+              <div class="field" id="field"><span class="ph" id="ph">Szukaj w Apple TV…</span><span id="ftxt"></span><span class="caret"></span></div>
+              <button class="send" id="kbSend"><i data-lucide="send"></i>Wyślij</button>
+            </div>
+            <div id="keys" style="display:flex;flex-direction:column;gap:7px;margin-top:auto"></div>
+          </section>
+
+          <section class="wake" id="wake" hidden>
+            <div class="orbit"><img src="../mockup-pulpit/assets/pixel/home.png" alt=""></div>
+            <div>
+              <h2>Łączenie z domem</h2>
+              <div class="steps" id="steps"><div><i></i>Wi-Fi</div><div><i></i>MQTT</div><div><i></i>Synchronizacja</div></div>
+            </div>
+          </section>
+
+          <div class="toast" id="toast" hidden></div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <aside class="notes" id="notes"></aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const bezel = $('#bezel');
+
+  /* ---------- Notatki per ekran ---------- */
+  const NOTES = {
+    start: { t: 'Start', shot: '01-start', plus: ['Zegar i pogoda po lewej, 4 duże kafle po prawej — nic nie trzeba przewijać.', 'Kafle 2×2 są szersze niż w pionie, nazwa + status mieszczą się w jednej linii.'], minus: ['Mniej miejsca w pionie na dodatkowe kafle (np. 6 urządzeń wymagałoby siatki 3×2).'] },
+    tv: { t: 'Telewizor', shot: '02-tv', plus: ['Źródło i tryb obrazu w nagłówku, w jednym rzędzie (ok. 200 px na każdy). Lewa kolumna zostaje dla kanałów i Cofnij/Menu. Przełącz „TV: wybór”, żeby porównać z obecnym firmware.', 'Dwie strefy: kanały i Cofnij/Menu po lewej, nawigacja po prawej.', 'Krzyżak + kołyski VOL/P w jednym rzędzie, jak w klasycznym pilocie trzymanym oburącz.', 'Mieści się 6 skrótów kanałów zamiast 5 (WP Pilot obok TVP).'], minus: ['Krzyżak 240 px zamiast ~300 px — wysokość 480 to twarde ograniczenie.', 'Kciuk prawej ręki ma krzyżak, ale lewej — kanały; jednoręcznie gorzej niż w pionie.'] },
+    appletv: { t: 'Apple TV', shot: '03-appletv', plus: ['Gładzik 330 px po prawej, akcje po lewej. Kliknij/przeciągnij po gładziku.', '„Tekst” otwiera klawiaturę na całą szerokość — klawisze 69 px zamiast ~44 px.'], minus: ['Gładzik nieco mniejszy (330 vs ~420 px w pionie).'] },
+    audio: { t: 'Głośniki Z906 — Soundstage', shot: '04-audio', plus: ['Źródło i efekt w nagłówku, obok nazwy — jak na TV. Prawa strona zostaje dla trzech suwaków na pełną wysokość. Przełącz „Z906: wybór”, żeby porównać.', 'Pierścień i suwaki obok siebie: każdy element dostaje pełną wysokość.', 'Suwaki kanałów wyższe (~250 px toru) → precyzyjniejszy krok 2.', 'Przeciągnij po pierścieniu (obrót względny) i po kolumnach kanałów (pion).'], minus: ['Odchodzi od zatwierdzonej kompozycji Soundstage (kolejność pionowa) — wymaga zmiany spec + ADR.'] },
+    home: { t: 'Dom', shot: '05-home', plus: ['Klimatyzacja włączona, cztery warianty karty — przełącznik „Klima”: teraz (firmware), A tarcza, B środek, C szybkie.', 'Klimatyzacja jako duża karta z temperaturą i −/+ wprost na ekranie zakładki.', 'Sceny 2×2 dostają duże pola dotyku.'], minus: ['Przy większej liczbie urządzeń HA potrzebny poziomy przewijany rząd kart.'] },
+    settings: { t: 'Ustawienia', shot: '06-more', plus: ['Wzorzec lista + szczegół (master-detail): bez przechodzenia na podstrony i wracania.', 'Ekran → Orientacja przełącza w makiecie stronę paska.'], minus: ['Edycja tekstu (hasło Wi-Fi) i tak zasłania cały ekran klawiaturą.'] },
+    editor: { t: 'Klawiatura', shot: '07-keyboard-qwerty', plus: ['Pełny QWERTY w 4 rzędach, klawisze 69 × 66 px — dużo wygodniej niż w pionie.'], minus: ['Pisanie oburącz; w dłoni jednoręcznie słabo.'] },
+  };
+  let current = 'start';
+  const cmpBtn = $('#cmp');
+  function renderNotes() {
+    const key = !$('#editor').hidden ? 'editor' : current;
+    const n = NOTES[key];
+    $('#notes').innerHTML = `<h2>${n.t}</h2>
+      <h3>Zyskujemy</h3><ul class="plus">${n.plus.map(x => `<li>${x}</li>`).join('')}</ul>
+      <h3>Tracimy</h3><ul class="minus">${n.minus.map(x => `<li>${x}</li>`).join('')}</ul>
+      <div class="portrait ${cmpBtn.getAttribute('aria-pressed') === 'true' ? 'on' : ''}"><h3>Ten ekran w pionie (obecny firmware)</h3><img src="../../screenshots/${n.shot}.png" alt="Obecny ekran w pionie"></div>`;
+  }
+
+  /* ---------- Nawigacja ---------- */
+  function go(name) {
+    $('#start').hidden = true;
+    current = name;
+    $$('.scr').forEach(s => s.hidden = s.dataset.scr !== name);
+    $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.go === name)));
+    renderNotes();
+  }
+  $$('[data-go]').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+  $$('.tab').forEach(t => t.addEventListener('dblclick', () => { $('#start').hidden = false; current = 'start'; renderNotes(); }));
+
+  function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 1600); }
+
+  /* ---------- Opcje makiety ---------- */
+  function setRail(side) {
+    bezel.classList.toggle('right', side === 'right');
+    $$('[data-rail]').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.rail === side)));
+    $$('[data-orient]').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.orient === side)));
+  }
+  $$('[data-rail]').forEach(c => c.addEventListener('click', () => setRail(c.dataset.rail)));
+  $$('[data-tvsel]').forEach(c => c.addEventListener('click', () => {
+    bezel.classList.toggle('tv-head', c.dataset.tvsel === 'head');
+    $$('[data-tvsel]').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+  }));
+  $$('[data-zsel]').forEach(c => c.addEventListener('click', () => {
+    bezel.classList.toggle('z-head', c.dataset.zsel === 'head');
+    $$('[data-zsel]').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+  }));
+  function showKv(v) {
+    $$('.kv').forEach(k => k.hidden = k.dataset.kv !== v);
+    $$('[data-kvsel]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.kvsel === v)));
+  }
+  $$('[data-kvsel]').forEach(c => c.addEventListener('click', () => showKv(c.dataset.kvsel)));
+  showKv('ring');
+  function showKp(v) {
+    $$('.kp').forEach(k => k.hidden = k.dataset.kp !== v);
+    $$('[data-kpsel]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.kpsel === v)));
+  }
+  function openKp() { go('home'); $('#kpage').hidden = false; }
+  $$('[data-kpsel]').forEach(c => c.addEventListener('click', () => { showKp(c.dataset.kpsel); openKp(); }));
+  $('#kpOpen').addEventListener('click', openKp);
+  $('#kpBack').addEventListener('click', () => $('#kpage').hidden = true);
+  $$('.kname, .kbig, .kt, .kring, .kcenter').forEach(e => e.addEventListener('click', ev => { if (!ev.target.closest('button')) openKp(); }));
+  $$('#kpage .kmodes button, #kpage .kmodeTiles button').forEach(b => b.addEventListener('click', () =>
+    $$('button', b.parentElement).forEach(x => x.setAttribute('aria-pressed', String(x === b)))));
+  let tk = 24.5;
+  $$('[data-tk]').forEach(b => b.addEventListener('click', () => {
+    tk = Math.max(16, Math.min(31, tk + +b.dataset.tk));
+    $$('.tval').forEach(e => e.textContent = tk.toFixed(1).replace('.', ','));
+    $$('.tarc').forEach(e => e.setAttribute('stroke-dasharray', (650.3 * (tk - 16) / 15) + ' 867.1'));
+  }));
+  showKp('p1');
+  let mt = 'sel';
+  function layoutModes() {
+    const box = document.querySelector('.kp[data-kp="p1"] .kmodeTiles');
+    const btns = [...box.querySelectorAll('button')];
+    box.classList.toggle('big', mt !== 'grid');
+    btns.forEach(b => b.classList.remove('big'));
+    if (mt === 'sel') (btns.find(b => b.getAttribute('aria-pressed') === 'true') || btns[0]).classList.add('big');
+    if (mt === 'cool') btns.find(b => b.textContent.trim() === 'Chłodzenie').classList.add('big');
+  }
+  $$('[data-mt]').forEach(c => c.addEventListener('click', () => {
+    mt = c.dataset.mt;
+    $$('[data-mt]').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+    showKp('p1'); openKp(); layoutModes();
+  }));
+  $$('.kp[data-kp="p1"] .kmodeTiles button').forEach(b => b.addEventListener('click', () => setTimeout(layoutModes)));
+  layoutModes();
+  $$('[data-pw]').forEach(c => c.addEventListener('click', () => {
+    bezel.classList.toggle('pw-soft', c.dataset.pw === 'soft');
+    $$('[data-pw]').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+  }));
+  $$('[data-th]').forEach(c => c.addEventListener('click', () => {
+    document.documentElement.dataset.theme = c.dataset.th;
+    $$('[data-th]').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+  }));
+  cmpBtn.addEventListener('click', () => { cmpBtn.setAttribute('aria-pressed', String(cmpBtn.getAttribute('aria-pressed') !== 'true')); renderNotes(); });
+  $('#touchmap').addEventListener('click', e => { const on = document.body.classList.toggle('show-touch'); e.currentTarget.setAttribute('aria-pressed', String(on)); });
+  $('#wakeBtn').addEventListener('click', wake);
+  function wake() {
+    const w = $('#wake'), st = $$('#steps div');
+    st.forEach(s => s.className = ''); w.hidden = false;
+    let i = 0;
+    const step = () => {
+      if (i > 0) st[i - 1].className = 'done';
+      if (i < st.length) { st[i].className = 'now'; i++; setTimeout(step, 550); }
+      else setTimeout(() => { w.hidden = true; $('#start').hidden = false; current = 'start'; renderNotes(); }, 300);
+    };
+    step();
+  }
+
+  /* ---------- Przyciski ogólne ---------- */
+  $$('.power').forEach(p => p.addEventListener('click', () => p.setAttribute('aria-pressed', String(p.getAttribute('aria-pressed') !== 'true'))));
+  $$('.tile.ch').forEach(t => t.addEventListener('click', () => { t.classList.add('flash'); setTimeout(() => t.classList.remove('flash'), 600); toast('Przełączam na ' + t.querySelector('img').alt); }));
+  $$('.scene').forEach(s => s.addEventListener('click', () => { $$('.scene').forEach(x => x.setAttribute('aria-pressed', String(x === s && x.getAttribute('aria-pressed') !== 'true'))); }));
+
+  /* ---------- Panel wyboru ---------- */
+  const PICK = {
+    src: { t: 'Źródło', o: ['TV', 'HDMI 1 · Apple TV', 'HDMI 2 · PC', 'HDMI 3', 'AV'] },
+    pic: { t: 'Tryb obrazu', o: ['Standard', 'Żywy', 'Kino', 'Kino domowe', 'Sport', 'Gra', 'Filmmaker Mode', 'Dolby Vision Cinema Bright'] },
+    ch: { t: 'Kanały', o: ['TVP 1', 'TVP 2', 'Polsat', 'TVN', 'TV4', 'TV Puls', 'TVN 7', 'TVP Info', 'TVP Kultura', 'Polsat News', 'TVN 24', 'Stopklatka', 'Fokus TV', 'TVP ABC'], num: true },
+    zsrc: { t: 'Źródło Z906', o: ['PC', 'RCA', 'Optical 1', 'Optical 2', 'Coaxial', 'AUX'] },
+    fx: { t: 'Efekt', o: ['Stereo 3D', '2.1', '4.1', 'Bez efektu'] },
+    mode: { t: 'Tryb klimatyzacji', o: ['Chłodzenie', 'Grzanie', 'Osuszanie', 'Wentylator', 'Auto'] },
+    fan: { t: 'Moc nawiewu', o: ['Auto', 'Cicha', 'Niska', 'Średnio niska', 'Średnia', 'Średnio wysoka', 'Wysoka', 'Turbo'] },
+    swing: { t: 'Lamele w pionie', o: ['Stop', 'Ruch', 'Góra', 'Środek', 'Dół'] },
+    swingh: { t: 'Lamele w poziomie', o: ['Stop', 'Ruch', 'Lewo', 'Środek', 'Prawo'] },
+  };
+  let pickFrom = null;
+  function openPick(key, from) {
+    const p = PICK[key]; pickFrom = from;
+    const cur = from.querySelector('.val')?.textContent;
+    $('#sheetTitle').textContent = p.t;
+    $('#sheetList').innerHTML = p.o.map((o, i) => `<button class="opt" aria-selected="${o === cur}" data-i="${i}"><span>${p.num ? `<small>${i + 1}</small>` : ''}${o}</span>${o === cur ? '<i data-lucide="check"></i>' : ''}</button>`).join('');
+    $('#scrim').hidden = false; $('#sheet').hidden = false; lucide.createIcons();
+    $$('#sheetList .opt').forEach(b => b.addEventListener('click', () => {
+      const v = p.o[+b.dataset.i]; closePick();
+      if (key === 'ch') { toast('Przełączam na ' + v); return; }
+      if (key === 'mode') { $('#klMeta').textContent = v; $('#klPow').setAttribute('aria-pressed', 'true'); return; }
+      $$('[data-pick="' + key + '"] .val').forEach(e => e.textContent = v);
+      from.classList.add('pending'); setTimeout(() => from.classList.remove('pending'), 1400);
+    }));
+  }
+  function closePick() { $('#scrim').hidden = true; $('#sheet').hidden = true; }
+  $$('[data-pick]').forEach(b => b.addEventListener('click', () => openPick(b.dataset.pick, b)));
+  $('#scrim').addEventListener('click', closePick); $('#sheetClose').addEventListener('click', closePick);
+
+  /* ---------- Gładzik ---------- */
+  const pad = $('#pad');
+  pad.addEventListener('pointerdown', e => {
+    const r = pad.getBoundingClientRect(), s = r.width / 330;
+    const d = document.createElement('span'); d.className = 'ripple';
+    d.style.left = (e.clientX - r.left) / s + 'px'; d.style.top = (e.clientY - r.top) / s + 'px';
+    pad.appendChild(d); setTimeout(() => d.remove(), 520);
+    const sx = e.clientX, sy = e.clientY;
+    const up = ev => { window.removeEventListener('pointerup', up);
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (Math.hypot(dx, dy) < 12) toast('OK'); else toast(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'Prawo' : 'Lewo') : (dy > 0 ? 'Dół' : 'Góra'));
+    };
+    window.addEventListener('pointerup', up);
+  });
+
+  /* ---------- Pierścień głośności (obrót względny) ---------- */
+  let vol = 35, muted = false;
+  const dial = $('#dial'), arc = $('#dialArc'), knob = $('#dialKnob');
+  function drawVol() {
+    const len = 527.8 * vol / 100; arc.setAttribute('stroke-dasharray', `${len} 703.7`);
+    const a = (135 + 270 * vol / 100) * Math.PI / 180;
+    knob.setAttribute('cx', 130 + 112 * Math.cos(a)); knob.setAttribute('cy', 130 + 112 * Math.sin(a));
+    $('#dialVal').textContent = vol; dial.classList.toggle('muted', muted);
+    $$('.dev[data-go="audio"] em')[0].innerHTML = `<i></i>głośność ${vol} · Optical 1`;
+  }
+  let lastA = null, acc = 0;
+  const angle = e => { const r = dial.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)); };
+  const dist = e => { const r = dial.getBoundingClientRect(); return Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)) / (r.width / 260); };
+  dial.addEventListener('pointerdown', e => { dial.setPointerCapture(e.pointerId); lastA = angle(e); acc = 0; });
+  dial.addEventListener('pointermove', e => {
+    if (lastA === null) return;
+    const a = angle(e); let d = a - lastA; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; lastA = a;
+    if (dist(e) < 55) return;
+    acc += d / (2 * Math.PI) * 100;
+    const steps = Math.trunc(acc / 2); if (steps) { acc -= steps * 2; vol = Math.max(0, Math.min(100, vol + steps * 2)); drawVol(); }
+  });
+  dial.addEventListener('pointerup', () => lastA = null);
+  $$('[data-vol]').forEach(b => b.addEventListener('click', () => { vol = Math.max(0, Math.min(100, vol + +b.dataset.vol)); drawVol(); }));
+  $('#mute').addEventListener('click', e => { muted = !muted; e.currentTarget.setAttribute('aria-pressed', String(muted)); e.currentTarget.innerHTML = `<i data-lucide="${muted ? 'volume-x' : 'volume-2'}"></i>`; lucide.createIcons(); drawVol(); });
+
+  /* ---------- Suwaki kanałów (ruch względny w pionie) ---------- */
+  $$('.lvl').forEach(l => {
+    const draw = () => { l.querySelector('.val').textContent = l.dataset.v; l.querySelector('.track i').style.height = l.dataset.v + '%'; };
+    draw(); let sy = null, base = 0;
+    l.addEventListener('pointerdown', e => { l.setPointerCapture(e.pointerId); sy = e.clientY; base = +l.dataset.v; });
+    l.addEventListener('pointermove', e => { if (sy === null) return; const s = l.getBoundingClientRect().height / l.offsetHeight;
+      let v = base + (sy - e.clientY) / s / 160 * 100; v = Math.max(0, Math.min(100, Math.round(v / 2) * 2)); l.dataset.v = v; draw(); });
+    l.addEventListener('pointerup', () => sy = null);
+  });
+
+  /* ---------- Klimatyzacja ---------- */
+  let kl = 22;
+  $$('[data-kl]').forEach(b => b.addEventListener('click', () => { kl = Math.max(16, Math.min(30, kl + +b.dataset.kl)); $('#klT').textContent = kl.toFixed(1).replace('.', ','); }));
+  $('#klPow').addEventListener('click', () => setTimeout(() => {
+    const on = $('#klPow').getAttribute('aria-pressed') === 'true';
+    $('#klMeta').textContent = on ? 'Chłodzenie' : 'Wyłączona';
+  }));
+
+  /* ---------- Ustawienia: master-detail ---------- */
+  const DET = {
+    wifi: `<h3>Wi-Fi</h3><div class="drow">Sieć<em>moja_siec</em></div><div class="drow">Stan<em class="ok">połączono</em></div><div class="drow">Sygnał<em>−54 dBm</em></div><div class="drow">Hasło<button class="opts" data-kb><span class="chip" style="background:var(--surface-2);color:var(--text);border:0">Zmień…</span></button></div>`,
+    mqtt: `<h3>MQTT</h3><div class="drow">Broker<em>mqtt.local:1883</em></div><div class="drow">Klient<em>multimedia_remote/1</em></div><div class="drow">Stan<em class="ok">połączono</em></div>`,
+    ekran: `<h3>Ekran</h3>
+      <div class="drow">Orientacja<span class="opts"><button data-orient="portrait">Pion</button><button data-orient="left" aria-pressed="true">Poziom L</button><button data-orient="right">Poziom P</button></span></div>
+      <div class="drow">Styl<span class="opts"><button data-th2="dark" aria-pressed="true">Ciemny</button><button data-th2="light">Jasny</button><button>Wg godzin</button></span></div>
+      <div class="drow">Jasność<input class="slider" type="range" value="80"></div>
+      <div class="drow">Wygaszenie<span class="opts"><button>15 s</button><button aria-pressed="true">30 s</button><button>60 s</button></span></div>`,
+    dzwiek: `<h3>Dźwięk</h3><div class="drow">Limit głośności Z906<span class="opts"><button aria-pressed="true">Bez limitu</button><button>70</button><button>50</button></span></div><div class="drow">Krok VOL<em>2</em></div>`,
+    pokoj: `<h3>Pokój i czas</h3><div class="drow">Pokój<em>SALON</em></div><div class="drow">Strefa czasowa<em>Europa/Warszawa</em></div>`,
+    wejscie: `<h3>Klawiatura i gładzik</h3><div class="drow">Układ<span class="opts"><button aria-pressed="true">QWERTY</button><button>ABC</button></span></div><div class="drow">Czułość gładzika<input class="slider" type="range" value="55"></div><div class="drow">Test klawiatury<button class="opts" data-kb><span class="chip" style="background:var(--surface-2);color:var(--text);border:0">Otwórz</span></button></div>`,
+    diag: `<h3>Diagnostyka</h3><div class="drow">IP<em>192.0.2.40</em></div><div class="drow">Wolna pamięć wewn.<em>182 kB</em></div><div class="drow">Ostatni snapshot<em>0,4 s temu</em></div><div class="drow">Czas pracy<em>2 d 4 h</em></div>`,
+    info: `<h3>O urządzeniu</h3><div class="drow">Płytka<em>Guition JC4880P443C</em></div><div class="drow">Panel<em>ST7701 · 480×800 natywnie</em></div><div class="drow">Orientacja<em>obrót 90° (PPA)</em></div><div class="drow">Firmware<em>v1 · 2026-11-06</em></div>`,
+  };
+  function showDetail(k) {
+    $$('.mrow').forEach(r => r.setAttribute('aria-current', String(r.dataset.d === k)));
+    $('#detail').innerHTML = DET[k];
+    const side = bezel.classList.contains('right') ? 'right' : 'left';
+    $$('#detail [data-orient]').forEach(b => {
+      b.setAttribute('aria-pressed', String(b.dataset.orient === side));
+      b.addEventListener('click', () => {
+        if (b.dataset.orient === 'portrait') { toast('Pion = obecny firmware · zmiana wymaga restartu UI'); cmpBtn.setAttribute('aria-pressed', 'true'); renderNotes(); return; }
+        setRail(b.dataset.orient); toast('Orientacja zapisana · restart UI');
+      });
+    });
+    $$('#detail [data-th2]').forEach(b => b.addEventListener('click', () => $(`[data-th="${b.dataset.th2}"]`).click() || $$('#detail [data-th2]').forEach(x => x.setAttribute('aria-pressed', String(x === b)))));
+    $$('#detail .opts button:not([data-orient]):not([data-th2])').forEach(b => b.addEventListener('click', () => $$('button', b.parentElement).forEach(x => x.setAttribute('aria-pressed', String(x === b)))));
+    $$('#detail [data-kb]').forEach(b => b.addEventListener('click', openKb));
+  }
+  $$('.mrow').forEach(r => r.addEventListener('click', () => showDetail(r.dataset.d)));
+  showDetail('ekran');
+
+  /* ---------- Klawiatura ---------- */
+  const ROWS = [['q','w','e','r','t','y','u','i','o','p'], ['a','s','d','f','g','h','j','k','l'], ['⇧','z','x','c','v','b','n','m','⌫'], ['123','ą ę','spacja','.','↵']];
+  let txt = '', shift = false;
+  function drawKeys() {
+    $('#keys').innerHTML = ROWS.map(r => `<div class="krow">${r.map(k => {
+      const cls = k === 'spacja' ? 'key sp' : (k.length > 1 || k === '⇧' || k === '⌫' || k === '↵') ? 'key w' : 'key';
+      const lab = shift && k.length === 1 && /[a-z]/.test(k) ? k.toUpperCase() : k;
+      return `<button class="${cls}${k === '⇧' && shift ? ' on' : ''}" data-k="${k}">${lab}</button>`; }).join('')}</div>`).join('');
+    $$('#keys .key').forEach(b => b.addEventListener('click', () => press(b.dataset.k)));
+  }
+  function press(k) {
+    if (k === '⇧') { shift = !shift; drawKeys(); return; }
+    if (k === '⌫') txt = txt.slice(0, -1);
+    else if (k === 'spacja') txt += ' ';
+    else if (k === '↵') { send(); return; }
+    else if (k === '123' || k === 'ą ę') { toast('Drugi układ — jak w pionie'); return; }
+    else { txt += shift ? k.toUpperCase() : k; if (shift) { shift = false; drawKeys(); } }
+    $('#ftxt').textContent = txt; $('#ph').hidden = txt.length > 0;
+  }
+  function openKb() { $('#editor').hidden = false; drawKeys(); renderNotes(); }
+  function closeKb() { $('#editor').hidden = true; renderNotes(); }
+  function send() { toast(txt ? `Wysłano: „${txt}”` : 'Pusty tekst'); txt = ''; $('#ftxt').textContent = ''; $('#ph').hidden = false; closeKb(); }
+  $('#openKb').addEventListener('click', openKb);
+  $('#kbBack').addEventListener('click', closeKb);
+  $('#kbSend').addEventListener('click', send);
+  document.addEventListener('keydown', e => {
+    if ($('#editor').hidden) return;
+    if (e.key === 'Backspace') press('⌫'); else if (e.key === 'Enter') press('↵'); else if (e.key === ' ') { press('spacja'); e.preventDefault(); }
+    else if (e.key.length === 1) { txt += e.key; $('#ftxt').textContent = txt; $('#ph').hidden = true; }
+  });
+
+  /* ---------- Skala do okna ---------- */
+  function fit() {
+    const box = $('#scaleBox'); box.style.transform = '';
+    const need = 828, avail = Math.min(box.parentElement.parentElement.clientWidth, window.innerWidth - 32);
+    const s = Math.min(1, avail / need);
+    box.style.transform = s < 1 ? `scale(${s})` : '';
+    box.style.width = need * s + 'px'; box.style.height = 508 * s + 'px';
+  }
+  window.addEventListener('resize', fit);
+
+  lucide.createIcons();
+  drawVol(); renderNotes(); fit();
+  setInterval(() => { const d = new Date(); $('#clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }, 1000);
+})();
+</script>
+</body>
+</html>

@@ -47,6 +47,7 @@ constexpr PrefSpec kPrefs[] = {
     {"kb_auto", 1},    // Pref::KeyboardAutoOpen
     {"theme", 0},      // Pref::ThemeMode — ciemny, jak przed jasnym stylem
     {"theme_hrs", 1},  // Pref::ThemeHours — ciemny od 18 do 8
+    {"orient", 0},     // Pref::Orientation — pion, natywny dla panelu
 };
 static_assert(sizeof(kPrefs) / sizeof(kPrefs[0]) == static_cast<std::size_t>(Pref::Count),
               "kazda preferencja potrzebuje klucza i wartosci domyslnej");

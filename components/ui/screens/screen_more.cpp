@@ -6,15 +6,94 @@
 namespace ui {
 namespace {
 
-void on_open_wifi(void* raw) { open_wifi_page(*static_cast<Context*>(raw)); }
-void on_open_mqtt(void* raw) { open_mqtt_page(*static_cast<Context*>(raw)); }
-void on_open_display(void* raw) { open_display_page(*static_cast<Context*>(raw)); }
-void on_open_sound(void* raw) { open_sound_page(*static_cast<Context*>(raw)); }
-void on_open_about(void* raw) { open_about_page(*static_cast<Context*>(raw)); }
-void on_open_place(void* raw) { open_place_page(*static_cast<Context*>(raw)); }
-void on_open_input(void* raw) { open_input_page(*static_cast<Context*>(raw)); }
-void on_open_diagnostics(void* raw) { open_diagnostics_page(*static_cast<Context*>(raw)); }
+// Poziom (makieta docs/ux/mockup-landscape): lista ustawień w wąskiej kolumnie, a wybrana
+// podstrona zadokowana obok niej, na prawej części ekranu, zamiast zasłaniać wszystko.
+constexpr int32_t kWideList = 290;
+constexpr std::size_t kSettingsCount = 8;
+
+// Podstrony w kolejności wierszy listy.
+const widgets::Page* settings_page(const Context& context, std::size_t index) {
+    const widgets::Page* pages[kSettingsCount] = {
+        &context.wifi.page,     &context.mqtt.page,          &context.device.display,
+        &context.device.sound,  &context.device.place,       &context.device.input,
+        &context.device.diagnostics, &context.device.about,
+    };
+    return pages[index];
+}
+
+const widgets::ListRow* settings_row(const Context& context, std::size_t index) {
+    const widgets::ListRow* rows[kSettingsCount] = {
+        &context.more.wifi,  &context.more.mqtt,  &context.more.brightness,
+        &context.more.sleep, &context.more.place, &context.more.input,
+        &context.more.diagnostics, &context.more.about,
+    };
+    return rows[index];
+}
+
+bool page_open(const widgets::Page& page) {
+    return page.root != nullptr && !lv_obj_has_flag(page.root, LV_OBJ_FLAG_HIDDEN);
+}
+
+// W poziomie otwarta jest najwyżej jedna podstrona: nowa zastępuje poprzednią.
+void open_setting(Context& context, void (*open)(Context&)) {
+    if (theme::landscape()) {
+        close_settings_pages(context);
+    }
+    open(context);
+}
+
+void on_open_wifi(void* raw) { open_setting(*static_cast<Context*>(raw), &open_wifi_page); }
+void on_open_mqtt(void* raw) { open_setting(*static_cast<Context*>(raw), &open_mqtt_page); }
+void on_open_display(void* raw) { open_setting(*static_cast<Context*>(raw), &open_display_page); }
+void on_open_sound(void* raw) { open_setting(*static_cast<Context*>(raw), &open_sound_page); }
+void on_open_about(void* raw) { open_setting(*static_cast<Context*>(raw), &open_about_page); }
+void on_open_place(void* raw) { open_setting(*static_cast<Context*>(raw), &open_place_page); }
+void on_open_input(void* raw) { open_setting(*static_cast<Context*>(raw), &open_input_page); }
+void on_open_diagnostics(void* raw) {
+    open_setting(*static_cast<Context*>(raw), &open_diagnostics_page);
+}
 }  // namespace
+
+void close_settings_pages(Context& context) {
+    for (std::size_t i = 0; i < kSettingsCount; ++i) {
+        widgets::show_page(*settings_page(context, i), false);
+    }
+    context.wifi.open = false;
+}
+
+void dock_settings_pages(Context& context) {
+    if (!theme::landscape()) {
+        return;
+    }
+    const int32_t left = theme::kRail + theme::kGutterWide + kWideList + theme::kS4;
+    const int32_t width = lv_display_get_horizontal_resolution(lv_display_get_default()) - left;
+    for (std::size_t i = 0; i < kSettingsCount; ++i) {
+        lv_obj_t* root = settings_page(context, i)->root;
+        lv_obj_set_size(root, width, LV_PCT(100));
+        lv_obj_align(root, LV_ALIGN_TOP_RIGHT, 0, 0);
+        lv_obj_set_style_border_width(root, 1, LV_PART_MAIN);
+        lv_obj_set_style_border_side(root, LV_BORDER_SIDE_LEFT, LV_PART_MAIN);
+        lv_obj_set_style_border_color(root, theme::line(), LV_PART_MAIN);
+    }
+}
+
+void sync_settings_detail(Context& context) {
+    if (!theme::landscape()) {
+        return;
+    }
+    if (context.screen != ScreenId::More) {
+        // Zadokowana podstrona należy do ustawień: nie może zostać nad TV czy Z906.
+        close_settings_pages(context);
+        return;
+    }
+    for (std::size_t i = 0; i < kSettingsCount; ++i) {
+        if (page_open(*settings_page(context, i))) {
+            return;
+        }
+    }
+    // Pusta prawa połowa wyglądała na błąd: po wejściu w ustawienia od razu widać Ekran.
+    open_display_page(context);
+}
 
 void build_more(Context& context, lv_obj_t* parent) {
     MoreScreen& screen = context.more;
@@ -47,6 +126,17 @@ void build_more(Context& context, lv_obj_t* parent) {
     screen.about = widgets::make_list_row(screen.section, LV_SYMBOL_FILE, "O urządzeniu",
                                           "wersja, restart, ustawienia fabryczne", "",
                                           &on_open_about, &context);
+
+    if (theme::landscape()) {
+        // Wąska kolumna: bez opisów pod nazwą. Długie podsumowania (Ekran, wersja)
+        // znikają — te same wartości widać obok, w otwartej podstronie.
+        lv_obj_set_width(screen.section, kWideList);
+        for (std::size_t i = 0; i < kSettingsCount; ++i) {
+            lv_obj_add_flag(settings_row(context, i)->note, LV_OBJ_FLAG_HIDDEN);
+        }
+        lv_obj_add_flag(screen.brightness.value, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(screen.about.value, LV_OBJ_FLAG_HIDDEN);
+    }
 
 }
 
@@ -97,6 +187,15 @@ void render_more(Context& context) {
     }
     lv_label_set_text(screen.about.value, esp_app_get_description()->version);
     lv_label_set_text(screen.place.value, context.room.c_str());
+
+    // Poziom: wiersz otwartej podstrony obwiedziony akcentem, jak wybór na liście.
+    if (theme::landscape()) {
+        for (std::size_t i = 0; i < kSettingsCount; ++i) {
+            const bool open = page_open(*settings_page(context, i));
+            lv_obj_set_style_border_color(settings_row(context, i)->root,
+                                          open ? theme::accent() : theme::line(), LV_PART_MAIN);
+        }
+    }
 
 }
 

@@ -57,4 +57,20 @@ num="0x2C,0x30-0x3A,0x2014"
 gen ubuntu_b_46_num Ubuntu-Bold.ttf 46 "$num"
 gen ubuntu_b_64_num Ubuntu-Bold.ttf 64 "$num"
 
+# Ikony trybów klimatyzacji: pięć znaków z Lucide 0.460.0 (licencja ISC), te same co w makiecie
+# docs/ux/mockup-landscape. Plik TTF jest w pakiecie npm `lucide-static@0.460.0` (font/lucide.ttf):
+#   npm pack lucide-static@0.460.0 && tar xzf lucide-static-0.460.0.tgz
+# sparkles, snowflake, sun, fan, droplets — kody z package/font/info.json.
+lucide="${LUCIDE_TTF:-}"
+if [ -n "$lucide" ]; then
+  echo "  lucide_modes_24  (24 px)"
+  npx --yes lv_font_conv@1.5.3 --font "$lucide" --range 0xE417,0xE169,0xE17C,0xE37D,0xE0B9 \
+    --size 24 --bpp 4 --no-compress --format lvgl --lv-include lvgl.h -o "$out/lucide_modes_24.c"
+  echo "  lucide_modes_36  (36 px)"
+  npx --yes lv_font_conv@1.5.3 --font "$lucide" --range 0xE417,0xE169,0xE17C,0xE37D,0xE0B9 \
+    --size 36 --bpp 4 --no-compress --format lvgl --lv-include lvgl.h -o "$out/lucide_modes_36.c"
+else
+  echo "  lucide_modes_24 pominięte: ustaw LUCIDE_TTF=ścieżka/do/lucide.ttf"
+fi
+
 echo "Gotowe: $out"

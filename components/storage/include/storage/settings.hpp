@@ -68,6 +68,7 @@ enum class Pref : uint8_t {
     KeyboardAutoOpen,// klawiatura wysuwa się sama, gdy Apple TV pokaże pole tekstowe; domyślnie tak
     ThemeMode,       // styl interfejsu (ui: ciemny, jasny, wg godzin), domyślnie 0 = ciemny
     ThemeHours,      // indeks godzin stylu ciemnego w trybie „wg godzin” (ui), domyślnie 18–8
+    Orientation,     // obrót ekranu (board::Rotation): 0 pion, 1 poziom 90°, 2 poziom 270°; po zmianie restart
     Count,
 };
 

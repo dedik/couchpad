@@ -94,7 +94,15 @@ inline constexpr int32_t kGutter = 24;
 // Panel 4,3" ma ok. 8,6 px na milimetr. Najmniejszy dopuszczalny cel to 68 px ≈ 8 mm.
 inline constexpr int32_t kTouch = 68;
 
-// Obszar treści po odjęciu nagłówka, paska zakładek i marginesów.
+// Orientacja pozioma (Ekran → Orientacja, board::Rotation): ekran 800 × 480.
+// Zakładki stają się pionowym paskiem z boku, a ekrany mają własny układ poziomy.
+// Prawdziwe dopiero po starcie wyświetlacza; zmiana orientacji to restart.
+bool landscape();
+inline constexpr int32_t kRail = 88;          // szerokość bocznego paska zakładek
+inline constexpr int32_t kRailTab = 80;       // wysokość zakładki w pasku
+inline constexpr int32_t kGutterWide = 20;    // margines treści w poziomie
+
+// Obszar treści po odjęciu nagłówka, paska zakładek i marginesów (pion).
 inline constexpr int32_t kContentW = 480 - 2 * kGutter;              // 432
 inline constexpr int32_t kContentH = 800 - kTopbar - kTabbar - kS3 - kS4;  // 623
 
@@ -119,6 +127,15 @@ const lv_font_t* font_key_b26();
 // (strzałki, zasilanie, głośność). Tekstu nim nie składamy. Docelowo zastąpi go
 // własny zestaw ikon przerobiony tak samo jak ikony zakładek.
 const lv_font_t* font_icon();     // 24 px — krzyżak, zasilanie, gładzik
+// Pięć ikon trybów klimatyzacji z Lucide 0.460.0 (te same co w makiecie), 24 px.
+// Znaki z obszaru prywatnego Unicode; generuje je tools/gen-fonts.sh.
+const lv_font_t* font_mode_icon();
+const lv_font_t* font_mode_icon_lg();  // 36 px: duży kafel wybranego trybu
+inline constexpr const char* kIconAuto = "\xEE\x90\x97";       // sparkles
+inline constexpr const char* kIconCool = "\xEE\x85\xA9";       // snowflake
+inline constexpr const char* kIconHeat = "\xEE\x85\xBC";       // sun
+inline constexpr const char* kIconFan = "\xEE\x8D\xBD";        // fan
+inline constexpr const char* kIconDry = "\xEE\x82\xB9";        // droplets
 const lv_font_t* font_icon_sm();  // 20 px — wiersze listy, przyciski akcji
 const lv_font_t* font_icon_xs();  // 14 px — pasek statusu
 

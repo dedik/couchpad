@@ -17,6 +17,8 @@ LV_FONT_DECLARE(ubuntu_b_19)
 LV_FONT_DECLARE(ubuntu_b_26)
 LV_FONT_DECLARE(ubuntu_b_46_num)
 LV_FONT_DECLARE(ubuntu_b_64_num)
+LV_FONT_DECLARE(lucide_modes_24)
+LV_FONT_DECLARE(lucide_modes_36)
 }
 
 namespace ui::theme {
@@ -147,6 +149,8 @@ const lv_font_t* font_b64num() { return &ubuntu_b_64_num; }
 const lv_font_t* font_key_b19() { return &g_key_b19; }
 const lv_font_t* font_key_b26() { return &g_key_b26; }
 const lv_font_t* font_icon() { return &lv_font_montserrat_24; }
+const lv_font_t* font_mode_icon() { return &lucide_modes_24; }
+const lv_font_t* font_mode_icon_lg() { return &lucide_modes_36; }
 const lv_font_t* font_icon_sm() { return &lv_font_montserrat_20; }
 const lv_font_t* font_icon_xs() { return &lv_font_montserrat_14; }
 
@@ -288,6 +292,12 @@ void init() {
     lv_style_set_text_color(&g_styles.cap, faint());
     lv_style_set_text_font(&g_styles.cap, font_r11());
     lv_style_set_text_letter_space(&g_styles.cap, 2);
+}
+
+bool landscape() {
+    lv_display_t* display = lv_display_get_default();
+    return display != nullptr &&
+           lv_display_get_horizontal_resolution(display) > lv_display_get_vertical_resolution(display);
 }
 
 void make_flat(lv_obj_t* obj) {
