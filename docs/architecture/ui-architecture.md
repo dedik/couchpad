@@ -21,6 +21,8 @@ Widok wysyła wyłącznie `UiIntent`. Kontroler aplikacji waliduje go, aktualizu
 
 Na ekranach codziennego sterowania zawsze widoczny jest dyskretny dolny pasek z dwiema zakładkami: `TV` i `GŁOŚNIKI`. Wybrana zakładka wskazuje aktualny widok i przełącza bezpośrednio między ekranami TV oraz Z906 — bez powrotu do ekranu Home i bez dodatkowego potwierdzenia. Pasek jest wspólnym komponentem LVGL, tworzonym raz i aktualizowanym razem z bieżącym ekranem.
 
+W orientacji poziomej ([ADR 0013](adr/0013-landscape-orientation.md)) te same zakładki stoją w pionowym pasku z lewej (88 px), a nagłówek z nazwą ekranu i zasilaniem zostaje nad treścią.
+
 ## Ekrany MVP
 
 | Ekran | Cel | Najważniejsze elementy |
@@ -81,13 +83,13 @@ a klienci transportu wysyłają w kolejce tylko stan swojego urządzenia (`Z906E
 | --- | --- |
 | `include/ui/theme.hpp`, `theme.cpp` | tokeny z `pulpit.css`: kolory, promienie, odstępy, wymiary powłoki, fonty, wspólne style. Dwie palety (ciemna, jasna) o tych samych rolach; `theme::apply()` przełącza je w locie, zamieniając kolory ról w stylach wspólnych i lokalnych wszystkich obiektów. Ekrany nie definiują własnych kolorów — kolor spoza palety nie zmieni się ze stylem. |
 | `include/ui/widgets.hpp` | cały katalog komponentów — zacznij od tego pliku |
-| `widgets.cpp` | sekcja, `make_fill`, `make_cap`, `Segmented`, `Tiles`, akcje, `ListRow`, `Readout`, `Banner` + `set_unavailable`, przycisk zasilania, `Page`, `ask_confirm` |
+| `widgets.cpp` | sekcja, `make_fill`, `make_cap`, `Segmented`, `Tiles`, akcje, `ListRow`, `Readout`, `Banner` + `set_unavailable`, przycisk zasilania, `Page`, `ask_confirm`; poziom: `make_split`, `make_pane`, `make_spacer`, `make_header_segment`, `dock_sheet` |
 | `widgets_controls.cpp` | wartości ciągłe: `Dial` (głośność), `Thermostat` (temperatura), `Level` (kanały Z906) |
 | `widgets_nav.cpp` | krzyżak, kołyska VOL/P, gładzik Apple TV |
 | `widgets_editor.cpp` | edytor tekstu z własną klawiaturą |
 | `widgets_internal.hpp` | prywatne pomocniki widżetów (`plain`, `attach`, `icon_label`) — ekrany ich nie widzą |
 | `ui_internal.hpp` | `Context` i struktury ekranów (`TvScreen`, `ClimateScreen`…), deklaracje `build_*`/`render_*` |
-| `shell.cpp` | powłoka: nagłówek, pasek statusu, pięć zakładek (`kScreens`), nakładka wybudzania |
+| `shell.cpp` | powłoka: nagłówek, pięć zakładek (`kScreens`; w poziomie boczny pasek), nakładka wybudzania, miejsce w nagłówku dla ekranu (`make_header_slot`, `show_header_slot`) |
 | `ui.cpp` | `dispatch`, `render`, wygaszanie i wybudzanie ekranu |
 | `screens/screen_*.cpp` | po jednym pliku na ekran lub podstronę; `screen_start.cpp` to ekran startowy po starcie i wybudzeniu (ADR 0010) |
 
@@ -130,6 +132,28 @@ trzymają ją stosy zadań, kolejki FreeRTOS i każda alokacja do 4 kB
   `esp_mqtt_client_init` ani `enqueue`;
 - stos zadania w PSRAM (`xTaskCreatePinnedToCoreWithCaps`) tylko wtedy, gdy zadanie nie
   dotyka flasha (NVS, OTA).
+
+### Orientacja pozioma
+
+[ADR 0013](adr/0013-landscape-orientation.md). `theme::landscape()` mówi, który układ zbudować;
+orientacja zmienia się tylko restartem, więc ekran buduje jeden z dwóch układów, a `render_*`
+zostaje wspólny. Wzorce:
+
+- **Ekran w dwóch kolumnach:** `widgets::make_split(section, gap)` i kolumny
+  `widgets::make_pane(section, szerokość, gap)` (0 = reszta wiersza); `make_spacer` dopycha
+  przyciski do dołu kolumny. Treść ma 672 × 383 px.
+- **Kontrolki w nagłówku** (źródło i tryb obrazu TV, źródło i efekt Z906):
+  `make_header_slot(context, szerokość)` przy budowie, `show_header_slot(context, slot, ekran,
+  świeży)` w `render_*`, `widgets::make_header_segment` obniża segment do wiersza 64 px.
+  Nagłówek leży poza sekcją ekranu, więc baner braku stanu go nie zasłania — handler musi sam
+  sprawdzić świeżość stanu.
+- **Listy wyboru:** `widgets::dock_sheet(page)` po `make_page` — w poziomie panel 380 px
+  z prawej nad przyciemnieniem, w pionie bez zmian.
+- **Podstrony ustawień:** zadokowane obok listy (`dock_settings_pages`), otwarta najwyżej
+  jedna; nowa podstrona ustawień musi trafić do `settings_page()` w `screen_more.cpp`.
+- **Etykiety z wielokropkiem** (`LV_LABEL_LONG_DOT`) potrzebują stałej szerokości. Z szerokością
+  „wg treści” LVGL pokazuje samo „…” (pogoda, moc nawiewu), a w kolumnie z `flex_grow` potrafi
+  przeliczać układ bez końca.
 
 ### Styl jasny i ciemny
 

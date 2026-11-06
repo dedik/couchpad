@@ -29,6 +29,22 @@ void build_home(Context& context, lv_obj_t* parent) {
     HomeScreen& screen = context.home;
     screen.section = widgets::make_section(parent);
 
+    if (theme::landscape()) {
+        // Poziom: kafelek klimatyzacji po lewej na pełną wysokość, sceny 2 × 2 obok.
+        // Treść ma 383 px wysokości: podpis i dwa rzędy scen po 166 px.
+        widgets::make_split(screen.section, theme::kS4);
+
+        lv_obj_t* left = widgets::make_pane(screen.section, 300, theme::kS3);
+        widgets::make_cap(left, "KLIMAT");
+        build_climate_tile(context, left);
+        lv_obj_set_flex_grow(context.climate.tile, 1);
+
+        lv_obj_t* right = widgets::make_pane(screen.section, 0, theme::kS3);
+        widgets::make_cap(right, "SCENY");
+        screen.scenes = widgets::make_tiles(right, kScenes, 4, 2, 166, &on_scene, &context);
+        return;
+    }
+
     widgets::make_cap(screen.section, "KLIMAT");
     build_climate_tile(context, screen.section);
 

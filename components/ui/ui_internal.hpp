@@ -27,6 +27,8 @@ struct TvScreen {
     // w stylu „Dolby Vision Cinema Bright” nie mieszczą się w rzędzie segmentów.
     widgets::Segmented source;
     widgets::Segmented picture;
+    // Poziom: oba segmenty w nagłówku powłoki, widoczne tylko na ekranie TV.
+    lv_obj_t* header = nullptr;
     widgets::Tiles channels;
 
     // Wspólna lista wyboru dla źródła i trybu obrazu.
@@ -82,6 +84,8 @@ struct AudioScreen {
     // segment pokazuje aktywną opcję, dotknięcie otwiera listę wyboru.
     widgets::Segmented source;
     widgets::Segmented effect;
+    // Poziom: oba segmenty w nagłówku powłoki, widoczne tylko na ekranie Z906.
+    lv_obj_t* header = nullptr;
     widgets::Dial* dial = nullptr;
     lv_obj_t* mute = nullptr;
     widgets::Level* center = nullptr;
@@ -111,6 +115,13 @@ struct ClimateScreen {
     lv_obj_t* tile_fan = nullptr;
     lv_obj_t* tile_mode = nullptr;
     lv_obj_t* tile_now = nullptr;
+    // Poziom (wariant C): kafelek steruje też sam — zasilanie, tryb i −/+ bez podstrony.
+    // Seria stuknięć w −/+ idzie jednym poleceniem 0,7 s po ostatnim, jak na tarczy.
+    lv_obj_t* tile_power = nullptr;
+    lv_obj_t* tile_pill = nullptr;
+    lv_obj_t* tile_steps = nullptr;
+    lv_timer_t* tile_timer = nullptr;
+    int32_t tile_pending = 0;
 
     // Podstrona powstaje przy pierwszym otwarciu — wolnej pamięci po starcie
     // zostaje niewiele, a do klimy można nie zajrzeć wcale.
@@ -124,6 +135,7 @@ struct ClimateScreen {
     widgets::Segmented modes;
     domain::Label mode_ids[domain::kMaxOptions];
     std::size_t mode_count = 0;
+    lv_obj_t* mode_icons[domain::kMaxOptions]{};  // poziom: ikona nad nazwą trybu
 
     // Moc nawiewu i żaluzje: kafelek z bieżącą wartością, dotknięcie otwiera listę.
     struct Option {
@@ -192,6 +204,7 @@ struct MoreScreen {
 // ---------- Podstrony ustawień pilota ----------
 struct DeviceScreens {
     widgets::Page display;
+    widgets::Segmented orientation;  // Pref::Orientation; zmiana restartuje pilota
     widgets::Segmented theme;
     lv_obj_t* theme_hours_cap = nullptr;  // widoczne tylko w trybie „wg godzin”
     widgets::Segmented theme_hours;
@@ -273,6 +286,7 @@ struct Shell {
     lv_obj_t* ident_icon = nullptr;
     lv_obj_t* ident_name = nullptr;
     lv_obj_t* ident_room = nullptr;
+    lv_obj_t* identity = nullptr;  // wiersz nagłówka; TV w poziomie dokłada tu źródło i obraz
     lv_obj_t* power = nullptr;
     // Wskaźnik Decode 5.1 obok zasilania, tylko na ekranie dźwięku. Informacja,
     // nigdy przełącznik.
@@ -340,6 +354,13 @@ void dispatch(Context& context, const domain::UiIntent& intent);
 void render(Context& context);
 void show_screen(Context& context, ScreenId screen);
 
+// Poziom: miejsce na kontrolki ekranu w wierszu nagłówka (po nazwie, przed Decode
+// i zasilaniem), np. źródło i tryb obrazu TV. Ukryte, dopóki ekran go nie pokaże.
+lv_obj_t* make_header_slot(Context& context, int32_t width);
+// Widoczne tylko na ekranie `owner`; bez świeżego stanu przygaszone jak sekcja ekranu
+// (dotyk blokują wtedy same handlery).
+void show_header_slot(const Context& context, lv_obj_t* slot, ScreenId owner, bool fresh);
+
 // Powłoka.
 void build_shell(Context& context);
 void render_shell(Context& context);
@@ -368,6 +389,12 @@ void render_more(Context& context);
 void build_wifi(Context& context);
 void render_wifi(Context& context);
 void open_wifi_page(Context& context);
+// Poziom: podstrony ustawień zadokowane obok listy (screen_more.cpp). W pionie nic nie robią
+// poza zamykaniem.
+void dock_settings_pages(Context& context);
+void close_settings_pages(Context& context);
+// Po zmianie ekranu: poza ustawieniami zamyka podstronę, w ustawieniach dba, żeby jedna była otwarta.
+void sync_settings_detail(Context& context);
 void build_mqtt(Context& context);
 void render_mqtt(Context& context);
 void open_mqtt_page(Context& context);

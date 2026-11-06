@@ -23,4 +23,4 @@
 - A touch must not wait for the network; after an action the UI shows a pending state, and the state is confirmed by an MQTT message.
 - When you change a module boundary, the MQTT format, the state model or a dependency, add an ADR and update the architecture documentation.
 - Hardware code is written only after it has been confirmed on this specific board unit. Do not copy pins from similar Guition models.
-- The approved Z906 screen is the Soundstage layout described in `docs/ux/tv-and-z906-ui.md`; do not replace it with a simplified card. The shared bottom tabs `TV | GŁOŚNIKI` (TV | SPEAKERS) are mandatory on the everyday control screens.
+- The approved Z906 screen is the Soundstage layout described in `docs/ux/tv-and-z906-ui.md`; do not replace it with a simplified card. The shared screen tabs are mandatory on the everyday control screens: at the bottom in portrait, in a side rail in landscape ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.en.md)). Design every new screen in both orientations.

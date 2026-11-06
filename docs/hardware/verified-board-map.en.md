@@ -127,7 +127,12 @@ table.
 - **Touch reset.** The BSP says "not connected", some community sources point to GPIO 3.
   Touch works without it, so the matter is open and non-blocking.
 - **Power consumption and power-saving modes** — untested.
-- **Screen rotation and touch axis calibration** in other orientations.
+- **Finger touch in landscape.** 90° rotation (Display → Orientation, `sw_rotate` on the CPU)
+  confirmed 2026-11-06: 800 × 480 image the right way up, remote touch from `remote.py` lands.
+  GT911 finger touch and 270° rotation still need a manual check.
+- **PPA for rotation.** With `CONFIG_LVGL_PORT_ENABLE_PPA=y`, scrolling a list in landscape hung
+  the LVGL task for good (2/2 attempts): it waited on the PPA holding the lock, the watchdog stayed
+  quiet. CPU rotation works; the PPA root cause is unknown (ADR 0013).
 
 ## ESP32-C6 and Wi-Fi
 

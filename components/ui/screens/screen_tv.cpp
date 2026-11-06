@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include "domain/z906_options.hpp"
 #include "images.h"
 #include "ui_internal.hpp"
 
@@ -21,8 +22,8 @@ constexpr std::size_t kChannelMenuTile = 4;
 // Nazwy kanałów tak, jak podaje je tuner. Porównanie pomija wielkość liter i spacje.
 const char* const kChannelIds[4] = {"Polsat", "TVN", "TVP1", "TVP2"};
 
-// Krok głośności Z906 jak na tarczy ekranu dźwięku.
-constexpr int32_t kVolumeStep = 2;
+// Krok głośności Z906 w poziomach wzmacniacza, jak −/+ na ekranie dźwięku.
+constexpr int32_t kVolumeStep = 1;
 
 // Identyfikator opcji o danym indeksie albo pusty, gdy źródło ich nie podaje.
 const char* id_at(const domain::OptionList& ids, std::size_t index) {
@@ -55,10 +56,17 @@ void open_picker(Context& context, domain::ControlId control, const char* title)
 }
 
 void on_source(void* raw, std::size_t) {
+    // W poziomie segmenty leżą w nagłówku, poza sekcją, której nie zasłania baner braku stanu.
+    if (!static_cast<Context*>(raw)->controller->state().tv_fresh()) {
+        return;
+    }
     open_picker(*static_cast<Context*>(raw), domain::ControlId::TvSource, "Źródło");
 }
 
 void on_picture(void* raw, std::size_t) {
+    if (!static_cast<Context*>(raw)->controller->state().tv_fresh()) {
+        return;
+    }
     open_picker(*static_cast<Context*>(raw), domain::ControlId::TvPicture, "Tryb obrazu");
 }
 
@@ -209,8 +217,11 @@ void step_volume(Context& context, int32_t delta) {
     if (const domain::PendingEntry* pending = state.pending_of(domain::ControlId::ZVolume)) {
         value = pending->requested_value;
     }
-    const int32_t limit = volume_limit();
-    value = std::max<int32_t>(0, std::min<int32_t>(value + delta, limit));
+    const int32_t next = domain::z906_step_volume(value, delta, volume_limit());
+    if (next == value) {
+        return;
+    }
+    value = next;
     domain::UiIntent intent;
     intent.kind = domain::IntentKind::SetValue;
     intent.control = domain::ControlId::ZVolume;
@@ -255,16 +266,46 @@ void render_half(widgets::Segmented& segmented, const domain::AppState& state,
     segmented.set_status(0, state.status_of(control));
 }
 
-}  // namespace
+// Poziom (makieta docs/ux/mockup-landscape): źródło i tryb obrazu w jednym rzędzie
+// w nagłówku, po lewej kanały oraz Cofnij i Menu TV, po prawej krzyżak z kołyskami.
+// Szerokości pod 800 px: treść 672 = kolumna 232 + odstęp 16 + nawigacja 424
+// (72 + 12 + 256 + 12 + 72). W nagłówku 672 px: znak 44, nazwa, wybór 400, zasilanie 48.
+constexpr int32_t kWideColumn = 232;
+constexpr int32_t kWideTileHeight = 88;
+constexpr int32_t kHeaderSelectorsW = 400;
 
-void build_tv(Context& context, lv_obj_t* parent) {
+void build_tv_landscape(Context& context) {
     TvScreen& screen = context.tv;
-    screen.section = widgets::make_section(parent);
+    widgets::make_split(screen.section, theme::kS4);
+    lv_obj_t* column = widgets::make_pane(screen.section, kWideColumn, theme::kS3);
 
-    screen.banner = widgets::make_banner(screen.section,
-                                         "Brak świeżego stanu telewizora.\n"
-                                         "Sterowanie wróci po nowym snapshocie.");
+    // Źródło i tryb obrazu w nagłówku, obok nazwy TV: w kolumnie 232 px zabierały
+    // połowę wysokości, a obok siebie nazwy trybów urywałyby się po kilku literach.
+    screen.header = make_header_slot(context, kHeaderSelectorsW);
+    screen.source = widgets::make_value_segment(screen.header, LV_SYMBOL_CHARGE, &on_source, &context);
+    screen.picture = widgets::make_value_segment(screen.header, LV_SYMBOL_IMAGE, &on_picture, &context);
+    widgets::make_header_segment(screen.source);
+    widgets::make_header_segment(screen.picture);
 
+    screen.channels = widgets::make_tiles(column, kChannels, 5, 3, kWideTileHeight, &on_channel,
+                                          &context);
+
+    widgets::make_spacer(column);
+
+    lv_obj_t* duo = widgets::make_duo(column);
+    widgets::make_action(duo, LV_SYMBOL_LEFT, "Cofnij", false, widgets::ActionLayout::Fill, &on_back, &context);
+    widgets::make_action(duo, LV_SYMBOL_LIST, "Menu TV", false, widgets::ActionLayout::Fill, &on_menu, &context);
+
+    lv_obj_t* fill = widgets::make_fill(screen.section);
+    lv_obj_set_height(fill, LV_PCT(100));
+    lv_obj_set_style_pad_column(fill, theme::kS3, LV_PART_MAIN);
+    widgets::make_rocker(fill, "VOL", true, &on_volume_up, &on_volume_down, &context);
+    widgets::make_dpad(fill, &on_key, &context);
+    widgets::make_rocker(fill, "P", false, &on_channel_up, &on_channel_down, &context);
+}
+
+void build_portrait_controls(Context& context) {
+    TvScreen& screen = context.tv;
     lv_obj_t* selectors = widgets::make_duo(screen.section);
     lv_obj_set_height(selectors, LV_SIZE_CONTENT);
     screen.source = widgets::make_value_segment(selectors, LV_SYMBOL_CHARGE, &on_source, &context);
@@ -284,12 +325,18 @@ void build_tv(Context& context, lv_obj_t* parent) {
     lv_obj_t* duo = widgets::make_duo(screen.section);
     widgets::make_action(duo, LV_SYMBOL_LEFT, "Cofnij", false, widgets::ActionLayout::Fill, &on_back, &context);
     widgets::make_action(duo, LV_SYMBOL_LIST, "Menu TV", false, widgets::ActionLayout::Fill, &on_menu, &context);
+}
 
+// Podstrony: lista kanałów i lista wyboru — te same w obu orientacjach.
+void build_tv_pages(Context& context) {
+    TvScreen& screen = context.tv;
     screen.channel_page = widgets::make_page("Kanały", &on_channel_back, &context);
     screen.channel_empty = widgets::make_cap(screen.channel_page.body,
                                              "LISTA KANAŁÓW JESZCZE NIE DOTARŁA");
 
+    widgets::dock_sheet(screen.channel_page);
     screen.picker = widgets::make_page("", &on_picker_back, &context);
+    widgets::dock_sheet(screen.picker);
     for (std::size_t i = 0; i < domain::kMaxOptions; ++i) {
         TvScreen::PickerRow& row = screen.picker_rows[i];
         row.context = &context;
@@ -302,6 +349,24 @@ void build_tv(Context& context, lv_obj_t* parent) {
         lv_obj_add_flag(lv_obj_get_child(row.row.root, -1), LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(row.row.note, LV_OBJ_FLAG_HIDDEN);
     }
+}
+
+}  // namespace
+
+void build_tv(Context& context, lv_obj_t* parent) {
+    TvScreen& screen = context.tv;
+    screen.section = widgets::make_section(parent);
+
+    screen.banner = widgets::make_banner(screen.section,
+                                         "Brak świeżego stanu telewizora.\n"
+                                         "Sterowanie wróci po nowym snapshocie.");
+
+    if (theme::landscape()) {
+        build_tv_landscape(context);
+    } else {
+        build_portrait_controls(context);
+    }
+    build_tv_pages(context);
 }
 
 void render_tv(Context& context) {
@@ -337,6 +402,7 @@ void render_tv(Context& context) {
     }
 
     widgets::set_unavailable(screen.section, screen.banner, !state.tv_fresh());
+    show_header_slot(context, screen.header, ScreenId::Tv, state.tv_fresh());
 }
 
 }  // namespace ui

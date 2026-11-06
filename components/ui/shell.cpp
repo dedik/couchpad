@@ -90,16 +90,21 @@ lv_obj_t* text_label(lv_obj_t* parent, const char* text, const lv_font_t* font, 
     return label;
 }
 
-void build_topbar(Context& context) {
+int32_t gutter() {
+    return theme::landscape() ? theme::kGutterWide : theme::kGutter;
+}
+
+void build_topbar(Context& context, lv_obj_t* parent) {
     Shell& shell = context.shell;
-    shell.topbar = plain(shell.root);
+    shell.topbar = plain(parent);
     lv_obj_set_size(shell.topbar, LV_PCT(100), theme::kTopbar);
-    lv_obj_set_style_pad_hor(shell.topbar, theme::kGutter, LV_PART_MAIN);
+    lv_obj_set_style_pad_hor(shell.topbar, gutter(), LV_PART_MAIN);
     lv_obj_set_style_pad_top(shell.topbar, theme::kTopbarPad, LV_PART_MAIN);
     theme::make_column(shell.topbar, 0);
 
 
     lv_obj_t* identity = plain(shell.topbar);
+    shell.identity = identity;
     lv_obj_set_size(identity, LV_PCT(100), theme::kIdentityRow);
     theme::make_row(identity, theme::kS3);
 
@@ -120,7 +125,7 @@ void build_topbar(Context& context) {
     shell.ident_name = text_label(texts, "", theme::font_b19(), theme::text());
     shell.ident_room = widgets::make_cap(texts, "");
 
-    // Decode 5.1 przeniesiony z treści ekranu dźwięku do nagłówka: pastylka z kropką,
+    // Wskaźnik dekodowania 5.1 (napis „Decode”) w nagłówku ekranu dźwięku: pastylka z kropką,
     // tylko do odczytu. Zielona kropka znaczy potwierdzone dekodowanie.
     shell.decode = plain(identity);
     lv_obj_set_size(shell.decode, LV_SIZE_CONTENT, 36);
@@ -135,7 +140,7 @@ void build_topbar(Context& context) {
     lv_obj_set_size(shell.decode_dot, 8, 8);
     lv_obj_set_style_radius(shell.decode_dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(shell.decode_dot, LV_OPA_COVER, LV_PART_MAIN);
-    shell.decode_label = text_label(shell.decode, "Decode 5.1", theme::font_m13(), theme::dim());
+    shell.decode_label = text_label(shell.decode, "Decode", theme::font_m13(), theme::dim());
     lv_obj_add_flag(shell.decode, LV_OBJ_FLAG_HIDDEN);
 
     // Nagłówek należy do bieżącego ekranu: zasilanie dotyczy tylko tego urządzenia,
@@ -145,27 +150,43 @@ void build_topbar(Context& context) {
 
 void build_tabbar(Context& context) {
     Shell& shell = context.shell;
+    const bool rail = theme::landscape();
     shell.tabbar = plain(shell.root);
-    lv_obj_set_size(shell.tabbar, LV_PCT(100), theme::kTabbar);
     lv_obj_set_style_bg_opa(shell.tabbar, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(shell.tabbar, theme::surface(), LV_PART_MAIN);
     lv_obj_set_style_border_width(shell.tabbar, 1, LV_PART_MAIN);
-    lv_obj_set_style_border_side(shell.tabbar, LV_BORDER_SIDE_TOP, LV_PART_MAIN);
     lv_obj_set_style_border_color(shell.tabbar, theme::line(), LV_PART_MAIN);
-    // 4 + 72 + 4: odstęp nad i pod zaznaczoną zakładką wygląda tak samo (nad nią
-    // jest jeszcze 1 px linii), a ikona 48 px siedzi w niej na środku.
-    lv_obj_set_style_pad_top(shell.tabbar, theme::kS1, LV_PART_MAIN);
-    lv_obj_set_style_pad_bottom(shell.tabbar, theme::kS1, LV_PART_MAIN);
-    lv_obj_set_style_pad_hor(shell.tabbar, theme::kS4, LV_PART_MAIN);
-    theme::make_row(shell.tabbar, theme::kS1);
-    lv_obj_set_flex_align(shell.tabbar, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_CENTER);
+    if (rail) {
+        // Poziom: pionowy pasek z lewej, zakładki wyśrodkowane w pionie (makieta
+        // docs/ux/mockup-landscape). Kciuk lewej ręki sięga go bez przekładania pilota.
+        lv_obj_set_size(shell.tabbar, theme::kRail, LV_PCT(100));
+        lv_obj_set_style_border_side(shell.tabbar, LV_BORDER_SIDE_RIGHT, LV_PART_MAIN);
+        lv_obj_set_style_pad_hor(shell.tabbar, theme::kS2, LV_PART_MAIN);
+        theme::make_column(shell.tabbar, theme::kS2);
+        lv_obj_set_flex_align(shell.tabbar, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
+                              LV_FLEX_ALIGN_CENTER);
+    } else {
+        lv_obj_set_size(shell.tabbar, LV_PCT(100), theme::kTabbar);
+        lv_obj_set_style_border_side(shell.tabbar, LV_BORDER_SIDE_TOP, LV_PART_MAIN);
+        // 4 + 72 + 4: odstęp nad i pod zaznaczoną zakładką wygląda tak samo (nad nią
+        // jest jeszcze 1 px linii), a ikona 48 px siedzi w niej na środku.
+        lv_obj_set_style_pad_top(shell.tabbar, theme::kS1, LV_PART_MAIN);
+        lv_obj_set_style_pad_bottom(shell.tabbar, theme::kS1, LV_PART_MAIN);
+        lv_obj_set_style_pad_hor(shell.tabbar, theme::kS4, LV_PART_MAIN);
+        theme::make_row(shell.tabbar, theme::kS1);
+        lv_obj_set_flex_align(shell.tabbar, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER,
+                              LV_FLEX_ALIGN_CENTER);
+    }
 
     for (std::size_t i = 0; i < kScreenCount; ++i) {
         lv_obj_t* tab = lv_button_create(shell.tabbar);
         lv_obj_remove_style_all(tab);
-        lv_obj_set_flex_grow(tab, 1);
-        lv_obj_set_height(tab, LV_PCT(100));
+        if (rail) {
+            lv_obj_set_size(tab, LV_PCT(100), theme::kRailTab);
+        } else {
+            lv_obj_set_flex_grow(tab, 1);
+            lv_obj_set_height(tab, LV_PCT(100));
+        }
         lv_obj_set_style_radius(tab, theme::kR3, LV_PART_MAIN);
         lv_obj_set_flex_flow(tab, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_flex_align(tab, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
@@ -270,14 +291,28 @@ void build_shell(Context& context) {
     lv_obj_remove_style_all(shell.root);
     lv_obj_add_style(shell.root, &theme::styles().screen, LV_PART_MAIN);
     lv_obj_remove_flag(shell.root, LV_OBJ_FLAG_SCROLLABLE);
-    theme::make_column(shell.root, 0);
+    // Pion: nagłówek, treść, zakładki na dole. Poziom: zakładki z boku, obok
+    // kolumna z nagłówkiem i treścią.
+    lv_obj_t* column = shell.root;
+    if (theme::landscape()) {
+        theme::make_row(shell.root, 0);
+        lv_obj_set_flex_align(shell.root, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START,
+                              LV_FLEX_ALIGN_START);
+        build_tabbar(context);
+        column = plain(shell.root);
+        lv_obj_set_height(column, LV_PCT(100));
+        lv_obj_set_flex_grow(column, 1);
+        theme::make_column(column, 0);
+    } else {
+        theme::make_column(shell.root, 0);
+    }
 
-    build_topbar(context);
+    build_topbar(context, column);
 
-    shell.content = plain(shell.root);
+    shell.content = plain(column);
     lv_obj_set_width(shell.content, LV_PCT(100));
     lv_obj_set_flex_grow(shell.content, 1);
-    lv_obj_set_style_pad_hor(shell.content, theme::kGutter, LV_PART_MAIN);
+    lv_obj_set_style_pad_hor(shell.content, gutter(), LV_PART_MAIN);
     lv_obj_set_style_pad_top(shell.content, theme::kS3, LV_PART_MAIN);
     lv_obj_set_style_pad_bottom(shell.content, theme::kS4, LV_PART_MAIN);
 
@@ -289,7 +324,9 @@ void build_shell(Context& context) {
         shell.pages[i] = page;
     }
 
-    build_tabbar(context);
+    if (!theme::landscape()) {
+        build_tabbar(context);
+    }
     build_wake(context);
 
     build_tv(context, shell.pages[static_cast<std::size_t>(ScreenId::Tv)]);
@@ -300,6 +337,7 @@ void build_shell(Context& context) {
     build_wifi(context);
     build_mqtt(context);
     build_device(context);
+    dock_settings_pages(context);
 }
 
 namespace {
@@ -422,6 +460,27 @@ void render_shell(Context& context) {
     lv_obj_remove_flag(shell.wake_settings, LV_OBJ_FLAG_HIDDEN);
 }
 
+lv_obj_t* make_header_slot(Context& context, int32_t width) {
+    lv_obj_t* slot = plain(context.shell.identity);
+    lv_obj_set_size(slot, width, LV_SIZE_CONTENT);
+    theme::make_row(slot, theme::kS2);
+    lv_obj_move_to_index(slot, 2);  // znak, nazwa, [miejsce], Decode, zasilanie
+    lv_obj_add_flag(slot, LV_OBJ_FLAG_HIDDEN);
+    return slot;
+}
+
+void show_header_slot(const Context& context, lv_obj_t* slot, ScreenId owner, bool fresh) {
+    if (slot == nullptr) {
+        return;
+    }
+    if (context.screen == owner) {
+        lv_obj_remove_flag(slot, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(slot, LV_OBJ_FLAG_HIDDEN);
+    }
+    lv_obj_set_style_opa(slot, fresh ? LV_OPA_COVER : 77, LV_PART_MAIN);
+}
+
 void show_screen(Context& context, ScreenId screen) {
     context.screen = screen;
     for (std::size_t i = 0; i < kScreenCount; ++i) {
@@ -431,6 +490,7 @@ void show_screen(Context& context, ScreenId screen) {
             lv_obj_add_flag(context.shell.pages[i], LV_OBJ_FLAG_HIDDEN);
         }
     }
+    sync_settings_detail(context);
     render(context);
 }
 

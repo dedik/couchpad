@@ -147,6 +147,42 @@ void sync_keyboard(Context& context) {
 
 }  // namespace
 
+namespace {
+
+// Poziom (makieta docs/ux/mockup-landscape, bez karty odtwarzania): po lewej aplikacje
+// i trzy akcje jedna pod drugą, po prawej gładzik. Treść 672 × 383 px:
+// kolumna 260 + odstęp 16 + gładzik w 396 px.
+constexpr int32_t kWideColumn = 260;
+constexpr int32_t kWideAppTileH = 80;
+constexpr int32_t kWideTrackpadSize = 360;
+
+void build_appletv_landscape(Context& context) {
+    AppleTvScreen& screen = context.appletv;
+    widgets::make_split(screen.section, theme::kS4);
+    lv_obj_t* column = widgets::make_pane(screen.section, kWideColumn, theme::kS2);
+
+    constexpr auto kAppCount = static_cast<int32_t>(domain::kAppleTvTileCount);
+    screen.apps = widgets::make_tiles(column, kApps, domain::kAppleTvTileCount, kAppCount,
+                                      kWideAppTileH, &on_app, &context);
+
+    widgets::make_spacer(column);
+
+    // Trzy akcje w kolumnie: obok siebie w 260 px podpisy ledwo się mieściły.
+    widgets::make_action(widgets::make_duo(column), LV_SYMBOL_LEFT, "Menu", false,
+                         widgets::ActionLayout::Fill, &on_menu, &context);
+    lv_obj_t* home = widgets::make_action(widgets::make_duo(column), LV_SYMBOL_HOME, "Home", false,
+                                          widgets::ActionLayout::Fill, nullptr, nullptr);
+    widgets::attach_presses(home, &on_home, &context);
+    widgets::make_action(widgets::make_duo(column), LV_SYMBOL_KEYBOARD, "Tekst", false,
+                         widgets::ActionLayout::Fill, &on_keyboard_button, &context);
+
+    lv_obj_t* fill = widgets::make_fill(screen.section);
+    lv_obj_set_height(fill, LV_PCT(100));
+    widgets::make_trackpad(fill, &on_key, &context, &on_key_hold, kWideTrackpadSize);
+}
+
+}  // namespace
+
 void build_appletv(Context& context, lv_obj_t* parent) {
     AppleTvScreen& screen = context.appletv;
     screen.section = widgets::make_section(parent);
@@ -154,6 +190,11 @@ void build_appletv(Context& context, lv_obj_t* parent) {
     screen.banner = widgets::make_banner(screen.section,
                                          "Brak świeżego stanu Apple TV.\n"
                                          "Sterowanie wróci po nowym snapshocie.");
+
+    if (theme::landscape()) {
+        build_appletv_landscape(context);
+        return;
+    }
 
     // Aplikacje nad gładzikiem, w rozmiarze skrótów kanałów TV (pięć na szerokość):
     // trzy kafelki wyśrodkowane, nie rozciągnięte na cały rząd.

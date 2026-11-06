@@ -8,11 +8,11 @@ To jest zatwierdzona specyfikacja projektowa v1 dla natywnej implementacji LVGL.
 
 ## Wspólna nawigacja
 
-- Rozdzielczość docelowa: 480 × 800, portret.
+- Rozdzielczość docelowa: 480 × 800, portret. Orientacja pozioma 800 × 480 (ustawienie Ekran → Orientacja) ma osobne układy według makiety `docs/ux/mockup-landscape` — [ADR 0013](../architecture/adr/0013-landscape-orientation.md).
 - Na dole obu widoków znajduje się wspólny, stale dostępny pasek z równymi zakładkami `TV` oraz `GŁOŚNIKI`.
 - Aktywna zakładka jest wyraźnie zaznaczona. Dotknięcie przełącza bezpośrednio między ekranami, bez ekranu Home i bez potwierdzenia.
 - Pasek styka się z dolną krawędzią obudowy wizualnej ekranu. Ma pozostać dyskretny odstęp między nim a kontrolkami znajdującymi się wyżej; nie może sprawiać wrażenia, że jest ich częścią.
-- Wszystkie przyciski zasilania (TV i Z906 w nagłówku TV oraz Z906 na ekranie głośników) używają jednej konwencji: włączone — akwamarynowe tło i ikona, wyłączone — neutralne tło i przygaszona ikona. Czerwony jest zarezerwowany dla wyciszenia i błędów, nigdy nie oznacza stanu zasilania.
+- Wszystkie przyciski zasilania (TV i Z906 w nagłówku TV oraz Z906 na ekranie głośników) używają jednej konwencji: koło 48 px z polem dotyku 64 px; włączone — miękkie bursztynowe tło, bursztynowa ikona i cienka obwódka, wyłączone — neutralne tło i przygaszona ikona. Pełnego wypełnienia nie używamy (od 2026-11-06), bo dominowało nagłówek. Czerwony jest zarezerwowany dla wyciszenia i błędów, nigdy nie oznacza stanu zasilania.
 - Zmiana zakładki nie odczytuje danych z sieci. Pokazuje aktualny lokalny `AppState`, który został uprzednio potwierdzony snapshotem.
 
 ## Ekran TV
@@ -49,7 +49,7 @@ To jedyny zaakceptowany kierunek ekranu dźwięku. Nie redukować go do małej k
 4. Poziomy wybór źródła: `PC`, `RCA`, `O1`, `O2`, `COX`, `AUX`.
 5. Sekcja „Scena dźwiękowa”: trzy pionowe suwaki `Center`, `Subwoofer`, `Tył`; bieżąca wartość 0–100 znajduje się nad właściwym suwakiem.
 6. Wybór efektu: `Stereo 3D`, `2.1`, `4.1`, `Bez efektu`.
-7. Stopka informacyjna `Decode 5.1` i stan aktywności. To wskaźnik, nie przycisk.
+7. Wskaźnik `Decode` (dekodowanie 5.1; innego Z906 nie ma, więc bez liczby) i stan aktywności — dziś pastylka w nagłówku. To wskaźnik, nie przycisk.
 8. Wspólny dolny pasek zakładek, odseparowany małą przerwą od stopki dekodowania.
 
 ### Wiązanie z danymi

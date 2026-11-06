@@ -23,4 +23,4 @@
 - Dotknięcie nie może czekać na sieć; po akcji UI pokazuje stan oczekujący, a stan potwierdza wiadomość MQTT.
 - Gdy zmieniasz granicę modułu, format MQTT, model stanu albo zależność, dodaj ADR i zaktualizuj dokumentację architektury.
 - Kod sprzętowy powstaje dopiero po potwierdzeniu go na tym konkretnym egzemplarzu płytki. Nie kopiuj pinów z podobnych modeli Guition.
-- Zatwierdzony ekran Z906 to układ Soundstage opisany w `docs/ux/tv-and-z906-ui.md`; nie zastępuj go uproszczoną kartą. Wspólne dolne zakładki `TV | GŁOŚNIKI` są obowiązkowe na ekranach codziennego sterowania.
+- Zatwierdzony ekran Z906 to układ Soundstage opisany w `docs/ux/tv-and-z906-ui.md`; nie zastępuj go uproszczoną kartą. Wspólne zakładki ekranów są obowiązkowe na ekranach codziennego sterowania: na dole w pionie, w bocznym pasku w poziomie ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.md)). Nowy ekran projektuj w obu orientacjach.

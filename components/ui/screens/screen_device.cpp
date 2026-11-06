@@ -47,6 +47,12 @@ const char* const kThemeLabels[] = {"ciemny", "jasny", "wg godzin"};
 constexpr NightWindow kThemeHours[] = {{17, 7}, {18, 8}, {19, 7}, {21, 7}};
 const char* const kThemeHoursLabels[] = {"17–7", "18–8", "19–7", "21–7"};
 
+// Orientacja: indeks Pref::Orientation, te same wartości co board::Rotation.
+// Ekrany budowane są raz, pod jeden rozmiar, więc zmiana wymaga restartu.
+constexpr uint8_t kOrientationCount = 3;
+const char* const kOrientationLabels[] = {"pion", "poziom", "poziom odwr."};
+uint8_t g_pending_orientation = 0;
+
 bool hour_in(const NightWindow& window, int hour) {
     return hour >= window.from || hour < window.to;
 }
@@ -146,6 +152,26 @@ void on_back_input(void* raw) {
 }
 void on_back_diagnostics(void* raw) {
     widgets::show_page(static_cast<Context*>(raw)->device.diagnostics, false);
+}
+
+void apply_orientation(void*) {
+    storage::set(storage::Pref::Orientation, g_pending_orientation);
+    esp_restart();
+}
+
+void on_orientation(void* raw, std::size_t index) {
+    auto& context = *static_cast<Context*>(raw);
+    // Segment wraca do zapisanej wartości; nowa obowiązuje dopiero po restarcie.
+    render(context);
+    if (index >= kOrientationCount ||
+        index == storage::get(storage::Pref::Orientation)) {
+        return;
+    }
+    g_pending_orientation = static_cast<uint8_t>(index);
+    widgets::ask_confirm("Zmienić orientację?",
+                         "Pilot uruchomi się ponownie i połączy z domem od nowa. "
+                         "Ustawienia zostają.",
+                         "Zmień", &apply_orientation, raw);
 }
 
 void on_theme(void* raw, std::size_t index) {
@@ -368,6 +394,13 @@ void build_device(Context& context) {
     DeviceScreens& screen = context.device;
 
     screen.display = widgets::make_page("Ekran", &on_back_display, &context);
+    add_section(screen.display.body, "ORIENTACJA");
+    screen.orientation = widgets::make_segmented(screen.display.body, LV_SYMBOL_LOOP,
+                                                 kOrientationCount, &on_orientation, &context);
+    screen.orientation.set_labels(kOrientationLabels, kOrientationCount);
+    add_note(screen.display.body,
+             "Poziom obraca obraz o 90°, odwrócony o 270°. Zmiana uruchamia "
+             "pilota ponownie.");
     add_section(screen.display.body, "STYL");
     screen.theme = widgets::make_segmented(screen.display.body, LV_SYMBOL_IMAGE, 3, &on_theme,
                                            &context);
@@ -469,6 +502,8 @@ void build_device(Context& context) {
 void render_device(Context& context) {
     DeviceScreens& screen = context.device;
 
+    const uint8_t orientation = storage::get(storage::Pref::Orientation);
+    screen.orientation.set_selected(orientation < kOrientationCount ? orientation : 0);
     const uint8_t style = storage::get(storage::Pref::ThemeMode);
     screen.theme.set_selected(style <= kThemeAuto ? style : kThemeDark);
     const uint8_t hours = storage::get(storage::Pref::ThemeHours);

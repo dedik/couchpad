@@ -8,11 +8,11 @@ This is the approved v1 design specification for the native LVGL implementation.
 
 ## Shared navigation
 
-- Target resolution: 480 × 800, portrait.
+- Target resolution: 480 × 800, portrait. The 800 × 480 landscape orientation (Display → Orientation setting) has its own layouts following the `docs/ux/mockup-landscape` mockup — [ADR 0013](../architecture/adr/0013-landscape-orientation.en.md).
 - At the bottom of both views there is a shared, always available bar with equal tabs `TV` and `GŁOŚNIKI` (SPEAKERS).
 - The active tab is clearly highlighted. A tap switches directly between screens, with no Home screen and no confirmation.
 - The bar touches the bottom edge of the screen's visual enclosure. There must be a discreet gap between it and the controls above; it must not look like it is part of them.
-- All power buttons (TV and Z906 in the TV header, and Z906 on the speakers screen) use a single convention: on — aquamarine background and icon, off — neutral background and dimmed icon. Red is reserved for mute and errors and never indicates power state.
+- All power buttons (TV and Z906 in the TV header, and Z906 on the speakers screen) use a single convention: a 48 px circle with a 64 px touch area; on — soft amber background, amber icon and a thin outline, off — neutral background and dimmed icon. No solid fill (since 2026-11-06), as it dominated the header. Red is reserved for mute and errors and never indicates power state.
 - Switching tabs does not read data from the network. It shows the current local `AppState`, which was previously confirmed by a snapshot.
 
 ## TV screen
@@ -49,7 +49,7 @@ This is the only accepted direction for the sound screen. Do not reduce it to a 
 4. Horizontal source selector: `PC`, `RCA`, `O1`, `O2`, `COX`, `AUX`.
 5. "Scena dźwiękowa" (Soundstage) section: three vertical sliders `Center`, `Subwoofer`, `Tył` (Rear); the current value 0–100 is shown above the respective slider.
 6. Effect selector: `Stereo 3D`, `2.1`, `4.1`, `Bez efektu` (No effect).
-7. Info footer `Decode 5.1` and activity state. This is an indicator, not a button.
+7. `Decode` indicator (5.1 decoding; the Z906 has no other, so no number) and activity state — now a pill in the header. This is an indicator, not a button.
 8. The shared bottom tab bar, separated by a small gap from the decode footer.
 
 ### Data binding

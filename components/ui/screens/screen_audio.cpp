@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <initializer_list>
 
 #include "domain/z906_options.hpp"
 #include "ui_internal.hpp"
@@ -32,10 +33,17 @@ void open_picker(Context& context, domain::ControlId control, const char* title)
 }
 
 void on_source(void* raw, std::size_t) {
+    // W poziomie segmenty leżą w nagłówku, poza sekcją, której nie zasłania baner braku stanu.
+    if (!static_cast<Context*>(raw)->controller->state().z906_fresh()) {
+        return;
+    }
     open_picker(*static_cast<Context*>(raw), domain::ControlId::ZSource, "Źródło dźwięku");
 }
 
 void on_effect(void* raw, std::size_t) {
+    if (!static_cast<Context*>(raw)->controller->state().z906_fresh()) {
+        return;
+    }
     open_picker(*static_cast<Context*>(raw), domain::ControlId::ZEffect, "Efekt");
 }
 
@@ -93,9 +101,9 @@ void on_volume(void* raw, int32_t value, bool) {
     send_value(*static_cast<Context*>(raw), domain::ControlId::ZVolume,
                value > limit ? limit : value);
 }
-// −/+ pod tarczą: krok o jeden punkt. Kolejny liczymy od wartości w toku, żeby
-// szybkie stuknięcia i przytrzymanie się sumowały, zanim snapshot je potwierdzi.
-// Kontroler przyjmuje dowolny procent, choć encja w HA deklaruje krok 2.
+// −/+ pod tarczą: krok o jeden poziom wzmacniacza (ok. 2,3 %, patrz
+// domain/z906_options.hpp). Kolejny liczymy od wartości w toku, żeby szybkie
+// stuknięcia i przytrzymanie się sumowały, zanim snapshot je potwierdzi.
 constexpr int32_t kVolumeStep = 1;
 // Dwa przyciski mieszczą się między końcami łuku tarczy (296 px, łuk 22 px).
 constexpr int32_t kStepSize = 64;
@@ -110,7 +118,7 @@ void step_volume(Context& context, int32_t delta) {
     if (const domain::PendingEntry* pending = state.pending_of(domain::ControlId::ZVolume)) {
         value = pending->requested_value;
     }
-    const int32_t next = std::clamp<int32_t>(value + delta, 0, volume_limit());
+    const int32_t next = domain::z906_step_volume(value, delta, volume_limit());
     if (next == value) {
         return;
     }
@@ -152,21 +160,34 @@ void apply_level(widgets::Level* level, int32_t snapshot_value, domain::ControlS
 
 }  // namespace
 
-void build_audio(Context& context, lv_obj_t* parent) {
+namespace {
+
+// Poziom: źródło i efekt w nagłówku, jak źródło i tryb obrazu na TV. W wierszu 672 px:
+// znak 44, nazwa, wybór 340, Decode, zasilanie 48.
+constexpr int32_t kHeaderSelectorsW = 340;
+// Poziom: tor suwaka kanału na całą wysokość prawej strony (pion: 170 px).
+constexpr int32_t kWideLevelTrackH = 300;
+
+void build_header_selectors(Context& context) {
     AudioScreen& screen = context.audio;
-    screen.section = widgets::make_section(parent);
+    screen.header = make_header_slot(context, kHeaderSelectorsW);
+    screen.source = widgets::make_value_segment(screen.header, LV_SYMBOL_USB, &on_source, &context);
+    screen.effect = widgets::make_value_segment(screen.header, LV_SYMBOL_AUDIO, &on_effect, &context);
+    widgets::make_header_segment(screen.source);
+    widgets::make_header_segment(screen.effect);
+}
 
-    screen.banner = widgets::make_banner(screen.section,
-                                         "Brak świeżego stanu Z906.\n"
-                                         "Sterowanie wróci po nowym snapshocie.");
-
-    lv_obj_t* selectors = widgets::make_duo(screen.section);
+void build_selectors(Context& context, lv_obj_t* parent) {
+    AudioScreen& screen = context.audio;
+    lv_obj_t* selectors = widgets::make_duo(parent);
     lv_obj_set_height(selectors, LV_SIZE_CONTENT);
     screen.source = widgets::make_value_segment(selectors, LV_SYMBOL_USB, &on_source, &context);
     screen.effect = widgets::make_value_segment(selectors, LV_SYMBOL_AUDIO, &on_effect, &context);
+}
 
-    lv_obj_t* fill = widgets::make_fill(screen.section);
-    screen.dial = widgets::make_dial(fill, "głośność", &on_volume, &context);
+void build_dial(Context& context, lv_obj_t* parent) {
+    AudioScreen& screen = context.audio;
+    screen.dial = widgets::make_dial(parent, "głośność", &on_volume, &context);
 
     // −/+ w otwarciu łuku u dołu, z powtarzaniem przy przytrzymaniu.
     lv_obj_t* volume_down = widgets::make_step_button(screen.dial->root, LV_SYMBOL_MINUS, true,
@@ -199,8 +220,11 @@ void build_audio(Context& context, lv_obj_t* parent) {
     lv_obj_add_event_cb(
         screen.mute, [](lv_event_t* event) { on_mute(lv_event_get_user_data(event)); },
         LV_EVENT_CLICKED, &context);
+}
 
-    lv_obj_t* levels = lv_obj_create(screen.section);
+void build_levels(Context& context, lv_obj_t* parent) {
+    AudioScreen& screen = context.audio;
+    lv_obj_t* levels = lv_obj_create(parent);
     theme::make_flat(levels);
     lv_obj_set_width(levels, LV_PCT(100));
     lv_obj_set_height(levels, LV_SIZE_CONTENT);
@@ -211,8 +235,45 @@ void build_audio(Context& context, lv_obj_t* parent) {
     screen.center = widgets::make_level(levels, "Center", &on_center, &context);
     screen.subwoofer = widgets::make_level(levels, "Subwoofer", &on_subwoofer, &context);
     screen.rear = widgets::make_level(levels, "Tył", &on_rear, &context);
+}
+
+}  // namespace
+
+void build_audio(Context& context, lv_obj_t* parent) {
+    AudioScreen& screen = context.audio;
+    screen.section = widgets::make_section(parent);
+
+    screen.banner = widgets::make_banner(screen.section,
+                                         "Brak świeżego stanu Z906.\n"
+                                         "Sterowanie wróci po nowym snapshocie.");
+
+    if (theme::landscape()) {
+        // Poziom (makieta docs/ux/mockup-landscape): tarcza głośności po lewej na pełną
+        // wysokość, obok źródło, efekt i trzy kanały. Każda część ma całą wysokość
+        // ekranu, zamiast dzielić ją jak w pionie.
+        widgets::make_split(screen.section, theme::kS4);
+
+        lv_obj_t* left = widgets::make_fill(screen.section);
+        lv_obj_set_flex_grow(left, 0);
+        lv_obj_set_size(left, LV_SIZE_CONTENT, LV_PCT(100));
+        build_dial(context, left);
+
+        lv_obj_t* right = widgets::make_pane(screen.section, 0, theme::kS4);
+        lv_obj_set_flex_align(right, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START,
+                              LV_FLEX_ALIGN_START);
+        build_header_selectors(context);
+        build_levels(context, right);
+        for (widgets::Level* level : {screen.center, screen.subwoofer, screen.rear}) {
+            lv_obj_set_height(level->bar, kWideLevelTrackH);
+        }
+    } else {
+        build_selectors(context, screen.section);
+        build_dial(context, widgets::make_fill(screen.section));
+        build_levels(context, screen.section);
+    }
 
     screen.picker = widgets::make_page("", &on_picker_back, &context);
+    widgets::dock_sheet(screen.picker);
     for (std::size_t i = 0; i < domain::kMaxOptions; ++i) {
         AudioScreen::PickerRow& row = screen.picker_rows[i];
         row.context = &context;
@@ -277,6 +338,7 @@ void render_audio(Context& context) {
 
 
     widgets::set_unavailable(screen.section, screen.banner, !state.z906_fresh());
+    show_header_slot(context, screen.header, ScreenId::Audio, state.z906_fresh());
 }
 
 }  // namespace ui

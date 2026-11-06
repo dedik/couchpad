@@ -123,7 +123,12 @@ tablicę partycji.
 - **Reset dotyku.** BSP podaje „niepodłączony", część źródeł społecznościowych wskazuje GPIO 3.
   Dotyk działa bez niego, więc sprawa jest otwarta i nieblokująca.
 - **Pobór prądu i tryby oszczędzania** — nietestowane.
-- **Obrót ekranu i kalibracja osi dotyku** przy innych orientacjach.
+- **Dotyk palcem w poziomie.** Obrót o 90° (Ekran → Orientacja, `sw_rotate` procesorem)
+  potwierdzony 2026-11-06: obraz 800 × 480 we właściwą stronę, zdalny dotyk z `remote.py` trafia.
+  Dotyk GT911 palcem i obrót o 270° czekają na sprawdzenie ręczne.
+- **PPA do obrotu.** Z `CONFIG_LVGL_PORT_ENABLE_PPA=y` przewijanie listy w poziomie zawieszało
+  zadanie LVGL na stałe (2/2 próby): czekało na PPA z trzymaną blokadą, watchdog milczał.
+  Obrót procesorem działa; przyczyny w PPA nie ustalono (ADR 0013).
 
 ## ESP32-C6 i Wi-Fi
 

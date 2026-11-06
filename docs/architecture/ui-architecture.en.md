@@ -21,6 +21,8 @@ The view sends only `UiIntent`. The application controller validates it, updates
 
 On the everyday control screens a discreet bottom bar with two tabs is always visible: `TV` and `GŁOŚNIKI` (Speakers). The selected tab indicates the current view and switches directly between the TV and Z906 screens — without returning to the Home screen and without any extra confirmation. The bar is a shared LVGL component, created once and updated together with the current screen.
 
+In landscape ([ADR 0013](adr/0013-landscape-orientation.en.md)) the same tabs sit in a vertical rail on the left (88 px), and the header with the screen name and power stays above the content.
+
 ## MVP screens
 
 | Screen | Purpose | Key elements |
@@ -81,13 +83,13 @@ and transport clients queue only the state of their own device (`Z906Event` carr
 | --- | --- |
 | `include/ui/theme.hpp`, `theme.cpp` | tokens from `pulpit.css`: colours, radii, spacing, shell dimensions, fonts, shared styles. Two palettes (dark, light) with the same roles; `theme::apply()` switches them at runtime by swapping role colours in the shared styles and in every object's local styles. Screens do not define their own colours — a colour outside the palette will not follow the theme. |
 | `include/ui/widgets.hpp` | the whole component catalogue — start with this file |
-| `widgets.cpp` | section, `make_fill`, `make_cap`, `Segmented`, `Tiles`, actions, `ListRow`, `Readout`, `Banner` + `set_unavailable`, power button, `Page`, `ask_confirm` |
+| `widgets.cpp` | section, `make_fill`, `make_cap`, `Segmented`, `Tiles`, actions, `ListRow`, `Readout`, `Banner` + `set_unavailable`, power button, `Page`, `ask_confirm`; landscape: `make_split`, `make_pane`, `make_spacer`, `make_header_segment`, `dock_sheet` |
 | `widgets_controls.cpp` | continuous values: `Dial` (volume), `Thermostat` (temperature), `Level` (Z906 channels) |
 | `widgets_nav.cpp` | D-pad, VOL/P rocker, Apple TV touchpad |
 | `widgets_editor.cpp` | text editor with its own keyboard |
 | `widgets_internal.hpp` | private widget helpers (`plain`, `attach`, `icon_label`) — not visible to screens |
 | `ui_internal.hpp` | `Context` and screen structures (`TvScreen`, `ClimateScreen`…), `build_*`/`render_*` declarations |
-| `shell.cpp` | shell: header, status bar, five tabs (`kScreens`), wake-up overlay |
+| `shell.cpp` | shell: header, five tabs (`kScreens`; a side rail in landscape), wake-up overlay, a header slot for the screen (`make_header_slot`, `show_header_slot`) |
 | `ui.cpp` | `dispatch`, `render`, screen dimming and wake-up |
 | `screens/screen_*.cpp` | one file per screen or subpage; `screen_start.cpp` is the start screen after boot and wake-up (ADR 0010) |
 
@@ -130,6 +132,27 @@ it holds task stacks, FreeRTOS queues and every allocation up to 4 kB
   `esp_mqtt_client_init` or `enqueue`;
 - a task stack in PSRAM (`xTaskCreatePinnedToCoreWithCaps`) only when the task does not
   touch flash (NVS, OTA).
+
+### Landscape orientation
+
+[ADR 0013](adr/0013-landscape-orientation.en.md). `theme::landscape()` tells which layout to build;
+orientation only changes with a restart, so a screen builds one of two layouts while `render_*`
+stays shared. Patterns:
+
+- **Two-column screen:** `widgets::make_split(section, gap)` and columns
+  `widgets::make_pane(section, width, gap)` (0 = rest of the row); `make_spacer` pushes buttons
+  to the bottom of a column. Content is 672 × 383 px.
+- **Controls in the header** (TV source and picture mode, Z906 source and effect):
+  `make_header_slot(context, width)` when building, `show_header_slot(context, slot, screen,
+  fresh)` in `render_*`; `widgets::make_header_segment` lowers a segment to the 64 px row.
+  The header is outside the screen section, so the no-state banner does not cover it — the
+  handler must check freshness itself.
+- **Pickers:** `widgets::dock_sheet(page)` after `make_page` — a 380 px sheet on the right over
+  a dimmed screen in landscape, unchanged in portrait.
+- **Settings sub-pages:** docked next to the list (`dock_settings_pages`), at most one open; a new
+  settings sub-page must be added to `settings_page()` in `screen_more.cpp`.
+- **Ellipsis labels** (`LV_LABEL_LONG_DOT`) need a fixed width. With a content width LVGL shows
+  just "…" (weather, fan speed), and in a `flex_grow` column it can relayout forever.
 
 ### Light and dark theme
 

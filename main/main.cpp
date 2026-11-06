@@ -49,7 +49,9 @@ extern "C" void app_main(void) {
     g_controller = &core::memory::make_in_psram<application::AppController>(*g_live);
     g_wifi = &core::memory::make_in_psram<transport::WifiService>();
     g_network = &core::memory::make_in_psram<application::NetworkController>(*g_wifi);
-    if (!board::start()) {
+    // Ustawienia przed ekranem: orientację ustala się przy jego starcie.
+    storage::init();
+    if (!board::start(board::rotation_from(storage::get(storage::Pref::Orientation)))) {
         ESP_LOGE(kTag, "ekran nie ruszyl — nie ma czego pokazywac");
         return;
     }
@@ -57,7 +59,6 @@ extern "C" void app_main(void) {
 #if CONFIG_PILOT_USB_CONSOLE
     board::start_usb_console();
 #endif
-    storage::init();
     // Jasność z ustawień (domyślnie 100 %), także po każdym wybudzeniu.
     board::set_brightness(storage::get(storage::Pref::Brightness));
 

@@ -1,6 +1,7 @@
 #include "widgets_internal.hpp"
 
 #include <cstring>
+#include <initializer_list>
 
 #include "core/config.hpp"
 #include "storage/settings.hpp"
@@ -128,6 +129,15 @@ const char* const kKeyTabs[] = {"abc", "ąę", "123", "#+=", ""};
 
 // Wysokość siatki QWERTY: trzy rzędy klawiszy po ok. 62 px.
 constexpr int32_t kQwertyGridH = 3 * 62 + 2 * 8;
+// Poziom: 480 px wysokości na nagłówek, pole i klawiaturę — rzędy niższe, ale klawisze
+// i tak szersze niż w pionie (800 px na rząd).
+constexpr int32_t kQwertyGridWideH = 3 * 50 + 2 * 8;
+constexpr int32_t kWideRow = 56;     // pole tekstowe z Anuluj i Zapisz w jednym rzędzie
+constexpr int32_t kWideActionW = 136;
+
+int32_t qwerty_grid_height() {
+    return theme::landscape() ? kQwertyGridWideH : kQwertyGridH;
+}
 
 using core::config::kKeyboardLiveIntervalMs;
 
@@ -223,15 +233,16 @@ lv_obj_t* key_action(lv_obj_t* parent, const char* symbol, const char* text) {
 }
 
 void build_keys(TextEditor& editor) {
+    const bool wide = theme::landscape();
     editor.keys = plain(editor.layer);
     lv_obj_set_width(editor.keys, LV_PCT(100));
     lv_obj_set_flex_grow(editor.keys, 1);
-    theme::make_column(editor.keys, theme::kS3);
-    lv_obj_set_style_pad_bottom(editor.keys, theme::kS4, LV_PART_MAIN);
+    theme::make_column(editor.keys, wide ? theme::kS2 : theme::kS3);
+    lv_obj_set_style_pad_bottom(editor.keys, wide ? theme::kS3 : theme::kS4, LV_PART_MAIN);
 
     editor.key_tabs = lv_buttonmatrix_create(editor.keys);
     matrix_base_style(editor.key_tabs, theme::font_m15());
-    lv_obj_set_size(editor.key_tabs, LV_PCT(100), 44);
+    lv_obj_set_size(editor.key_tabs, LV_PCT(100), wide ? 40 : 44);
     lv_obj_set_style_radius(editor.key_tabs, theme::kR3, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(editor.key_tabs, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(editor.key_tabs, theme::surface(), LV_PART_MAIN);
@@ -290,7 +301,7 @@ void build_keys(TextEditor& editor) {
         LV_EVENT_VALUE_CHANGED, &editor);
 
     lv_obj_t* bottom = plain(editor.keys);
-    lv_obj_set_size(bottom, LV_PCT(100), 56);
+    lv_obj_set_size(bottom, LV_PCT(100), wide ? 48 : 56);
     theme::make_row(bottom, theme::kS2);
 
     // ⇧ i ⌫ są w ostatnim rzędzie macierzy, więc spacja może być szeroka jak na telefonie.
@@ -327,7 +338,7 @@ void show_keyboard_style(TextEditor& editor) {
         lv_obj_set_style_bg_color(editor.key_grid, theme::surface2(), LV_PART_ITEMS);
         lv_obj_set_style_radius(editor.key_grid, theme::kR1, LV_PART_ITEMS);
         lv_obj_set_flex_grow(editor.key_grid, 0);
-        lv_obj_set_height(editor.key_grid, kQwertyGridH);
+        lv_obj_set_height(editor.key_grid, qwerty_grid_height());
         lv_obj_set_flex_align(editor.keys, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_START,
                               LV_FLEX_ALIGN_START);
     } else {
@@ -399,9 +410,12 @@ TextEditor* make_text_editor() {
     lv_obj_set_style_bg_color(editor->layer, theme::bg(), LV_PART_MAIN);
     lv_obj_add_flag(editor->layer, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(editor->layer, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_set_style_pad_hor(editor->layer, theme::kGutter, LV_PART_MAIN);
-    lv_obj_set_style_pad_top(editor->layer, theme::kS6, LV_PART_MAIN);
-    theme::make_column(editor->layer, theme::kS3);
+    const bool wide = theme::landscape();
+    const int32_t row_h = wide ? kWideRow : 72;
+    lv_obj_set_style_pad_hor(editor->layer, wide ? theme::kGutterWide : theme::kGutter,
+                             LV_PART_MAIN);
+    lv_obj_set_style_pad_top(editor->layer, wide ? theme::kS3 : theme::kS6, LV_PART_MAIN);
+    theme::make_column(editor->layer, wide ? theme::kS2 : theme::kS3);
 
     // Nagłówek: podpis i tytuł po lewej, przełącznik stylu klawiatury po prawej.
     lv_obj_t* head = plain(editor->layer);
@@ -449,13 +463,13 @@ TextEditor* make_text_editor() {
 
     lv_obj_t* field_row = plain(editor->layer);
     lv_obj_set_width(field_row, LV_PCT(100));
-    lv_obj_set_height(field_row, 72);
+    lv_obj_set_height(field_row, row_h);
     theme::make_row(field_row, theme::kS2);
 
     editor->field = lv_textarea_create(field_row);
     lv_obj_remove_style_all(editor->field);
     lv_obj_set_width(editor->field, LV_PCT(100));
-    lv_obj_set_height(editor->field, 72);
+    lv_obj_set_height(editor->field, row_h);
     lv_obj_set_style_bg_opa(editor->field, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(editor->field, theme::surface2(), LV_PART_MAIN);
     lv_obj_set_style_radius(editor->field, theme::kR3, LV_PART_MAIN);
@@ -482,7 +496,7 @@ TextEditor* make_text_editor() {
     // całą próbę połączenia.
     editor->reveal = lv_button_create(field_row);
     lv_obj_remove_style_all(editor->reveal);
-    lv_obj_set_size(editor->reveal, theme::kTouch, 72);
+    lv_obj_set_size(editor->reveal, theme::kTouch, row_h);
     lv_obj_set_style_radius(editor->reveal, theme::kR3, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(editor->reveal, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(editor->reveal, theme::surface2(), LV_PART_MAIN);
@@ -502,7 +516,8 @@ TextEditor* make_text_editor() {
         },
         LV_EVENT_CLICKED, editor);
 
-    lv_obj_t* duo = make_duo(editor->layer);
+    // Poziom: Anuluj i Zapisz w rzędzie pola, żeby klawiatura zmieściła się w 480 px.
+    lv_obj_t* duo = wide ? field_row : make_duo(editor->layer);
     auto* cancel_cb = static_cast<Callback*>(lv_malloc(sizeof(Callback)));
     cancel_cb->context = editor;
     lv_obj_t* cancel = make_action(duo, LV_SYMBOL_CLOSE, "Anuluj", false, ActionLayout::Fill,
@@ -532,6 +547,12 @@ TextEditor* make_text_editor() {
     lv_obj_add_event_cb(
         accept, [](lv_event_t* event) { lv_free(lv_event_get_user_data(event)); },
         LV_EVENT_DELETE, accept_cb);
+    if (wide) {
+        for (lv_obj_t* action : {cancel, accept}) {
+            lv_obj_set_flex_grow(action, 0);
+            lv_obj_set_size(action, kWideActionW, row_h);
+        }
+    }
 
     build_keys(*editor);
 
