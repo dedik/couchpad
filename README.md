@@ -29,6 +29,20 @@ The same interface in the light theme — permanently, or during the day when th
 
 Individual light-theme screens are in [`docs/screenshots/light/`](docs/screenshots/light/).
 
+### Landscape
+
+The same remote held sideways or standing on a table: 800 × 480 with tabs in a side rail,
+two-column layouts and the selectors moved into the header. Chosen in *Settings → Display →
+Orientation*; the remote restarts in the new orientation
+([ADR 0013](docs/architecture/adr/0013-landscape-orientation.en.md)).
+
+![All screens — landscape](docs/screenshots/overview-landscape.png)
+
+![All screens — landscape, light theme](docs/screenshots/overview-landscape-light.png)
+
+Individual landscape screens are in [`docs/screenshots/landscape/`](docs/screenshots/landscape/)
+and [`docs/screenshots/landscape/light/`](docs/screenshots/landscape/light/).
+
 The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
 
 ## What it does
@@ -47,12 +61,15 @@ The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
   the Apple TV, switchable on the keyboard itself or in settings. It uses Home Assistant's
   `apple_tv.set_keyboard_text` and the `keyboard_focus` sensor ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.en.md)).
 - **Z906** — volume dial with −/+ steps, centre, subwoofer and rear levels, input and
-  effect, Decode 5.1 indicator.
+  effect, Decode indicator.
 - **Home** — air conditioner (mode, temperature, fan, swing) and scenes.
 - **Start screen** after wake-up — clock, weather and the state of every device.
 - **Light and dark theme** — chosen in the settings: fixed or by hours (dark from 18 to 8 by
   default). Switches at runtime, without a restart
   ([ADR 0012](docs/architecture/adr/0012-light-and-dark-theme.en.md)).
+- **Portrait or landscape** — a setting, not a sensor (the board has none): in landscape the
+  image is rotated on the CPU and every screen has its own two-column layout
+  ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.en.md)).
 - **Settings on the device** — Wi-Fi, MQTT broker, screen and theme, sound limit, room and time zone,
   keyboard and trackpad, diagnostics. Credentials are entered on the panel and kept in its
   NVS, never in the repository.
