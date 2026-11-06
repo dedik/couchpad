@@ -7,6 +7,7 @@ się bez restartu pilota.
     uvx --with pyserial --with pillow python tools/remote.py shot zrzut.png
     uvx --with pyserial --with pillow python tools/remote.py tap 240 400
     uvx --with pyserial --with pillow python tools/remote.py drag 240 600 240 300 300
+    uvx --with pyserial --with pillow python tools/remote.py hit 166 420
     uvx --with pyserial --with pillow python tools/remote.py tour katalog/
 
 `tour` przechodzi przez zakładki i podstrony i zapisuje zrzut każdej z nich
@@ -87,6 +88,18 @@ class Remote:
     def tap(self, x: int, y: int) -> None:
         self._command(f"tap {x} {y}")
 
+    def hit(self, x: int, y: int) -> str:
+        """Który obiekt LVGL dostałby dotyk w (x, y) — nic nie dotyka."""
+        self.port.write(f"\nhit {x} {y}\n".encode())
+        deadline = time.monotonic() + TIMEOUT_S
+        found = ""
+        while True:
+            line = self._line(deadline)
+            if line.startswith(b"@@HIT"):
+                found = line.decode(errors="replace").strip()
+            elif line.startswith(b"@@OK"):
+                return found
+
     def drag(self, x1: int, y1: int, x2: int, y2: int, ms: int) -> None:
         self._command(f"drag {x1} {y1} {x2} {y2} {ms}")
 
@@ -153,7 +166,7 @@ def to_image(data: bytes, width: int, height: int) -> Image.Image:
 
 
 def main() -> int:
-    if len(sys.argv) < 2 or sys.argv[1] not in {"shot", "tap", "drag", "tour"}:
+    if len(sys.argv) < 2 or sys.argv[1] not in {"shot", "tap", "drag", "tour", "hit"}:
         print(__doc__)
         return 2
     action, args = sys.argv[1], sys.argv[2:]
@@ -166,6 +179,8 @@ def main() -> int:
             print(f"{out}  {time.monotonic() - started:.1f} s")
         elif action == "tap":
             remote.tap(int(args[0]), int(args[1]))
+        elif action == "hit":
+            print(remote.hit(int(args[0]), int(args[1])))
         elif action == "drag":
             remote.drag(*(int(value) for value in args[:5]))
         else:
