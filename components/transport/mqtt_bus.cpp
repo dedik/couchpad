@@ -4,8 +4,10 @@
 #include <cstring>
 
 #include "core/config.hpp"
+#include "esp_event.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
+#include "esp_netif.h"
 #include "mqtt_client.h"
 
 namespace transport {
@@ -20,6 +22,14 @@ constexpr int kBufferSize = 4096;
 // na serię kroków gładzika. Stos zadania wysyłki jest w PSRAM: zadanie nie dotyka flasha.
 constexpr UBaseType_t kQueueLength = 8;
 constexpr uint32_t kSenderStack = 4096;
+
+// Czy interfejs stacji ma już adres. Przed esp_netif_create_default_wifi_sta nie ma
+// też interfejsu — wtedy też czekamy.
+bool has_ip() {
+    esp_netif_t* sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    esp_netif_ip_info_t info{};
+    return sta != nullptr && esp_netif_get_ip_info(sta, &info) == ESP_OK && info.ip.addr != 0;
+}
 
 }  // namespace
 
@@ -87,6 +97,48 @@ bool MqttBus::start() {
     if (handle_ == nullptr) {
         return false;
     }
+    if (ip_waiter_ != nullptr) {
+        return true;
+    }
+    // Najpierw zapis na zdarzenie, potem sprawdzenie: adres przydzielony pomiędzy
+    // nie przepadnie. Jeśli IP już jest, rezygnujemy z czekania i łączymy od razu.
+    esp_event_handler_instance_t waiter = nullptr;
+    if (esp_event_handler_instance_register(
+            IP_EVENT, IP_EVENT_STA_GOT_IP,
+            [](void* self, esp_event_base_t base, int32_t id, void* data) {
+                on_got_ip(self, base, id, data);
+            },
+            this, &waiter) != ESP_OK) {
+        return start_client();
+    }
+    ip_waiter_ = waiter;
+    if (!has_ip()) {
+        ESP_LOGI(kTag, "czekam na adres IP przed polaczeniem z brokerem");
+        return true;
+    }
+    cancel_ip_wait();
+    return start_client();
+}
+
+void MqttBus::on_got_ip(void* self, const char*, int32_t, void*) {
+    auto* bus = static_cast<MqttBus*>(self);
+    // Jednorazowo: po zerwaniu i powrocie Wi-Fi esp-mqtt łączy się ponownie sam.
+    bus->cancel_ip_wait();
+    bus->start_client();
+}
+
+void MqttBus::cancel_ip_wait() {
+    if (ip_waiter_ == nullptr) {
+        return;
+    }
+    esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, ip_waiter_);
+    ip_waiter_ = nullptr;
+}
+
+bool MqttBus::start_client() {
+    if (handle_ == nullptr) {
+        return false;
+    }
     if (esp_mqtt_client_start(static_cast<esp_mqtt_client_handle_t>(handle_)) != ESP_OK) {
         ESP_LOGE(kTag, "nie udalo sie wystartowac klienta");
         close();
@@ -96,6 +148,7 @@ bool MqttBus::start() {
 }
 
 void MqttBus::close() {
+    cancel_ip_wait();
     if (handle_ == nullptr) {
         return;
     }

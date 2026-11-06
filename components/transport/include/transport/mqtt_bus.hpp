@@ -35,6 +35,9 @@ public:
     // Tworzy klienta bez łączenia. `false`, gdy brakuje adresu brokera.
     bool open(const storage::MqttSettings& settings);
     void attach(Handler handler, void* arg);
+    // Bez adresu IP klient nie łączy się od razu, tylko czeka na IP_EVENT_STA_GOT_IP.
+    // Inaczej esp-mqtt próbuje kilka razy z „Host is unreachable”, a każda nieudana
+    // próba to dla pilota błąd łącza na ekranie, choć Wi-Fi po prostu jeszcze wstaje.
     bool start();
     // Zatrzymuje i niszczy klienta. Klienci muszą wcześniej zapomnieć uchwyt.
     void close();
@@ -59,8 +62,12 @@ private:
 
     static void sender_entry(void* self);
     void sender();
+    static void on_got_ip(void* self, const char* base, int32_t id, void* data);
+    bool start_client();
+    void cancel_ip_wait();
 
     void* handle_ = nullptr;
+    void* ip_waiter_ = nullptr;  // esp_event_handler_instance_t, gdy start czeka na IP
     QueueHandle_t outgoing_ = nullptr;
     TaskHandle_t sender_task_ = nullptr;
     // Zadanie wysyłki trzyma ją na czas `publish`, `close()` — na czas niszczenia klienta.
