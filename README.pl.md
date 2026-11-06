@@ -29,6 +29,20 @@ Ten sam interfejs w jasnym stylu — na stałe albo w dzień, gdy styl zależy o
 
 Pojedyncze ekrany jasnego stylu leżą w [`docs/screenshots/light/`](docs/screenshots/light/).
 
+### Poziom
+
+Ten sam pilot trzymany bokiem albo postawiony na stoliku: 800 × 480, zakładki w bocznym pasku,
+układy dwukolumnowe, a wybór źródła i trybu w nagłówku. Wybór w *Ustawienia → Ekran →
+Orientacja*; pilot uruchamia się ponownie w nowej orientacji
+([ADR 0013](docs/architecture/adr/0013-landscape-orientation.md)).
+
+![Wszystkie ekrany — poziom](docs/screenshots/overview-landscape.png)
+
+![Wszystkie ekrany — poziom, styl jasny](docs/screenshots/overview-landscape-light.png)
+
+Pojedyncze ekrany w poziomie leżą w [`docs/screenshots/landscape/`](docs/screenshots/landscape/)
+i [`docs/screenshots/landscape/light/`](docs/screenshots/landscape/light/).
+
 ## Co potrafi
 
 - **TV** — stan zasilania, źródło i tryb obrazu, krzyżak, kołyski głośności i kanałów,
@@ -46,12 +60,15 @@ Pojedyncze ekrany jasnego stylu leżą w [`docs/screenshots/light/`](docs/screen
   przełączane na samej klawiaturze lub w ustawieniach. Korzysta z `apple_tv.set_keyboard_text`
   i czujnika `keyboard_focus` w Home Assistancie ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.md)).
 - **Z906** — tarcza głośności z krokiem −/+, poziomy centralnego, subwoofera i tyłu,
-  wejście i efekt, wskaźnik Decode 5.1.
+  wejście i efekt, wskaźnik Decode.
 - **Dom** — klimatyzacja (tryb, temperatura, nawiew, żaluzje) i sceny.
 - **Ekran startowy** po wybudzeniu — zegar, pogoda i stan każdego urządzenia.
 - **Styl jasny i ciemny** — wybierany w ustawieniach: na stałe albo wg godzin (domyślnie
   ciemny od 18 do 8). Zmienia się w locie, bez restartu
   ([ADR 0012](docs/architecture/adr/0012-light-and-dark-theme.md)).
+- **Pion albo poziom** — ustawienie, nie czujnik (płytka go nie ma): w poziomie obraz obraca
+  procesor, a każdy ekran ma własny układ w dwóch kolumnach
+  ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.md)).
 - **Ustawienia na urządzeniu** — Wi-Fi, broker MQTT, ekran i styl, limit głośności, pokój i strefa
   czasowa, klawiatura i gładzik, diagnostyka. Dane dostępowe wpisuje się na panelu i leżą
   w jego NVS, nigdy w repozytorium.
