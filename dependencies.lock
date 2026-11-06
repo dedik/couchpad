@@ -188,6 +188,6 @@ direct_dependencies:
 - espressif/esp_wifi_remote
 - idf
 - lvgl/lvgl
-manifest_hash: 06b589203c47392f42103a93b6a29be0c6956e0c13c95201adfab99e61694681
+manifest_hash: 3c1eed58dca1b742cc68ef7ca356dcb18a88287e4274fd9548aef27790350897
 target: esp32p4
 version: 2.0.0
