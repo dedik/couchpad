@@ -11,4 +11,8 @@ dependencies:
   ## a `esp_hosted` dowozi je po SDIO do ESP32-C6. Wersje zostają luźne do czasu testu na
   ## sprzęcie — protokół musi dogadać się z firmware slave, które siedzi we flashu C6.
   espressif/esp_wifi_remote: "*"
-  espressif/esp_hosted: "*"
+  ## 3.0.x: od 3.1.0 manifest ma reguły `if` na opcjach Kconfig, których 3.0.x nie definiuje.
+  ## Przy "*" sprawdzanie nowych wersji rozwiązywało graf z 3.1.0, zapisywało te opcje jako
+  ## brakujące i CMake kończył się "Missing required kconfig option after retry" (2026-11-05).
+  ## Podniesienie wersji to i tak zmiana protokołu z firmware slave na C6 — tylko po teście.
+  espressif/esp_hosted: "~3.0.10"
