@@ -5,6 +5,7 @@
 //   shot                         bieżąca ramka panelu w base64 między `@@SHOT` i `@@END`
 //   tap <x> <y>                  krótkie dotknięcie
 //   drag <x1> <y1> <x2> <y2> <ms>  przeciągnięcie palcem
+//   hit <x> <y>                  który obiekt dostałby dotyk w tym punkcie (bez dotykania)
 //
 // Współrzędne dotyku są logiczne, takie jak widzi interfejs po obrocie ekranu.
 // Zrzut to kopia bufora ramki panelu DPI — dokładnie to, co widać, razem z nakładkami
@@ -189,6 +190,66 @@ void send_frame() {
     }
 }
 
+// ---------- trafienie ----------
+
+// Ten sam porządek co wejście LVGL: warstwa systemowa, górna, potem ekran.
+void report_hit(int32_t x, int32_t y) {
+    char line[200];
+    int used = 0;
+    {
+        Lock lock(1000);
+        if (!lock.held()) {
+            return;
+        }
+        lv_point_t point = {x, y};
+        lv_obj_t* hit = lv_indev_search_obj(lv_layer_sys(), &point);
+        if (hit == nullptr) {
+            hit = lv_indev_search_obj(lv_layer_top(), &point);
+        }
+        if (hit == nullptr) {
+            hit = lv_indev_search_obj(lv_screen_active(), &point);
+        }
+        used = snprintf(line, sizeof(line), "@@HIT %d %d", static_cast<int>(x), static_cast<int>(y));
+        // Obiekt i dwa poziomy rodziców: obszar i czy jest klikalny.
+        for (int depth = 0; hit != nullptr && depth < 3; ++depth, hit = lv_obj_get_parent(hit)) {
+            lv_area_t area;
+            lv_obj_get_coords(hit, &area);
+            used += snprintf(line + used, sizeof(line) - used, " | %p %d,%d-%d,%d%s", static_cast<void*>(hit),
+                             static_cast<int>(area.x1), static_cast<int>(area.y1),
+                             static_cast<int>(area.x2), static_cast<int>(area.y2),
+                             lv_obj_has_flag(hit, LV_OBJ_FLAG_CLICKABLE) ? " klik" : "");
+        }
+    }
+    line[used < static_cast<int>(sizeof(line)) - 1 ? used : static_cast<int>(sizeof(line)) - 2] = '\n';
+    write_all(line, static_cast<std::size_t>(used < static_cast<int>(sizeof(line)) - 1 ? used + 1 : sizeof(line) - 1));
+}
+
+// ---------- log dotyku GT911 ----------
+
+// Każde naciśnięcie, puszczenie i kliknięcie palcem: punkt po obrocie i obiekt, który je
+// dostał. Do diagnozy trafiania w poziomie; zdalny palec z `tap` tu nie trafia.
+void log_touch(lv_event_t* event) {
+    const lv_event_code_t code = lv_event_get_code(event);
+    const char* name = code == LV_EVENT_PRESSED    ? "nacisk"
+                       : code == LV_EVENT_RELEASED ? "puszczenie"
+                       : code == LV_EVENT_CLICKED  ? "klik"
+                                                   : nullptr;
+    if (name == nullptr) {
+        return;
+    }
+    lv_indev_t* indev = static_cast<lv_indev_t*>(lv_event_get_current_target(event));
+    lv_point_t point;
+    lv_indev_get_point(indev, &point);
+    lv_obj_t* target = static_cast<lv_obj_t*>(lv_event_get_param(event));
+    lv_area_t area = {};
+    if (target != nullptr) {
+        lv_obj_get_coords(target, &area);
+    }
+    ESP_LOGI(kTag, "dotyk %s %d,%d -> %p %d,%d-%d,%d", name, static_cast<int>(point.x),
+             static_cast<int>(point.y), static_cast<void*>(target), static_cast<int>(area.x1),
+             static_cast<int>(area.y1), static_cast<int>(area.x2), static_cast<int>(area.y2));
+}
+
 // ---------- komendy ----------
 
 void run(const char* command) {
@@ -203,6 +264,8 @@ void run(const char* command) {
         tap(x1, y1);
     } else if (std::sscanf(command, "drag %d %d %d %d %d", &x1, &y1, &x2, &y2, &ms) == 5) {
         drag(x1, y1, x2, y2, static_cast<uint32_t>(ms));
+    } else if (std::sscanf(command, "hit %d %d", &x1, &y1) == 2) {
+        report_hit(x1, y1);
     } else {
         return;
     }
@@ -245,6 +308,9 @@ void start_usb_console() {
         lv_indev_t* finger = lv_indev_create();
         lv_indev_set_type(finger, LV_INDEV_TYPE_POINTER);
         lv_indev_set_read_cb(finger, &finger_read);
+        if (lv_indev_t* touch = bsp_display_get_input_dev()) {
+            lv_indev_add_event_cb(touch, &log_touch, LV_EVENT_ALL, nullptr);
+        }
     }
     xTaskCreate(&console_task, "console", 4096, nullptr, 2, nullptr);
     ESP_LOGI(kTag, "konsola USB gotowa: zrzuty i dotyk (tools/remote.py)");

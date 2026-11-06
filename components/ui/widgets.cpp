@@ -176,6 +176,7 @@ lv_obj_t* make_spacer(lv_obj_t* column) {
     lv_obj_t* spacer = plain(column);
     lv_obj_set_width(spacer, LV_PCT(100));
     lv_obj_set_flex_grow(spacer, 1);
+    lv_obj_remove_flag(spacer, LV_OBJ_FLAG_CLICKABLE);
     return spacer;
 }
 
@@ -286,8 +287,13 @@ lv_obj_t* make_action(lv_obj_t* parent, const char* symbol, const char* text, bo
     lv_obj_add_style(button, &styles().act, LV_PART_MAIN);
     if (primary) {
         lv_obj_add_style(button, &styles().act_primary, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(button, theme::accent_pressed(), LV_STATE_PRESSED);
     } else {
+        // Bez bursztynu: jaśniejsze tło na czas trzymania palca.
+        lv_obj_set_style_bg_color(button, theme::surface3(), LV_STATE_PRESSED);
     }
+    // Stuknięcie tuż przy krawędzi też się liczy (duo ma widoczny nadmiar, patrz make_duo).
+    lv_obj_set_ext_click_area(button, theme::kS2);
     lv_obj_set_flex_flow(button,
                          layout == ActionLayout::Stacked ? LV_FLEX_FLOW_COLUMN : LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(button, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -394,6 +400,16 @@ lv_obj_t* make_duo(lv_obj_t* parent) {
     lv_obj_set_width(duo, LV_PCT(100));
     lv_obj_set_height(duo, 72);
     theme::make_row(duo, theme::kS2);
+    // LVGL szuka dzieci tylko w obrębie rodzica (z OVERFLOW_VISIBLE: powiększonym
+    // o ext_draw_size). Rząd zgłasza margines równy ext_click_area przycisków,
+    // inaczej stuknięcie tuż nad przyciskiem by przepadło.
+    lv_obj_add_flag(duo, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+    lv_obj_remove_flag(duo, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(
+        duo,
+        [](lv_event_t* event) { lv_event_set_ext_draw_size(event, theme::kS2); },
+        LV_EVENT_REFR_EXT_DRAW_SIZE, nullptr);
+    lv_obj_refresh_ext_draw_size(duo);
     return duo;
 }
 
