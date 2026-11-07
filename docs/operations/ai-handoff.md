@@ -592,6 +592,14 @@ NVS `orient`, restart po zmianie. Każdy ekran i podstrona mają układ poziomy;
 - Lekcja: zrzut nie wybudza ekranu, a pokazuje ostatnią ramkę. Przed stuknięciem sprawdź
   `hit` — przypadkowe stuknięcie na ekranie Apple TV uruchomiło YouTube i (przez CEC) telewizor.
 
+## Ekran startowy: w domu — 2026-11-07
+
+[ADR 0015](../architecture/adr/0015-indoor-average-on-start-screen.md). Wiadomość pogody ma pole
+`indoor` (średnia temperatura i wilgotność z czujników pomieszczeń, liczona w bridge'u; kopia
+`…before-indoor.20261107-091007`). Poziom: zegar 96 px (`ubuntu_b_96_num`) i data na środku lewej
+kolumny, kafle „na zewnątrz” / „w domu”; pion: pigułka pod pogodą. Ikony kafli startu wyśrodkowane.
+Sprawdzone na płytce w poziomie; pion — tylko w makiecie.
+
 ## Następny bezpieczny krok
 
 1. Ekran WIĘCEJ według planu powyżej (etap 2).

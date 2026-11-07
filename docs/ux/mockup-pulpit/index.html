@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="pulpit.css?v=57">
+<link rel="stylesheet" href="pulpit.css?v=59">
 <link rel="stylesheet" href="../mockup-dom/rooms.css?v=9">
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
@@ -201,7 +201,11 @@
         <header class="start-head">
           <div class="start-clock"><b class="start-time">21:47</b><span class="start-date">wtorek, 3 listopada · SALON</span></div>
           <!-- Pogoda z HA (ADR 0011): treść, nie stan — pilot pokazuje ostatnią z pamięci od razu -->
-          <div class="start-weather"><img src="assets/pixel/weather_partly.png" alt=""><span><b>6°C</b><em>przejaśnienia</em></span></div>
+          <div class="start-side">
+            <div class="start-weather"><img src="assets/pixel/weather_partly.png" alt=""><span><b>6°C</b><em>przejaśnienia</em></span></div>
+            <!-- Średnia z czujników pomieszczeń i wilgotność (makieta, ekran startowy) -->
+            <div class="start-indoor"><span class="start-indoor-cap">W DOMU</span><b>23,8°</b><em>39%</em></div>
+          </div>
         </header>
         <div class="start-grid" role="group" aria-label="Urządzenia">
           <button class="launch" type="button" data-go="tv"><span class="pix" data-pix="tv"></span><span class="launch-text"><b>Telewizor</b><em class="launch-state" data-state="tv"></em></span></button>

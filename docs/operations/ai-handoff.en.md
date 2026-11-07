@@ -589,6 +589,14 @@ patterns in `ui-architecture.en.md` ("Landscape orientation").
 - Lesson: a screenshot does not wake the screen, it shows the last frame. Check `hit` before
   every tap — an accidental tap on the Apple TV screen launched YouTube and (via CEC) the TV.
 
+## Start screen: at home — 2026-11-07
+
+[ADR 0015](../architecture/adr/0015-indoor-average-on-start-screen.en.md). The weather message has an
+`indoor` field (average temperature and humidity of the room sensors, computed by the bridge;
+backup `…before-indoor.20261107-091007`). Landscape: a 96 px clock (`ubuntu_b_96_num`) and the date
+centred in the left column, "outside" / "at home" tiles; portrait: a pill under the weather.
+Start tile icons are centred. Checked on the board in landscape; portrait only in the mockup.
+
 ## Next safe step
 
 1. The WIĘCEJ screen according to the plan above (stage 2).

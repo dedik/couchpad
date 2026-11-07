@@ -119,6 +119,7 @@ const lv_font_t* font_b19();
 const lv_font_t* font_b26();
 const lv_font_t* font_b46num();  // cyfry, przecinek, pauza: głośność, kafelek klimy
 const lv_font_t* font_b64num();  // to samo w 64 px: tarcza temperatury
+const lv_font_t* font_b96num();  // 96 px, same cyfry i dwukropek: zegar startu w poziomie
 // Jak b19/b26, ale z symbolami LVGL (⇧, ⌫) — dla klawiatury ekranowej.
 const lv_font_t* font_key_b19();
 const lv_font_t* font_key_b26();

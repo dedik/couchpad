@@ -229,8 +229,13 @@ multimedia_remote/v1/<remote_id>/weather       Home Assistant → remote
 ```
 
 ```json
-{ "condition": "partlycloudy", "temperature": 5.5, "night": true }
+{ "condition": "partlycloudy", "temperature": 5.5, "night": true,
+  "indoor": { "temperature": 23.8, "humidity": 39 } }
 ```
+
+`indoor` ([ADR 0015](adr/0015-indoor-average-on-start-screen.en.md)) is optional: the average
+temperature (degrees, one decimal) and humidity (%, integer) of the room sensors, computed by the
+bridge. Without the field the "at home" tile is hidden; without `humidity`, only its line.
 
 `condition` is the state identifier of the `weather` entity in HA; the remote picks an icon and a Polish name for it. `night` says the sun is below the horizon (`sun.sun`): HA has a night variant only for a clear sky (`clear-night`), so e.g. `partlycloudy` at night is drawn by the remote with a moon. Weather is not part of the snapshot: it is content, not device state, so the remote shows the last one from memory immediately after wake-up, and hides it after 6 hours without an update.
 

@@ -1,5 +1,6 @@
 #include "transport/ha_client.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -279,6 +280,16 @@ void HaClient::handle_weather(const char* data, int length) {
             static_cast<int16_t>(std::lround(temperature->valuedouble * 10.0));
         weather_ready_.night =
             cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(root, "night")) != 0;
+        // Sekcja `indoor` (ADR 0015) jest opcjonalna: bridge bez niej — brak kafla „w domu”.
+        const cJSON* indoor = cJSON_GetObjectItemCaseSensitive(root, "indoor");
+        const cJSON* inside = cJSON_GetObjectItemCaseSensitive(indoor, "temperature");
+        const cJSON* humidity = cJSON_GetObjectItemCaseSensitive(indoor, "humidity");
+        weather_ready_.indoor_known = cJSON_IsNumber(inside) != 0;
+        weather_ready_.indoor_tenths =
+            weather_ready_.indoor_known ? static_cast<int16_t>(std::lround(inside->valuedouble * 10.0)) : 0;
+        weather_ready_.humidity_known = cJSON_IsNumber(humidity) != 0;
+        weather_ready_.humidity = weather_ready_.humidity_known
+            ? static_cast<uint8_t>(std::clamp(std::lround(humidity->valuedouble), 0L, 100L)) : 0;
         weather_ready_.received_ms = core::now_ms();
         weather_ready_.revision += 1;
         weather_fresh_ = true;

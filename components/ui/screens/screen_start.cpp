@@ -243,6 +243,9 @@ void render_weather(Context& context) {
         if (!lv_obj_has_flag(screen.weather, LV_OBJ_FLAG_HIDDEN)) {
             lv_obj_add_flag(screen.weather, LV_OBJ_FLAG_HIDDEN);
         }
+        if (!lv_obj_has_flag(screen.indoor, LV_OBJ_FLAG_HIDDEN)) {
+            lv_obj_add_flag(screen.indoor, LV_OBJ_FLAG_HIDDEN);
+        }
         screen.shown_weather = 0;
         return;
     }
@@ -268,6 +271,27 @@ void render_weather(Context& context) {
                                            : night        ? def->night_name
                                                           : def->name);
     lv_obj_remove_flag(screen.weather, LV_OBJ_FLAG_HIDDEN);
+
+    // W domu (ADR 0015): średnia z czujników pomieszczeń, z dziesiątymi — różnica pół
+    // stopnia w mieszkaniu ma znaczenie, a na zewnątrz nie.
+    if (weather->indoor_known) {
+        char temp[16];
+        widgets::format_tenths(temp, sizeof(temp), weather->indoor_tenths);
+        lv_label_set_text_fmt(screen.indoor_temp, "%s°", temp);
+        if (weather->humidity_known) {
+            if (theme::landscape()) {
+                lv_label_set_text_fmt(screen.indoor_note, "wilgotność %u%%",
+                                      static_cast<unsigned>(weather->humidity));
+            } else {
+                lv_label_set_text_fmt(screen.indoor_note, "%u%%", static_cast<unsigned>(weather->humidity));
+            }
+        } else {
+            lv_label_set_text(screen.indoor_note, theme::landscape() ? "średnia z pomieszczeń" : "");
+        }
+        lv_obj_remove_flag(screen.indoor, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(screen.indoor, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 void render_clock(Context& context) {
@@ -290,8 +314,13 @@ void render_clock(Context& context) {
     }
     screen.shown_minute = minute;
     lv_label_set_text_fmt(screen.time, "%d:%02d", parts.tm_hour, parts.tm_min);
-    lv_label_set_text_fmt(screen.date, "%s, %d %s · %s", kDays[parts.tm_wday % 7], parts.tm_mday,
-                          kMonths[parts.tm_mon % 12], context.room.c_str());
+    if (theme::landscape()) {
+        lv_label_set_text_fmt(screen.date, "%s, %d %s", kDays[parts.tm_wday % 7], parts.tm_mday,
+                              kMonths[parts.tm_mon % 12]);
+    } else {
+        lv_label_set_text_fmt(screen.date, "%s, %d %s · %s", kDays[parts.tm_wday % 7],
+                              parts.tm_mday, kMonths[parts.tm_mon % 12], context.room.c_str());
+    }
 }
 
 }  // namespace
@@ -311,7 +340,7 @@ void build_start(Context& context) {
     int32_t tile_h = kTileH;
     lv_obj_t* info = screen.root;
     if (wide) {
-        constexpr int32_t kInfoW = 260;
+        constexpr int32_t kInfoW = 300;
         const int32_t width = lv_display_get_horizontal_resolution(lv_display_get_default());
         const int32_t height = lv_display_get_vertical_resolution(lv_display_get_default());
         lv_obj_set_style_pad_all(screen.root, theme::kS6, LV_PART_MAIN);
@@ -340,44 +369,100 @@ void build_start(Context& context) {
         theme::make_row(head, theme::kS3);
     }
 
-    lv_obj_t* clock = box(head);
-    lv_obj_set_height(clock, LV_SIZE_CONTENT);
+    lv_obj_t* clock = box(wide ? info : head);
     if (wide) {
+        // Poziom: godzina i data na środku wolnego miejsca nad kaflami pogody.
         lv_obj_set_width(clock, LV_PCT(100));
-    } else {
         lv_obj_set_flex_grow(clock, 1);
+        theme::make_column(clock, theme::kS2);
+        lv_obj_set_flex_align(clock, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
+                              LV_FLEX_ALIGN_CENTER);
+        lv_obj_move_to_index(clock, 0);
+    } else {
+        lv_obj_set_height(clock, LV_SIZE_CONTENT);
+        lv_obj_set_flex_grow(clock, 1);
+        theme::make_column(clock, theme::kS2);
     }
-    theme::make_column(clock, theme::kS2);
-    screen.time = text_label(clock, theme::font_b64num(), theme::text());
-    screen.date = text_label(clock, theme::font_r13(), theme::dim());
+    screen.time = text_label(clock, wide ? theme::font_b96num() : theme::font_b64num(), theme::text());
+    screen.date = text_label(clock, wide ? theme::font_r15() : theme::font_r13(), theme::dim());
 
-    screen.weather = box(head);
-    lv_obj_set_size(screen.weather, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    theme::make_row(screen.weather, theme::kS2);
-    screen.weather_icon = lv_image_create(screen.weather);
-    lv_obj_t* weather_texts = box(screen.weather);
-    lv_obj_set_size(weather_texts, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    theme::make_column(weather_texts, 4);
-    lv_obj_set_flex_align(weather_texts, LV_FLEX_ALIGN_CENTER,
-                          wide ? LV_FLEX_ALIGN_START : LV_FLEX_ALIGN_END,
-                          wide ? LV_FLEX_ALIGN_START : LV_FLEX_ALIGN_END);
-    screen.weather_temp = text_label(weather_texts, theme::font_b26(), theme::text());
-    screen.weather_text = text_label(weather_texts, theme::font_r13(), theme::dim());
-    // Stała szerokość: przy szerokości „wg treści” LVGL liczył etykiecie z wielokropkiem
-    // zero miejsca i zamiast opisu pogody było samo „…”.
-    lv_obj_set_width(screen.weather_text, 140);
-    lv_obj_set_style_text_align(screen.weather_text, wide ? LV_TEXT_ALIGN_LEFT : LV_TEXT_ALIGN_RIGHT,
-                                LV_PART_MAIN);
-    lv_label_set_long_mode(screen.weather_text, LV_LABEL_LONG_DOT);
+    if (wide) {
+        // Poziom (ADR 0015): dwa kafle obok siebie — na zewnątrz i w domu.
+        lv_obj_set_size(head, LV_PCT(100), LV_SIZE_CONTENT);
+        theme::make_row(head, 10);
+        lv_obj_set_flex_align(head, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+        auto stat_tile = [&](const char* caption) {
+            lv_obj_t* tile = box(head);
+            lv_obj_add_style(tile, &theme::styles().card, LV_PART_MAIN);
+            lv_obj_set_height(tile, LV_SIZE_CONTENT);
+            lv_obj_set_width(tile, 0);
+            lv_obj_set_flex_grow(tile, 1);
+            lv_obj_set_style_pad_all(tile, theme::kS3, LV_PART_MAIN);
+            theme::make_column(tile, 4);
+            widgets::make_cap(tile, caption);
+            return tile;
+        };
+        screen.weather = stat_tile("NA ZEWNĄTRZ");
+        lv_obj_t* row = box(screen.weather);
+        lv_obj_set_size(row, LV_PCT(100), 64);
+        theme::make_row(row, 6);
+        screen.weather_icon = lv_image_create(row);
+        lv_obj_set_style_margin_left(screen.weather_icon, -6, LV_PART_MAIN);
+        screen.weather_temp = text_label(row, theme::font_b26(), theme::text());
+        screen.weather_text = text_label(screen.weather, theme::font_r11(), theme::dim());
+        lv_obj_set_width(screen.weather_text, LV_PCT(100));
+        lv_label_set_long_mode(screen.weather_text, LV_LABEL_LONG_DOT);
+
+        screen.indoor = stat_tile("W DOMU");
+        lv_obj_t* irow = box(screen.indoor);
+        lv_obj_set_size(irow, LV_PCT(100), 64);
+        theme::make_row(irow, 6);
+        lv_obj_t* house = lv_image_create(irow);
+        lv_image_set_src(house, &icon_home);
+        screen.indoor_temp = text_label(irow, theme::font_b26(), theme::text());
+        screen.indoor_note = text_label(screen.indoor, theme::font_r11(), theme::dim());
+        lv_obj_set_width(screen.indoor_note, LV_PCT(100));
+        lv_label_set_long_mode(screen.indoor_note, LV_LABEL_LONG_DOT);
+    } else {
+        // Pion: pogoda po prawej, pod nią pigułka „W DOMU 23,8° 39%”.
+        lv_obj_t* side = box(head);
+        lv_obj_set_size(side, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+        theme::make_column(side, theme::kS2);
+        lv_obj_set_flex_align(side, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_END);
+        screen.weather = box(side);
+        lv_obj_set_size(screen.weather, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+        theme::make_row(screen.weather, theme::kS2);
+        screen.weather_icon = lv_image_create(screen.weather);
+        lv_obj_t* weather_texts = box(screen.weather);
+        lv_obj_set_size(weather_texts, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+        theme::make_column(weather_texts, 4);
+        lv_obj_set_flex_align(weather_texts, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_END,
+                              LV_FLEX_ALIGN_END);
+        screen.weather_temp = text_label(weather_texts, theme::font_b26(), theme::text());
+        screen.weather_text = text_label(weather_texts, theme::font_r13(), theme::dim());
+        // Stała szerokość: przy szerokości „wg treści” LVGL liczył etykiecie z wielokropkiem
+        // zero miejsca i zamiast opisu pogody było samo „…”.
+        lv_obj_set_width(screen.weather_text, 140);
+        lv_obj_set_style_text_align(screen.weather_text, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
+        lv_label_set_long_mode(screen.weather_text, LV_LABEL_LONG_DOT);
+
+        screen.indoor = box(side);
+        lv_obj_set_size(screen.indoor, LV_SIZE_CONTENT, 32);
+        lv_obj_add_style(screen.indoor, &theme::styles().card, LV_PART_MAIN);
+        lv_obj_set_style_radius(screen.indoor, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_pad_hor(screen.indoor, theme::kS3, LV_PART_MAIN);
+        theme::make_row(screen.indoor, theme::kS2);
+        widgets::make_cap(screen.indoor, "W DOMU");
+        screen.indoor_temp = text_label(screen.indoor, theme::font_b15(), theme::text());
+        screen.indoor_note = text_label(screen.indoor, theme::font_r13(), theme::dim());
+    }
     lv_obj_add_flag(screen.weather, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(screen.indoor, LV_OBJ_FLAG_HIDDEN);
 
     // Cztery kafelki 2 × 2.
     // W poziomie stopka idzie na dół lewej kolumny, więc powstaje przed siatką.
     lv_obj_t* foot = nullptr;
     if (wide) {
-        lv_obj_t* spacer = box(info);
-        lv_obj_set_width(spacer, LV_PCT(100));
-        lv_obj_set_flex_grow(spacer, 1);
         foot = box(info);
     }
 
@@ -399,8 +484,14 @@ void build_start(Context& context) {
         lv_obj_set_flex_align(tile.root, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_START,
                               LV_FLEX_ALIGN_START);
 
-        // Sprite 24 × 24 w skali 4 ×, wygenerowany bez wygładzania (tools/gen_assets.py).
-        lv_obj_t* icon = lv_image_create(tile.root);
+        // Ikona na środku wolnego miejsca nad nazwą (2026-11-07: w rogu wyglądała krzywo).
+        lv_obj_t* well = box(tile.root);
+        lv_obj_set_width(well, LV_PCT(100));
+        lv_obj_set_flex_grow(well, 1);
+        theme::make_row(well, 0);
+        lv_obj_set_flex_align(well, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
+                              LV_FLEX_ALIGN_CENTER);
+        lv_obj_t* icon = lv_image_create(well);
         lv_image_set_src(icon, kTiles[i].icon);
 
         lv_obj_t* texts = box(tile.root);

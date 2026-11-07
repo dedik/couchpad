@@ -419,7 +419,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .launch { position: relative; border-radius: var(--r4); background: var(--surface); border: 1px solid var(--line); padding: var(--s5); display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; overflow: hidden; }
 .launch:active { background: var(--surface-2); }
 /* Sprite 24 × 24 w skali 4 ×: każdy piksel siatki to 4 × 4 piksele ekranu */
-.launch .pix { display: block; width: 96px; height: 96px; }
+.launch .pix { display: block; width: 96px; height: 96px; align-self: center; margin: auto 0; }  /* ikona na środku wolnego miejsca */
 .launch .pix svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .launch-text { display: grid; gap: 6px; width: 100%; }
 .launch-text b { font-size: var(--t-xl); font-weight: 700; letter-spacing: -.01em; }
@@ -554,3 +554,10 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 
 /* ---------- Dom: pasek pomieszczeń na podstronie pokoju ---------- */
 .room-rail { flex: none; margin: var(--s3) var(--gutter) 0; padding-bottom: 6px; border-bottom: 1px solid var(--surface-2); }
+
+/* ---------- Start: temperatura w domu pod pogodą (makieta) ---------- */
+.start-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s2); }
+.start-indoor { display: flex; align-items: baseline; gap: var(--s2); padding: 6px 12px; border-radius: var(--rf); background: var(--surface); border: 1px solid var(--line); }
+.start-indoor-cap { font-size: var(--t-cap); letter-spacing: .16em; color: var(--faint); }
+.start-indoor b { font-size: var(--t-md); font-weight: 700; }
+.start-indoor em { font-style: normal; font-size: var(--t-sm); color: var(--dim); }

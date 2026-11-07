@@ -168,6 +168,11 @@ struct StartScreen {
     lv_obj_t* weather_icon = nullptr;
     lv_obj_t* weather_temp = nullptr;
     lv_obj_t* weather_text = nullptr;
+    // W domu (ADR 0015): średnia temperatura i wilgotność z czujników pomieszczeń.
+    // Poziom — kafel obok pogody, pion — pigułka pod pogodą.
+    lv_obj_t* indoor = nullptr;
+    lv_obj_t* indoor_temp = nullptr;
+    lv_obj_t* indoor_note = nullptr;
     uint32_t shown_weather = 0;    // rewizja pogody na ekranie; 0 = nic
     struct Tile {
         lv_obj_t* root = nullptr;

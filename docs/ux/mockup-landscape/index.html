@@ -247,6 +247,17 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
 .start .left { width: 300px; display: flex; flex-direction: column; }
 .clock { font-size: 96px; font-weight: 700; line-height: .95; letter-spacing: -.02em; }
 .date { color: var(--dim); font-size: 15px; margin-top: 8px; }
+.sclock { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.sclock .clock { font-size: 104px; }
+.sstats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sstat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); padding: 12px 12px 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.scap { font-size: 11px; letter-spacing: .16em; color: var(--faint); }
+.sval { display: flex; align-items: center; gap: 8px; }
+.sval img { width: 48px; height: 48px; image-rendering: pixelated; margin-left: -4px; }
+.sval img.sm { width: 40px; height: 40px; margin: 4px 0 4px -2px; }
+.sval b { font-size: 34px; font-weight: 700; line-height: 1; } .sval b small { font-size: 22px; color: var(--dim); font-weight: 500; }
+.snote { font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.start .conn { margin-top: 16px; justify-content: center; }
 .weather { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-size: 32px; font-weight: 700; }
 .weather img { width: 64px; height: 64px; image-rendering: pixelated; }
 .weather span { font-size: 13px; color: var(--dim); font-weight: 400; display: block; }
@@ -254,8 +265,8 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
 .conn i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
 .start .grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .dev { border-radius: var(--r4); background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; text-align: left; }
-.dev img { width: 72px; height: 72px; image-rendering: pixelated; }
-.dev b { font-size: 21px; margin-top: auto; }
+.dev img { width: 72px; height: 72px; image-rendering: pixelated; align-self: center; margin: auto 0; }  /* ikona na środku wolnego miejsca */
+.dev b { font-size: 21px; }
 .dev em { font-style: normal; font-size: 12px; color: var(--dim); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
 .dev em i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 .dev em i.off { background: var(--faint); }
@@ -663,10 +674,25 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
 
           <!-- Start: pełny ekran bez paska -->
           <section class="start" id="start">
+            <!-- Lewa kolumna: godzina i data na środku, pod nimi „na zewnątrz” i „w domu”
+                 (jedna średnia z czujników pomieszczeń i wilgotność). -->
             <div class="left">
-              <div class="clock" id="clock">21:40</div>
-              <div class="date">czwartek, 6 listopada · SALON</div>
-              <div class="weather"><img src="../mockup-pulpit/assets/pixel/weather_partly_night.png" alt=""><div>7°C<span>częściowe zachmurzenie</span></div></div>
+              <div class="sclock">
+                <div class="clock" id="clock">21:40</div>
+                <div class="date">czwartek, 6 listopada</div>
+              </div>
+              <div class="sstats">
+                <div class="sstat">
+                  <span class="scap">NA ZEWNĄTRZ</span>
+                  <div class="sval"><img src="../mockup-pulpit/assets/pixel/weather_partly_night.png" alt=""><b>7<small>°</small></b></div>
+                  <span class="snote">częściowe zachmurzenie</span>
+                </div>
+                <div class="sstat">
+                  <span class="scap">W DOMU</span>
+                  <div class="sval"><img src="../mockup-pulpit/assets/pixel/home.png" alt="" class="sm"><b>23,8<small>°</small></b></div>
+                  <span class="snote">wilgotność 39%</span>
+                </div>
+              </div>
               <div class="conn"><i></i>Połączono z domem</div>
             </div>
             <div class="grid">
@@ -796,7 +822,7 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
 
   /* ---------- Notatki per ekran ---------- */
   const NOTES = {
-    start: { t: 'Start', shot: '01-start', plus: ['Zegar i pogoda po lewej, 4 duże kafle po prawej — nic nie trzeba przewijać.', 'Kafle 2×2 są szersze niż w pionie, nazwa + status mieszczą się w jednej linii.'], minus: ['Mniej miejsca w pionie na dodatkowe kafle (np. 6 urządzeń wymagałoby siatki 3×2).'] },
+    start: { t: 'Start', shot: '01-start', plus: ['Godzina większa i wyśrodkowana w lewej kolumnie, bez pustego miejsca pod pogodą.', 'Dwa kafle: na zewnątrz (pogoda z HA) i w domu — średnia z czujników pomieszczeń i wilgotność.', '4 duże kafle urządzeń po prawej, bez przewijania.'], minus: ['Średnia nie mówi, który pokój odstaje — od tego jest zakładka Dom.'] },
     tv: { t: 'Telewizor', shot: '02-tv', plus: ['Źródło i tryb obrazu w nagłówku, w jednym rzędzie (ok. 200 px na każdy). Lewa kolumna zostaje dla kanałów i Cofnij/Menu. Przełącz „TV: wybór”, żeby porównać z obecnym firmware.', 'Dwie strefy: kanały i Cofnij/Menu po lewej, nawigacja po prawej.', 'Krzyżak + kołyski VOL/P w jednym rzędzie, jak w klasycznym pilocie trzymanym oburącz.', 'Mieści się 6 skrótów kanałów zamiast 5 (WP Pilot obok TVP).'], minus: ['Krzyżak 240 px zamiast ~300 px — wysokość 480 to twarde ograniczenie.', 'Kciuk prawej ręki ma krzyżak, ale lewej — kanały; jednoręcznie gorzej niż w pionie.'] },
     appletv: { t: 'Apple TV', shot: '03-appletv', plus: ['Gładzik 330 px po prawej, akcje po lewej. Kliknij/przeciągnij po gładziku.', '„Tekst” otwiera klawiaturę na całą szerokość — klawisze 69 px zamiast ~44 px.'], minus: ['Gładzik nieco mniejszy (330 vs ~420 px w pionie).'] },
     audio: { t: 'Głośniki Z906 — Soundstage', shot: '04-audio', plus: ['Źródło i efekt w nagłówku, obok nazwy — jak na TV. Prawa strona zostaje dla trzech suwaków na pełną wysokość. Przełącz „Z906: wybór”, żeby porównać.', 'Pierścień i suwaki obok siebie: każdy element dostaje pełną wysokość.', 'Suwaki kanałów wyższe (~250 px toru) → precyzyjniejszy krok 2.', 'Przeciągnij po pierścieniu (obrót względny) i po kolumnach kanałów (pion).'], minus: ['Odchodzi od zatwierdzonej kompozycji Soundstage (kolejność pionowa) — wymaga zmiany spec + ADR.'] },

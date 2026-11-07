@@ -229,8 +229,13 @@ multimedia_remote/v1/<remote_id>/weather       Home Assistant → pilot
 ```
 
 ```json
-{ "condition": "partlycloudy", "temperature": 5.5, "night": true }
+{ "condition": "partlycloudy", "temperature": 5.5, "night": true,
+  "indoor": { "temperature": 23.8, "humidity": 39 } }
 ```
+
+`indoor` ([ADR 0015](adr/0015-indoor-average-on-start-screen.md)) jest opcjonalne: średnia
+temperatura (stopnie, jedno miejsce po przecinku) i wilgotność (%, całkowita) z czujników
+pomieszczeń, liczona w bridge'u. Brak pola chowa kafel „w domu”; brak `humidity` — sam opis wilgotności.
 
 `condition` to identyfikator stanu encji `weather` w HA; pilot dobiera do niego ikonę i polską nazwę. `night` mówi, że słońce jest pod horyzontem (`sun.sun`): HA ma nocny wariant tylko dla bezchmurnego nieba (`clear-night`), więc np. `partlycloudy` w nocy pilot rysuje z księżycem. Pogoda nie należy do snapshotu: to treść, nie stan urządzenia, więc pilot pokazuje ostatnią z pamięci od razu po wybudzeniu, a po 6 godzinach bez aktualizacji ją chowa.
 
