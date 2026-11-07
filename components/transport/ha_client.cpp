@@ -11,6 +11,7 @@
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_random.h"
+#include "freertos/idf_additions.h"
 #include "mqtt_client.h"
 
 namespace transport {
@@ -92,6 +93,67 @@ void climate_from(const cJSON* node, domain::ClimateState& climate) {
     options_from(node, "swing_horizontal_modes", climate.swing_horizontal_modes);
 }
 
+uint16_t u16_from(const cJSON* parent, const char* key) {
+    const cJSON* node = cJSON_GetObjectItemCaseSensitive(parent, key);
+    if (!cJSON_IsNumber(node) || node->valuedouble <= 0) {
+        return 0;
+    }
+    return node->valuedouble > 65535 ? 65535 : static_cast<uint16_t>(std::lround(node->valuedouble));
+}
+
+void light_from(const cJSON* node, domain::LightState& light) {
+    light.id.assign(string_from(node, "id"));
+    light.label.assign(string_from(node, "label"));
+    light.available = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(node, "available")) != 0;
+    light.on = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(node, "on")) != 0;
+    const uint16_t brightness = u16_from(node, "brightness");
+    light.brightness = static_cast<uint8_t>(brightness > 100 ? 100 : brightness);
+    light.kelvin = u16_from(node, "kelvin");
+}
+
+// Sekcja `lights` (ADR 0014). Brak sekcji (bridge sprzed tej decyzji) zostawia
+// światła niedostępne. Pola przypisujemy po kolei — bez kopii przez stos MQTT.
+void lights_from(const cJSON* node, domain::LightsState& lights) {
+    lights.count = 0;
+    lights.effect_count = 0;
+    lights.available = cJSON_IsArray(node) != 0;
+    const cJSON* item = nullptr;
+    cJSON_ArrayForEach(item, node) {
+        if (lights.count >= lights.rooms.size() || !cJSON_IsObject(item)) {
+            continue;
+        }
+        const char* id = string_from(item, "id");
+        if (id[0] == '\0') {
+            continue;
+        }
+        domain::RoomLight& room = lights.rooms[lights.count++];
+        room.room.assign(string_from(item, "room"));
+        light_from(item, room.main);
+        room.dimmable = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(item, "dimmable")) != 0;
+        room.min_kelvin = u16_from(item, "min_kelvin");
+        room.max_kelvin = u16_from(item, "max_kelvin");
+        room.effect.assign(string_from(item, "effect"));
+        room.member_count = 0;
+        const cJSON* member = nullptr;
+        cJSON_ArrayForEach(member, cJSON_GetObjectItemCaseSensitive(item, "members")) {
+            if (room.member_count >= room.members.size() || !cJSON_IsObject(member) ||
+                string_from(member, "id")[0] == '\0') {
+                continue;
+            }
+            light_from(member, room.members[room.member_count++]);
+        }
+        if (lights.effect_count == 0) {
+            const cJSON* effect = nullptr;
+            cJSON_ArrayForEach(effect, cJSON_GetObjectItemCaseSensitive(item, "effects")) {
+                if (lights.effect_count < lights.effects.size() && cJSON_IsString(effect) &&
+                    effect->valuestring != nullptr && effect->valuestring[0] != '\0') {
+                    lights.effects[lights.effect_count++].assign(effect->valuestring);
+                }
+            }
+        }
+    }
+}
+
 // Klawisz trackpada w słowniku `remote.send_command` integracji apple_tv.
 const char* key_name(domain::NavKey key) {
     switch (key) {
@@ -122,7 +184,12 @@ bool HaClient::start(MqttBus& bus, const storage::MqttSettings& settings) {
     if (events_ == nullptr) {
         // Każdy snapshot zastępuje poprzedni, więc cztery miejsca wystarczą; kolejka
         // leży w pamięci wewnętrznej, a zdarzenie ma ok. 1,7 kB.
-        events_ = xQueueCreate(4, sizeof(HaEvent));
+        // Ze światłami (ADR 0014) zdarzenie ma ok. 3 kB — kolejka idzie do PSRAM,
+        // pamięć wewnętrzna jest potrzebna stosom zadań.
+        events_ = xQueueCreateWithCaps(4, sizeof(HaEvent), MALLOC_CAP_SPIRAM);
+        if (events_ == nullptr) {
+            events_ = xQueueCreate(4, sizeof(HaEvent));
+        }
     }
     if (assembly_ == nullptr) {
         assembly_ = static_cast<char*>(heap_caps_malloc(kAssemblyCapacity, MALLOC_CAP_SPIRAM));
@@ -331,6 +398,27 @@ void HaClient::publish_intent(const domain::UiIntent& intent) {
             action = "climate.swing_horizontal.set";
             cJSON_AddStringToObject(args, "mode", intent.text.c_str());
             break;
+        // Oświetlenie (ADR 0014): identyfikator światła z sekcji `lights`.
+        case ControlId::LightPower:
+            action = "light.power.set";
+            cJSON_AddStringToObject(args, "id", intent.target.c_str());
+            cJSON_AddBoolToObject(args, "on", intent.flag);
+            break;
+        case ControlId::LightBrightness:
+            action = "light.brightness.set";
+            cJSON_AddStringToObject(args, "id", intent.target.c_str());
+            cJSON_AddNumberToObject(args, "percent", intent.value);
+            break;
+        case ControlId::LightKelvin:
+            action = "light.color_temp.set";
+            cJSON_AddStringToObject(args, "id", intent.target.c_str());
+            cJSON_AddNumberToObject(args, "kelvin", intent.number);
+            break;
+        case ControlId::LightEffect:
+            action = "light.effect.set";
+            cJSON_AddStringToObject(args, "id", intent.target.c_str());
+            cJSON_AddStringToObject(args, "effect", intent.payload.c_str());
+            break;
         case ControlId::AtvKeyboard:
             if (intent.payload.empty()) {
                 action = "appletv.keyboard.clear";
@@ -423,15 +511,17 @@ void HaClient::handle_payload(const char* data, int length) {
     }
 
     climate_from(cJSON_GetObjectItemCaseSensitive(root, "climate"), event.climate);
+    lights_from(cJSON_GetObjectItemCaseSensitive(root, "lights"), event.lights);
 
     cJSON_Delete(root);
     // Jedna linia na snapshot: bez niej z logu nie da się odróżnić „HA milczy”
     // od „HA mówi, że Apple TV jest niedostępne”.
-    ESP_LOGI(kTag, "snapshot rewizja %u: apple tv %s, aplikacji %u, klima %s %s %d",
+    ESP_LOGI(kTag, "snapshot rewizja %u: apple tv %s, aplikacji %u, klima %s %s %d, swiatel %u",
              static_cast<unsigned>(revision), atv.available ? "dostepne" : "niedostepne",
              static_cast<unsigned>(atv.app_count),
              event.climate.available ? "dostepna" : "niedostepna",
-             event.climate.hvac_mode.c_str(), static_cast<int>(event.climate.target_tenths));
+             event.climate.hvac_mode.c_str(), static_cast<int>(event.climate.target_tenths),
+             static_cast<unsigned>(event.lights.count));
     emit(event);
 }
 

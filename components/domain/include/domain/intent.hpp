@@ -37,6 +37,12 @@ enum class ControlId : uint8_t {
     ClimateFan,
     ClimateSwing,
     ClimateSwingH,
+    // Oświetlenie (ADR 0014). Identyfikator światła jedzie w `target`; oczekiwanie
+    // zapamiętuje go w `text`, żeby pulsowało dokładnie to światło.
+    LightPower,
+    LightBrightness,  // value: 1..100 %
+    LightKelvin,      // number: kelwiny
+    LightEffect,      // payload: nazwa efektu z listy, pusty = bez efektu
 };
 
 enum class IntentKind : uint8_t {
@@ -109,6 +115,19 @@ inline bool targets_climate(const UiIntent& intent) {
         case ControlId::ClimateFan:
         case ControlId::ClimateSwing:
         case ControlId::ClimateSwingH:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// `true` dla zamiarów oświetlenia. Idą kontraktem v1 do Home Assistanta (ADR 0014).
+inline bool targets_lights(const UiIntent& intent) {
+    switch (intent.control) {
+        case ControlId::LightPower:
+        case ControlId::LightBrightness:
+        case ControlId::LightKelvin:
+        case ControlId::LightEffect:
             return true;
         default:
             return false;

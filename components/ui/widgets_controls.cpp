@@ -312,19 +312,36 @@ void Thermostat::set_range(int32_t min_tenths, int32_t max_tenths, int32_t step_
     max_ = max_tenths;
     step_ = step_tenths;
     lv_arc_set_range(arc, min_, max_);
-    char text[16];
-    format_tenths(text, sizeof(text), min_);
-    lv_label_set_text_fmt(scale_min, "%s°", text);
-    format_tenths(text, sizeof(text), max_);
-    lv_label_set_text_fmt(scale_max, "%s°", text);
+    if (percent_) {
+        lv_label_set_text_fmt(scale_min, "%d%%", static_cast<int>(min_));
+        lv_label_set_text_fmt(scale_max, "%d%%", static_cast<int>(max_));
+    } else {
+        char text[16];
+        format_tenths(text, sizeof(text), min_);
+        lv_label_set_text_fmt(scale_min, "%s°", text);
+        format_tenths(text, sizeof(text), max_);
+        lv_label_set_text_fmt(scale_max, "%s°", text);
+    }
     set_value(value_);
+}
+
+void Thermostat::set_percent() {
+    percent_ = true;
+    lv_label_set_text(unit_label, "%");
+    const int32_t min = min_, max = max_, step = step_;
+    min_ = max_ = step_ = 0;  // wymusza przepisanie skali
+    set_range(min, max, step);
 }
 
 void Thermostat::set_value(int32_t tenths) {
     value_ = std::clamp(tenths, min_, max_);
     lv_arc_set_value(arc, value_);
     char text[16];
-    format_tenths(text, sizeof(text), value_);
+    if (percent_) {
+        lv_snprintf(text, sizeof(text), "%d", static_cast<int>(value_));
+    } else {
+        format_tenths(text, sizeof(text), value_);
+    }
     lv_label_set_text(value_label, text);
     lv_obj_set_style_opa(minus, enabled_ && value_ > min_ ? LV_OPA_COVER : 77, LV_PART_MAIN);
     lv_obj_set_style_opa(plus, enabled_ && value_ < max_ ? LV_OPA_COVER : 77, LV_PART_MAIN);

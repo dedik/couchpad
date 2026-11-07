@@ -109,6 +109,7 @@ void close_overlays(Context& context) {
     widgets::show_page(context.audio.picker, false);
     context.audio.picker_control = domain::ControlId::None;
 
+    close_room(context);
     if (context.climate.built) {
         widgets::show_page(context.climate.picker, false);
         context.climate.picker_control = domain::ControlId::None;

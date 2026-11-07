@@ -182,10 +182,113 @@ struct StartScreen {
     int shown_minute = -1;         // zegar przerysowujemy tylko po zmianie minuty
 };
 
-// ---------- Ekran Dom ----------
+// ---------- Ekran Dom: pomieszczenia (ADR 0014) ----------
+inline constexpr std::size_t kRoomCount = 6;
+inline constexpr std::size_t kKelvinSteps = 7;
+inline constexpr std::size_t kEffectTiles = domain::kMaxEffects + 1;  // + „Brak”
+
 struct HomeScreen {
     lv_obj_t* section = nullptr;
-    widgets::Tiles scenes;
+
+    // Klimatyzacja: pion — wąski pasek nad siatką, poziom — pigułka w nagłówku.
+    lv_obj_t* climate = nullptr;
+    lv_obj_t* climate_dot = nullptr;
+    lv_obj_t* climate_text = nullptr;
+
+    // Kafelek pomieszczenia: dotknięcie otwiera pokój, lampka w rogu przełącza
+    // jego główne światło.
+    struct RoomTile {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* lamp = nullptr;
+        lv_obj_t* lamp_icon = nullptr;
+        lv_obj_t* lamp_bar = nullptr;
+        lv_obj_t* lamp_fill = nullptr;
+        lv_obj_t* dot = nullptr;
+        lv_obj_t* state = nullptr;
+    };
+    RoomTile tiles[kRoomCount];
+};
+
+// Podstrona pomieszczenia: pokój → światło (grupa) → żarówka albo lista efektów.
+// Pełny ekran. Pion: pasek pomieszczeń pod nagłówkiem. Poziom: pasek zakładek i pasek
+// pomieszczeń schowane w szufladach — wysuwa je przeciągnięcie od lewej / prawej krawędzi.
+struct RoomScreen {
+    enum class Level : uint8_t { Room, Light, Bulb };
+
+    bool built = false;
+    bool open = false;
+    std::size_t room = 0;
+    std::size_t bulb = 0;
+    Level stack[3]{};
+    std::size_t depth = 0;
+
+    lv_obj_t* root = nullptr;
+    lv_obj_t* title = nullptr;
+    lv_obj_t* sub = nullptr;
+    lv_obj_t* rail_items[kRoomCount]{};
+    lv_obj_t* body = nullptr;
+
+    // Poziom: szuflady przy krawędziach, przyciemnienie pod nimi i pasy chwytu gestu.
+    lv_obj_t* scrim = nullptr;
+    lv_obj_t* drawer_tabs = nullptr;
+    lv_obj_t* drawer_rooms = nullptr;
+    lv_obj_t* edges[2]{};
+    int8_t drawer = 0;      // -1 lewa (zakładki), 1 prawa (pomieszczenia), 0 schowane
+    int8_t swipe = 0;       // krawędź, od której zaczął się gest; 0 = brak
+    int32_t swipe_x = 0;
+
+    // Poziom 1: urządzenia pokoju.
+    struct Card {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* well = nullptr;
+        lv_obj_t* icon = nullptr;
+        lv_obj_t* name = nullptr;
+        lv_obj_t* state = nullptr;
+        lv_obj_t* note = nullptr;
+        lv_obj_t* power = nullptr;
+        lv_obj_t* chevron = nullptr;
+    };
+    lv_obj_t* view_room = nullptr;
+    Card lamp;
+    Card climate;
+    Card empty;
+
+    // Poziom 2 i 3: światło — grupa albo jedna żarówka. Układ jak podstrona klimy:
+    // tarcza jasności i obok kafle barwy, efektu i żarówek.
+    lv_obj_t* view_light = nullptr;
+    widgets::Thermostat* dial = nullptr;
+    lv_obj_t* effect_icon = nullptr;
+    lv_obj_t* kelvin_row = nullptr;
+    lv_obj_t* light_power = nullptr;
+    lv_obj_t* kelvin_box = nullptr;
+    lv_obj_t* kelvin_value = nullptr;
+    lv_obj_t* kelvin[kKelvinSteps]{};
+    uint16_t kelvin_steps[kKelvinSteps]{};
+    lv_obj_t* group_box = nullptr;      // efekt i żarówki: tylko dla grupy
+    lv_obj_t* effect_row = nullptr;
+    lv_obj_t* effect_value = nullptr;
+    struct BulbRow {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* icon = nullptr;
+        lv_obj_t* name = nullptr;
+        lv_obj_t* note = nullptr;
+        Context* context = nullptr;
+        std::size_t index = 0;
+    };
+    BulbRow bulbs[domain::kMaxLightMembers];
+
+    // Wybór efektu dla całej grupy: lista jak wybór trybu klimy — w poziomie panel przy
+    // prawej krawędzi, w pionie pełny ekran. Wybór zamyka listę. Pozycja 0 to „Brak”.
+    widgets::Page effect_picker;
+    bool effect_picker_open = false;
+    struct EffectTile {
+        widgets::ListRow row;
+        lv_obj_t* icon = nullptr;
+        Context* context = nullptr;
+        std::size_t index = 0;
+        domain::EffectName name;
+    };
+    EffectTile effects[kEffectTiles];
 };
 
 // ---------- Ekran Więcej ----------
@@ -341,6 +444,7 @@ struct Context {
     AppleTvScreen appletv;
     AudioScreen audio;
     HomeScreen home;
+    RoomScreen room_page;
     ClimateScreen climate;
     StartScreen start;
     MoreScreen more;
@@ -374,6 +478,10 @@ void build_audio(Context& context, lv_obj_t* parent);
 void render_audio(Context& context);
 void build_home(Context& context, lv_obj_t* parent);
 void render_home(Context& context);
+// Podstrona pomieszczenia (screen_home.cpp). Zamykana przy zmianie ekranu i wybudzeniu.
+void close_room(Context& context);
+// Podstrona klimatyzacji, także z karty w pomieszczeniu (screen_climate.cpp).
+void open_climate_page(Context& context);
 // Kafelek klimy na ekranie Dom i jej podstrona (screen_climate.cpp).
 void build_climate_tile(Context& context, lv_obj_t* parent);
 void render_climate(Context& context);

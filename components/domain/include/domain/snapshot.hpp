@@ -126,6 +126,56 @@ struct ClimateState {
     bool uses_target() const { return is_on() && hvac_mode != "fan_only"; }
 };
 
+// ---------- Oświetlenie (ADR 0014) ----------
+// Główne światło pomieszczenia. Encje zna wyłącznie bridge w Home Assistancie —
+// pilot dostaje krótkie identyfikatory (`lampa`, `lampa_lewa`) i nimi steruje.
+using LightId = core::Text<20>;
+using EffectName = core::Text<16>;
+
+inline constexpr std::size_t kMaxLightMembers = 4;   // żarówki w grupie
+inline constexpr std::size_t kMaxRoomLights = 3;     // pomieszczenia ze światłem w snapshocie
+inline constexpr std::size_t kMaxEffects = 16;       // effect_list WiZ ma dokładnie 16
+
+struct LightState {
+    LightId id;
+    LightId label;
+    bool available = false;
+    bool on = false;
+    uint8_t brightness = 0;   // 0..100 %; 0, gdy wyłączona
+    uint16_t kelvin = 0;      // 0, gdy encja nie podaje (wyłączona albo w efekcie)
+};
+
+struct RoomLight {
+    LightId room;             // identyfikator kafelka: `salon`, `kuchnia`…
+    LightState main;          // encja główna (dla grupy: cała grupa)
+    bool dimmable = false;    // `false` dla przełącznika: tylko wł./wył.
+    uint16_t min_kelvin = 0;  // 0 = bez barwy
+    uint16_t max_kelvin = 0;
+    EffectName effect;        // pusty = bez efektu
+    std::array<LightState, kMaxLightMembers> members{};
+    std::size_t member_count = 0;
+
+    bool has_kelvin() const { return min_kelvin > 0 && max_kelvin > min_kelvin; }
+};
+
+struct LightsState {
+    bool available = false;   // bridge przysłał sekcję `lights`
+    std::array<RoomLight, kMaxRoomLights> rooms{};
+    std::size_t count = 0;
+    // Lista efektów jest wspólna: bridge podaje ją z pierwszej grupy, która ją ma.
+    std::array<EffectName, kMaxEffects> effects{};
+    std::size_t effect_count = 0;
+
+    const RoomLight* room(const char* id) const {
+        for (std::size_t i = 0; i < count; ++i) {
+            if (rooms[i].room == id) {
+                return &rooms[i];
+            }
+        }
+        return nullptr;
+    }
+};
+
 struct DeviceSnapshot {
     // Pilot ignoruje snapshot o rewizji nie większej niż ostatnio przetworzona.
     uint32_t revision = 0;
@@ -133,6 +183,7 @@ struct DeviceSnapshot {
     Z906State z906;
     AppleTvState appletv;
     ClimateState climate;
+    LightsState lights;
 };
 
 }  // namespace domain

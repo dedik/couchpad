@@ -819,13 +819,22 @@ void build_climate_tile(Context& context, lv_obj_t* parent) {
 }
 
 void render_climate(Context& context) {
-    if (context.climate.tile == nullptr) {
-        return;
+    // Od ADR 0014 ekran Dom nie ma dużego kafelka klimy (pasek albo pigułka w screen_home.cpp),
+    // ale podstrona dalej się otwiera — także z karty klimy w salonie.
+    if (context.climate.tile != nullptr) {
+        render_tile(context);
     }
-    render_tile(context);
     if (context.climate.built) {
         render_page(context);
     }
+}
+
+void open_climate_page(Context& context) {
+    if (!context.climate.built) {
+        build_page(context);
+    }
+    widgets::show_page(context.climate.page, true);
+    render(context);
 }
 
 }  // namespace ui

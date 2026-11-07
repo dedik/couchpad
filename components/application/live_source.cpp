@@ -9,6 +9,7 @@ void LiveSource::start() {
     appletv_ = domain::AppleTvState{};
     // Bez kopii pustej struktury przez stos: wystarczy, że klima nie jest świeża.
     climate_.available = false;
+    lights_.available = false;
     tv_state_ = domain::TvState{};
     stop();
 
@@ -39,8 +40,9 @@ void LiveSource::stop() {
 }
 
 void LiveSource::send(const domain::UiIntent& intent) {
-    // Klimatyzacja idzie kontraktem v1, jak Apple TV (ADR 0009).
-    if (domain::targets_home_assistant(intent) || domain::targets_climate(intent)) {
+    // Klimatyzacja i światła idą kontraktem v1, jak Apple TV (ADR 0009, 0014).
+    if (domain::targets_home_assistant(intent) || domain::targets_climate(intent) ||
+        domain::targets_lights(intent)) {
         ha_.publish_intent(intent);
     } else if (domain::targets_tv(intent)) {
         tv_.publish_intent(intent);
@@ -54,6 +56,7 @@ void LiveSource::request_sync() {
     z906_fresh_ = false;
     appletv_ = domain::AppleTvState{};
     climate_.available = false;
+    lights_.available = false;
     tv_state_ = domain::TvState{};
     z906_.request_sync();
     ha_.request_sync();
@@ -67,6 +70,7 @@ void LiveSource::merge_into(SourceEvent& out) {
     out.snapshot.z906 = z906_state_;
     out.snapshot.appletv = appletv_;
     out.snapshot.climate = climate_;
+    out.snapshot.lights = lights_;
 }
 
 // Wołane z zadania LVGL, którego stos ma 8 kB. Snapshot waży około 2,5 kB, a nad
@@ -101,9 +105,11 @@ bool LiveSource::poll(SourceEvent& out) {
         if (ha_event_.kind == transport::HaEvent::Kind::Snapshot) {
             appletv_ = ha_event_.appletv;
             climate_ = ha_event_.climate;
+            lights_ = ha_event_.lights;
         } else {
             appletv_ = domain::AppleTvState{};
             climate_.available = false;
+            lights_.available = false;
         }
         if (z906_fresh_) {
             merge_into(out);

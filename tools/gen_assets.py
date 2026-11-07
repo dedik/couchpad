@@ -50,6 +50,11 @@ LARGE_SCALE = 2
 # Pogoda na ekranie startowym (ADR 0011): siatka 32 x 32 w skali 2 x, 64 px obok zegara.
 WEATHER_ICONS = ["sunny", "night", "partly", "partly_night", "cloudy", "rain", "snow", "storm", "fog", "wind"]
 WEATHER_SCALE = 2
+# Ekran Dom (ADR 0014, rysuje tools/draw_room_icons.py): pomieszczenie 48 px w pasku
+# pomieszczeń i 96 px na kafelku; lampa 64 px; żarówka 32 px w wierszu i 64 px w nagłówku.
+ROOM_ICONS = ["salon", "kuchnia", "przedpokoj", "biuro", "lazienka", "sypialnia"]
+LAMP_STATES = ["on", "dim", "off", "na"]
+BULB_STATES = ["on", "off"]
 
 
 def c_identifier(name: str) -> str:
@@ -177,6 +182,11 @@ def main() -> int:
     jobs = [(icon, PIXEL_SCALE, f"icon_{icon}") for icon in TAB_ICONS]
     jobs += [(icon, LARGE_SCALE, f"icon_{icon}_large") for icon in LARGE_ICONS]
     jobs += [(f"weather_{icon}", WEATHER_SCALE, f"icon_weather_{icon}") for icon in WEATHER_ICONS]
+    jobs += [(f"room_{room}", 1, f"icon_room_{room}") for room in ROOM_ICONS]
+    jobs += [(f"room_{room}", 2, f"icon_room_{room}_large") for room in ROOM_ICONS]
+    jobs += [(f"lamp_{state}", 2, f"icon_lamp_{state}") for state in LAMP_STATES]
+    jobs += [(f"bulb_{state}", 1, f"icon_bulb_{state}") for state in BULB_STATES]
+    jobs += [(f"bulb_{state}", 2, f"icon_bulb_{state}_large") for state in BULB_STATES]
     for icon, scale, name in jobs:
         source = Image.open(MOCKUP / "assets" / "pixel" / f"{icon}.png").convert("RGBA")
         image = source.resize((source.width * scale, source.height * scale), Image.NEAREST)

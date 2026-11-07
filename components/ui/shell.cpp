@@ -483,6 +483,7 @@ void show_header_slot(const Context& context, lv_obj_t* slot, ScreenId owner, bo
 
 void show_screen(Context& context, ScreenId screen) {
     context.screen = screen;
+    close_room(context);  // pomieszczenie należy do ekranu Dom, zakładka je zamyka
     for (std::size_t i = 0; i < kScreenCount; ++i) {
         if (i == static_cast<std::size_t>(screen)) {
             lv_obj_remove_flag(context.shell.pages[i], LV_OBJ_FLAG_HIDDEN);
