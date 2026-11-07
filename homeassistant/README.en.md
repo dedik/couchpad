@@ -27,6 +27,8 @@ Settings → Devices & services → MQTT.
 | automation "on Z906, Apple TV or AC change" | new snapshot after every entity change; AC — state and attributes shown on the remote |
 | automation "on startup" | snapshot after a Home Assistant restart |
 | automation "execute command" | receives the `command` topic and sets entities, including `climate.*` ([ADR 0009](../docs/architecture/adr/0009-climate-via-home-assistant.en.md)) |
+| `light_rooms` table and the "light" automation | main light of each room: `lights` section in the snapshot and `light.*` commands ([ADR 0014](../docs/architecture/adr/0014-rooms-and-lights.en.md)); a new room = a table entry + entities in the triggers of the automation below |
+| "snapshot after light change" automation | one snapshot 0.5 s after group and bulb changes (`mode: restart`) |
 | automation "Apple TV navigation" | `appletv.navigate` → `remote.send_command`, without a snapshot |
 | script and automation "TV channel list" | retained tuner list on `.../channels`: on startup, every hour, on `tv.channels.request` |
 | automation "TV channel" + `rest_command` | `tv.channel.open` → tuner list and `open` on Glasshouse, without a snapshot ([ADR 0008](../docs/architecture/adr/0008-tv-via-glasshouse.en.md)) |

@@ -18,6 +18,10 @@
 #
 # KLIMATYZACJA (ADR 0009): encja `climate.living_room_ac` (Midea), odczytana 2026-11-02.
 # Tryby, zakres, krok i opcje bierzemy z jej atrybutów, nie z tego pliku.
+#
+# OŚWIETLENIE (ADR 0014): główne światło pomieszczeń w `light_rooms` niżej. Pilot dostaje
+# krótkie identyfikatory (`lampa`, `lampa_lewa`), encje zna tylko ten plik. Lampa w salonie
+# to grupa `light.living_room_lamp` z trzech żarówek WiZ, odczytana 2026-11-07.
 
 # Skróty kanałów TV (ADR 0008). Glasshouse przełącza kanał wyłącznie po HTTP,
 # więc pilot wysyła `tv.channel.open` tym kontraktem, a zapytania robi Home
@@ -125,6 +129,22 @@ script:
             # Na Apple TV ta aplikacja nazywa się „Pilot WP”, nie „WP Pilot”.
             - { id: "pl.pilotwp.appletv", label: "Pilot WP" }
 
+      # Główne światło pomieszczeń (ADR 0014). `room` to kafelek na pilocie (salon,
+      # kuchnia, przedpokoj, biuro, lazienka, sypialnia), `id` to klucz w poleceniach
+      # `light.*`. Grupa podaje `members` — pilot steruje wtedy też każdą żarówką.
+      # Pokój bez wpisu pilot pokazuje jako „brak światła”. Encje dopisane tutaj trzeba
+      # też dopisać do wyzwalaczy automatyzacji „Pilot — snapshot po zmianie światła”.
+      - variables: &lights
+          light_rooms:
+            - room: salon
+              id: lampa
+              label: Lampa
+              entity: light.living_room_lamp
+              members:
+                - { id: lampa_lewa, label: Lewa, entity: light.living_room_lamp_left }
+                - { id: lampa_srodek, label: Środkowa, entity: light.living_room_lamp_center }
+                - { id: lampa_prawa, label: Prawa, entity: light.living_room_lamp_right }
+
       - variables: &climate
           climate_entity: climate.living_room_ac
 
@@ -195,6 +215,38 @@ script:
                 {{ state_attr(climate_entity, 'swing_horizontal_mode') or '' }}
               swing_horizontal_modes: >-
                 {{ state_attr(climate_entity, 'swing_horizontal_modes') or [] }}
+            # Oświetlenie (ADR 0014): jasność w procentach, barwa w kelwinach (0, gdy encja
+            # jej nie podaje — wyłączona albo w efekcie). Lista efektów tylko przy grupie.
+            lights: >-
+              {% set bad = ['unavailable', 'unknown', 'none'] %}
+              {% set ns = namespace(out=[]) %}
+              {% for r in light_rooms %}
+                {% set m = namespace(items=[]) %}
+                {% for b in r.members | default([]) %}
+                  {% set m.items = m.items + [{
+                    'id': b.id, 'label': b.label,
+                    'available': states(b.entity) not in bad,
+                    'on': is_state(b.entity, 'on'),
+                    'brightness': ((state_attr(b.entity, 'brightness') or 0) / 2.55) | round(0) | int,
+                    'kelvin': state_attr(b.entity, 'color_temp_kelvin') or 0 }] %}
+                {% endfor %}
+                {% set e = r.entity %}
+                {% set is_light = e.startswith('light.') %}
+                {% set modes = state_attr(e, 'supported_color_modes') or [] %}
+                {% set ns.out = ns.out + [{
+                  'room': r.room, 'id': r.id, 'label': r.label,
+                  'available': states(e) not in bad,
+                  'on': is_state(e, 'on'),
+                  'dimmable': is_light and (modes | reject('eq', 'onoff') | list | count > 0),
+                  'brightness': ((state_attr(e, 'brightness') or 0) / 2.55) | round(0) | int,
+                  'kelvin': state_attr(e, 'color_temp_kelvin') or 0,
+                  'min_kelvin': state_attr(e, 'min_color_temp_kelvin') or 0,
+                  'max_kelvin': state_attr(e, 'max_color_temp_kelvin') or 0,
+                  'effect': state_attr(e, 'effect') or '',
+                  'effects': (state_attr(e, 'effect_list') or [])[:16],
+                  'members': m.items }] %}
+              {% endfor %}
+              {{ ns.out }}
 
       - service: mqtt.publish
         data:
@@ -281,7 +333,8 @@ automation:
     # snapshotu, żeby trackpad nie stał w kolejce za resztą poleceń.
     condition: >-
       {{ trigger.payload_json.action not in
-         ['appletv.navigate', 'tv.channel.open', 'tv.channels.request'] }}
+         ['appletv.navigate', 'tv.channel.open', 'tv.channels.request'] and
+         not (trigger.payload_json.action | default('')).startswith('light.') }}
     variables:
       <<: [*appletv, *climate]
       command: "{{ trigger.payload_json.action }}"
@@ -455,6 +508,117 @@ automation:
         then:
           - delay: "00:00:00.4"
           - service: script.multimedia_remote_publish
+
+  # ---------------------------------------------------------------------------
+  # Oświetlenie (ADR 0014). Pilot podaje identyfikator z `light_rooms`, bridge
+  # zamienia go na encję. Nieznany identyfikator albo wartość spoza zakresu — nic.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — światło
+    id: multimedia_remote_light
+    mode: queued
+    max: 20
+    max_exceeded: silent
+    trigger:
+      - platform: mqtt
+        topic: multimedia_remote/v1/living-room-remote/command
+    condition: >-
+      {{ (trigger.payload_json.action | default('')).startswith('light.') }}
+    variables:
+      <<: *lights
+      command: "{{ trigger.payload_json.action }}"
+      args: "{{ trigger.payload_json.args | default({}, true) }}"
+      target: >-
+        {% set ns = namespace(e='') %}
+        {% for r in light_rooms %}
+          {% if r.id == args.id | default('') %}{% set ns.e = r.entity %}{% endif %}
+          {% for b in r.members | default([]) %}
+            {% if b.id == args.id | default('') %}{% set ns.e = b.entity %}{% endif %}
+          {% endfor %}
+        {% endfor %}
+        {{ ns.e }}
+    action:
+      - condition: "{{ target | length > 0 }}"
+      - choose:
+          # Przełącznik (`switch.*`) też może być głównym światłem — wtedy tylko wł./wył.
+          - conditions: "{{ command == 'light.power.set' }}"
+            sequence:
+              - service: >-
+                  {{ target.split('.')[0] }}.turn_{{ 'on' if args.on else 'off' }}
+                target:
+                  entity_id: "{{ target }}"
+
+          - conditions: >-
+              {{ command == 'light.brightness.set' and target.startswith('light.') and
+                 args.percent is number }}
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ target }}"
+                data:
+                  brightness_pct: "{{ [[args.percent | int, 1] | max, 100] | min }}"
+
+          - conditions: >-
+              {{ command == 'light.color_temp.set' and target.startswith('light.') and
+                 args.kelvin is number }}
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ target }}"
+                data:
+                  color_temp_kelvin: >-
+                    {{ [[args.kelvin | int, state_attr(target, 'min_color_temp_kelvin') | int(2000)] | max,
+                        state_attr(target, 'max_color_temp_kelvin') | int(6500)] | min }}
+
+          # Efekt z listy encji. Pusty efekt to powrót do zwykłej bieli — WiZ wychodzi
+          # z efektu po ustawieniu barwy.
+          - conditions: >-
+              {{ command == 'light.effect.set' and target.startswith('light.') and
+                 args.effect | default('') in (state_attr(target, 'effect_list') or []) }}
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ target }}"
+                data:
+                  effect: "{{ args.effect }}"
+          - conditions: >-
+              {{ command == 'light.effect.set' and target.startswith('light.') and
+                 args.effect | default('') == '' }}
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ target }}"
+                data:
+                  color_temp_kelvin: "{{ state_attr(target, 'color_temp_kelvin') or 2700 }}"
+      # Snapshot także wtedy, gdy nic się nie zmieniło (np. ta sama jasność) — inaczej
+      # pilot czekałby na potwierdzenie do limitu czasu.
+      - delay: "00:00:00.6"
+      - service: script.multimedia_remote_publish
+
+  # Grupa i żarówki zmieniają się naraz (jedno polecenie to kilka zmian stanu
+  # i atrybutów), więc czekamy chwilę i publikujemy jeden snapshot (`mode: restart`).
+  - alias: Pilot — snapshot po zmianie światła
+    id: multimedia_remote_publish_on_light
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: &light_entities
+          - light.living_room_lamp
+          - light.living_room_lamp_left
+          - light.living_room_lamp_center
+          - light.living_room_lamp_right
+        to: ~
+      - platform: state
+        entity_id: *light_entities
+        attribute: brightness
+      - platform: state
+        entity_id: *light_entities
+        attribute: color_temp_kelvin
+      - platform: state
+        entity_id: *light_entities
+        attribute: effect
+    action:
+      - delay: "00:00:00.5"
+      - service: script.multimedia_remote_publish
 
   # ---------------------------------------------------------------------------
   # Nawigacja Apple TV (ADR 0007). Zdarzenie chwilowe: bez opóźnienia i bez
