@@ -67,6 +67,16 @@ climate.swing.set             { "mode": "Full" }          from climate.swing_mod
 climate.swing_horizontal.set  { "mode": "Left" }          from climate.swing_horizontal_modes
 ```
 
+Light actions ([ADR 0014](adr/0014-rooms-and-lights.en.md)). `id` is an identifier from the
+`lights` section (main light or bulb); only the bridge knows the entities:
+
+```text
+light.power.set        { "id": "lampa", "on": true }
+light.brightness.set   { "id": "lampa_lewa", "percent": 60 }     1..100, turns the light on
+light.color_temp.set   { "id": "lampa", "kelvin": 3500 }         within min_kelvin..max_kelvin
+light.effect.set       { "id": "lampa", "effect": "Cozy" }       from `effects`; "" = no effect
+```
+
 `action` in `appletv.navigate` is optional and defaults to `tap`. `double` and `hold` reproduce
 the hidden gestures of the Siri Remote: Home ×2 opens the app switcher, holding Home opens Control
 Center, holding `select` opens the context menu.
@@ -132,6 +142,18 @@ Commands set state explicitly; we do not introduce `toggle` when the UI has no f
     "swing_horizontal_mode": "Full",
     "swing_horizontal_modes": ["off", "Full", "Left", "Center", "Right"]
   },
+  "lights": [
+    {
+      "room": "salon", "id": "lampa", "label": "Lampa",
+      "available": true, "on": true, "dimmable": true,
+      "brightness": 62, "kelvin": 3500, "min_kelvin": 2700, "max_kelvin": 6500,
+      "effect": "", "effects": ["Cozy", "Relax", "TV time", "..."],
+      "members": [
+        { "id": "lampa_lewa", "label": "Lewa", "available": true, "on": true,
+          "brightness": 70, "kelvin": 3500 }
+      ]
+    }
+  ],
   "shortcuts": [
     { "id": "movie-mode", "label": "Film", "enabled": true }
   ]
@@ -155,6 +177,17 @@ The `climate` section:
 - `hvac_mode` equal to `off` means the air conditioning is off. In `fan_only` the target temperature has no effect.
 - `current` is `null` when the room sensor does not report a value.
 - Temperatures are in degrees; the remote rounds them to tenths.
+
+The `lights` section ([ADR 0014](adr/0014-rooms-and-lights.en.md)):
+
+- One entry per room with a main light (`room`: `salon`, `kuchnia`, `przedpokoj`, `biuro`,
+  `lazienka`, `sypialnia`); the remote shows a room without an entry as "no light". The
+  remote reads at most three entries and four bulbs in `members`.
+- `brightness` in percent (0 when off), `kelvin` — current colour temperature, or 0 when the
+  entity does not report it (off or in an effect). `min_kelvin` = 0 means no colour control.
+- `dimmable: false` for a switch (`switch.*`) — on/off only.
+- `effects` is the group entity's `effect_list` (at most 16), `effect` — current or empty.
+- A missing section (bridge from before ADR 0014) disables lights; the rest of the remote works.
 
 The remote ignores a snapshot whose revision is not greater than the last processed one. When there is no state, it shows the device as unavailable and does not guess its status.
 
@@ -201,7 +234,7 @@ multimedia_remote/v1/<remote_id>/weather       Home Assistant → remote
 
 `condition` is the state identifier of the `weather` entity in HA; the remote picks an icon and a Polish name for it. `night` says the sun is below the horizon (`sun.sun`): HA has a night variant only for a clear sky (`clear-night`), so e.g. `partlycloudy` at night is drawn by the remote with a moon. Weather is not part of the snapshot: it is content, not device state, so the remote shows the last one from memory immediately after wake-up, and hides it after 6 hours without an update.
 
-The Home Assistant automation/bridge publishes a snapshot after every change of the TV, Z906, Apple TV, air conditioning or a shortcut, after a restart, and after receiving `remote.sync.request`. A sync request after wake-up must generate a new revision after Home Assistant checks the current state; it must not merely resend the old retained message.
+The Home Assistant automation/bridge publishes a snapshot after every change of the TV, Z906, Apple TV, air conditioning, lights or a shortcut, after a restart, and after receiving `remote.sync.request`. A sync request after wake-up must generate a new revision after Home Assistant checks the current state; it must not merely resend the old retained message.
 
 ## Availability and errors
 

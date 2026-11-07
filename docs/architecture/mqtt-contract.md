@@ -67,6 +67,16 @@ climate.swing.set             { "mode": "Full" }          z climate.swing_modes
 climate.swing_horizontal.set  { "mode": "Left" }          z climate.swing_horizontal_modes
 ```
 
+Akcje oświetlenia ([ADR 0014](adr/0014-rooms-and-lights.md)). `id` to identyfikator z sekcji
+`lights` (światło główne albo żarówka); encje zna wyłącznie bridge:
+
+```text
+light.power.set        { "id": "lampa", "on": true }
+light.brightness.set   { "id": "lampa_lewa", "percent": 60 }     1..100, włącza światło
+light.color_temp.set   { "id": "lampa", "kelvin": 3500 }         w zakresie min_kelvin..max_kelvin
+light.effect.set       { "id": "lampa", "effect": "Cozy" }       z `effects`; "" = bez efektu
+```
+
 `action` w `appletv.navigate` jest opcjonalne, domyślnie `tap`. `double` i `hold` odtwarzają
 ukryte gesty pilota Siri: Home ×2 otwiera przełącznik aplikacji, przytrzymanie Home — Centrum
 sterowania, przytrzymanie `select` — menu kontekstowe.
@@ -132,6 +142,18 @@ Temat `state`: QoS 1, retained. Każdy komunikat zawiera pełny, samowystarczaln
     "swing_horizontal_mode": "Full",
     "swing_horizontal_modes": ["off", "Full", "Left", "Center", "Right"]
   },
+  "lights": [
+    {
+      "room": "salon", "id": "lampa", "label": "Lampa",
+      "available": true, "on": true, "dimmable": true,
+      "brightness": 62, "kelvin": 3500, "min_kelvin": 2700, "max_kelvin": 6500,
+      "effect": "", "effects": ["Cozy", "Relax", "TV time", "..."],
+      "members": [
+        { "id": "lampa_lewa", "label": "Lewa", "available": true, "on": true,
+          "brightness": 70, "kelvin": 3500 }
+      ]
+    }
+  ],
   "shortcuts": [
     { "id": "movie-mode", "label": "Film", "enabled": true }
   ]
@@ -155,6 +177,17 @@ Sekcja `climate`:
 - `hvac_mode` równe `off` oznacza wyłączoną klimę. W `fan_only` temperatura docelowa nie działa.
 - `current` jest `null`, gdy czujnik w pokoju nie podaje wartości.
 - Temperatury w stopniach; pilot zaokrągla je do dziesiątych.
+
+Sekcja `lights` ([ADR 0014](adr/0014-rooms-and-lights.md)):
+
+- Jedna pozycja na pomieszczenie z głównym światłem (`room`: `salon`, `kuchnia`,
+  `przedpokoj`, `biuro`, `lazienka`, `sypialnia`); pokój bez pozycji pilot pokazuje jako
+  „brak światła”. Pilot czyta najwyżej trzy pozycje i cztery żarówki w `members`.
+- `brightness` w procentach (0, gdy wyłączone), `kelvin` — bieżąca barwa albo 0, gdy encja
+  jej nie podaje (wyłączona albo w efekcie). `min_kelvin` = 0 oznacza światło bez barwy.
+- `dimmable: false` dla przełącznika (`switch.*`) — wtedy tylko wł./wył.
+- `effects` to `effect_list` encji grupy (najwyżej 16), `effect` — bieżący albo pusty.
+- Brak sekcji (bridge sprzed ADR 0014) gasi światła, reszta pilota działa.
 
 Pilot ignoruje snapshot o rewizji nie większej niż ostatnio przetworzona. Przy braku stanu pokazuje urządzenie jako niedostępne, nie zgaduje jego statusu.
 
@@ -201,7 +234,7 @@ multimedia_remote/v1/<remote_id>/weather       Home Assistant → pilot
 
 `condition` to identyfikator stanu encji `weather` w HA; pilot dobiera do niego ikonę i polską nazwę. `night` mówi, że słońce jest pod horyzontem (`sun.sun`): HA ma nocny wariant tylko dla bezchmurnego nieba (`clear-night`), więc np. `partlycloudy` w nocy pilot rysuje z księżycem. Pogoda nie należy do snapshotu: to treść, nie stan urządzenia, więc pilot pokazuje ostatnią z pamięci od razu po wybudzeniu, a po 6 godzinach bez aktualizacji ją chowa.
 
-Automatyzacja/bridge Home Assistanta publikuje snapshot po każdej zmianie TV, Z906, Apple TV, klimatyzacji lub skrótu, po restarcie oraz po otrzymaniu `remote.sync.request`. Żądanie synchronizacji po wybudzeniu musi wygenerować nową rewizję po sprawdzeniu bieżącego stanu przez Home Assistant; nie może jedynie odesłać starej wiadomości retained.
+Automatyzacja/bridge Home Assistanta publikuje snapshot po każdej zmianie TV, Z906, Apple TV, klimatyzacji, świateł lub skrótu, po restarcie oraz po otrzymaniu `remote.sync.request`. Żądanie synchronizacji po wybudzeniu musi wygenerować nową rewizję po sprawdzeniu bieżącego stanu przez Home Assistant; nie może jedynie odesłać starej wiadomości retained.
 
 ## Dostępność i błędy
 
