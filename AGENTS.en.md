@@ -4,7 +4,7 @@
 
 ## Before you start
 
-1. Read `docs/architecture/README.md`, `docs/architecture/mqtt-contract.md`, `docs/ux/tv-and-z906-ui.md` and `docs/operations/ai-handoff.md`.
+1. Read `docs/architecture/README.md`, `docs/architecture/mqtt-contract.md`, `docs/ux/tv-and-z906-ui.md` and `docs/operations/ai-handoff.md`. When working on the Home tab, also `docs/ux/home-screen.en.md` (the standard: hierarchy, rules, components, adding devices).
 2. Check `git status --short --branch` and do not delete other people's uncommitted changes.
 3. Before modifying hardware code, read `docs/hardware/bring-up.md`.
 

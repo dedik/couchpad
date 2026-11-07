@@ -540,7 +540,7 @@ dotyk w kontrolkę naprawdę steruje domem. Ekran ustawień pokazuje nazwę siec
 publikacją zrzutu trzeba ją zamaskować. Zrzuty do dokumentacji robi się w obu stylach
 (`docs/screenshots/` i `docs/screenshots/light/`, plus `overview.png` i `overview-light.png`)
 oraz w obu orientacjach (`docs/screenshots/landscape/` i `landscape/light/`, plus
-`overview-landscape*.png`). `tour` zna tylko pion; poziom zrzuca się ręcznie (`shot`, `tap`
+`overview-landscape*.png`). Zakładka Dom ma osobny komplet (`05-home`, `10-room`…`14-drawers`) i `overview-home*.png` — patrz `docs/ux/home-screen.md`, pkt 6; zbiorcze obrazy składa `tools/overview.py`. `tour` zna tylko pion; poziom zrzuca się ręcznie (`shot`, `tap`
 w zakładki bocznego paska x = 44, y = 64/152/240/328/416). Zdalny dotyk w poziomie przyjmuje
 współrzędne logiczne 800 × 480. Przed serią stuknięć zrób zrzut: po wygaszeniu ekranu pilot
 wraca na ekran startowy i stuknięcia trafiają w inne miejsca.
@@ -567,6 +567,30 @@ NVS `orient`, restart po zmianie. Każdy ekran i podstrona mają układ poziomy;
 - Zasilanie: koło 48 px, pole dotyku 64 px (`ext_click_area`) — rodzic musi mieć 64 px wysokości.
 - Nie sprawdzone na płytce: dotyk palcem w nowych układach, obrót 270°, przyciski −/+, tryb
   i zasilanie na karcie klimatyzacji.
+
+## Pomieszczenia i oświetlenie — 2026-11-07
+
+[ADR 0014](../architecture/adr/0014-rooms-and-lights.md). Makiety: `docs/ux/mockup-pulpit`,
+`docs/ux/mockup-landscape`, wspólne `docs/ux/mockup-dom/rooms.js` i `rooms.css`.
+
+- Ekran Dom: sceny usunięte, siatka sześciu pomieszczeń (`ui/screens/screen_home.cpp`),
+  klima jako pasek (pion) albo pigułka w nagłówku (poziom). Duży kafelek klimy nie jest już
+  budowany; `render_climate` rysuje sam tylko podstronę, `open_climate_page` otwiera ją z karty.
+- Podstrona pokoju: pełny ekran na `lv_layer_sys`. W poziomie oba paski w szufladach
+  (`build_drawers`): pas 28 px przy krawędzi łapie gest (`PRESSING`, ≥ 36 px) i stuknięcie.
+  Sprawdzone gestem symulowanym (`remote.py drag`); palcem przy samej krawędzi panelu — nie. Poziomy: pokój → światło → żarówka; efekty to lista wyboru jak tryb klimy (`dock_sheet`, wybór ją zamyka); `close_room` przy zmianie
+  zakładki i w `close_overlays`.
+- Widok światła jak podstrona klimy: tarcza jasności to `widgets::Thermostat` w trybie
+  procentowym (`set_percent`, zakres 5–100, krok 5), obok kafle barwy, efektu i żarówek.
+  Zasilanie światła, żarówki i efektów w nagłówku po prawej; skróty na kafelkach zostają.
+- Ikony: `tools/draw_room_icons.py` (pomieszczenia 48, lampa i żarówka 32) → `gen_assets.py`.
+- Kontrakt: sekcja `lights`, akcje `light.*`; `HaEvent` ma ok. 3 kB, kolejka w PSRAM.
+- Bridge wdrożony na serwerze HA (kopia `…before-lights.20261107-073712`, `check_config`,
+  przeładowanie skryptów i automatyzacji bez restartu). Standard: `docs/ux/home-screen.md`.
+- Sprawdzone na płytce (poziom): siatka, podstrona pokoju, pasek pomieszczeń, klima z karty
+  i powrót. Widoki światła, żarówki i efektów — dopiero po wdrożeniu bridge'a.
+- Lekcja: zrzut nie wybudza ekranu, a pokazuje ostatnią ramkę. Przed stuknięciem sprawdź
+  `hit` — przypadkowe stuknięcie na ekranie Apple TV uruchomiło YouTube i (przez CEC) telewizor.
 
 ## Następny bezpieczny krok
 

@@ -545,3 +545,12 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .lab-note { margin: var(--s2) 0 0; font-size: 12px; line-height: 1.5; color: var(--faint); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
+
+/* ---------- Dom: kompaktowy kafel klimatyzacji (nad siatką pomieszczeń) ---------- */
+.device-tile.is-compact { height: 56px; flex: none; padding: 0 var(--s4); grid-template-rows: 1fr; align-items: center; }
+.device-tile.is-compact .device-body { display: none; }
+.device-tile.is-compact .device-head { grid-template-columns: 36px 1fr 20px; }
+.device-tile.is-compact .device-mark { width: 36px; height: 36px; }
+
+/* ---------- Dom: pasek pomieszczeń na podstronie pokoju ---------- */
+.room-rail { flex: none; margin: var(--s3) var(--gutter) 0; padding-bottom: 6px; border-bottom: 1px solid var(--surface-2); }

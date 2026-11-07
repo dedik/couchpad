@@ -3,7 +3,7 @@
 [English](README.md)
 
 Natywny firmware dla 4,3-calowego panelu dotykowego z ESP32-P4, który steruje salonem po
-MQTT: telewizorem LG, Apple TV, głośnikami Logitech Z906 i klimatyzacją przez Home
+MQTT: telewizorem LG, Apple TV, głośnikami Logitech Z906, klimatyzacją i światłem przez Home
 Assistanta. ESP-IDF, C++17 i LVGL 9 — bez przeglądarki na urządzeniu, więc pilot budzi się
 w około dwie sekundy i reaguje od razu.
 
@@ -43,6 +43,20 @@ Orientacja*; pilot uruchamia się ponownie w nowej orientacji
 Pojedyncze ekrany w poziomie leżą w [`docs/screenshots/landscape/`](docs/screenshots/landscape/)
 i [`docs/screenshots/landscape/light/`](docs/screenshots/landscape/light/).
 
+### Zakładka Dom
+
+Pomieszczenia, pokój, Lampa, lista efektów, pojedyncza żarówka i — w poziomie — szuflada
+pomieszczeń wysuwana gestem od krawędzi. Zasady, według których dochodzą kolejne urządzenia:
+[`docs/ux/home-screen.md`](docs/ux/home-screen.md) ([ADR 0014](docs/architecture/adr/0014-rooms-and-lights.md)).
+
+![Zakładka Dom — pion](docs/screenshots/overview-home.png)
+
+![Zakładka Dom — pion, styl jasny](docs/screenshots/overview-home-light.png)
+
+![Zakładka Dom — poziom](docs/screenshots/overview-home-landscape.png)
+
+![Zakładka Dom — poziom, styl jasny](docs/screenshots/overview-home-landscape-light.png)
+
 ## Co potrafi
 
 - **TV** — stan zasilania, źródło i tryb obrazu, krzyżak, kołyski głośności i kanałów,
@@ -61,7 +75,10 @@ i [`docs/screenshots/landscape/light/`](docs/screenshots/landscape/light/).
   i czujnika `keyboard_focus` w Home Assistancie ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.md)).
 - **Z906** — tarcza głośności z krokiem −/+, poziomy centralnego, subwoofera i tyłu,
   wejście i efekt, wskaźnik Decode.
-- **Dom** — klimatyzacja (tryb, temperatura, nawiew, żaluzje) i sceny.
+- **Dom** — sześć pomieszczeń z pixelartowymi ikonami i szybkim wł./wył. głównego światła;
+  w pokoju jego urządzenia: Lampa (tarcza jasności, barwa, 16 efektów, każda żarówka osobno)
+  i klimatyzacja (tryb, temperatura, nawiew, żaluzje). Standard zakładki:
+  [`docs/ux/home-screen.md`](docs/ux/home-screen.md).
 - **Ekran startowy** po wybudzeniu — zegar, pogoda i stan każdego urządzenia.
 - **Styl jasny i ciemny** — wybierany w ustawieniach: na stałe albo wg godzin (domyślnie
   ciemny od 18 do 8). Zmienia się w locie, bez restartu
@@ -175,8 +192,10 @@ inaczej, dostosuj `components/transport/z906_client.cpp`.
 
 ## TODO
 
-- [ ] **Więcej encji z Home Assistanta** — światła, rolety, sceny, czujniki i inne
-  urządzenia na ekranie Dom, ustawiane po stronie Home Assistanta zamiast na sztywno w kodzie.
+- [x] **Światła z Home Assistanta** — główne światło pomieszczeń, grupy żarówek i efekty,
+  ustawiane w bridge'u (`light_rooms`), nie w kodzie ([ADR 0014](docs/architecture/adr/0014-rooms-and-lights.md)).
+- [ ] **Więcej encji z Home Assistanta** — rolety, czujniki, gniazdka i inne urządzenia na ekranie
+  Dom według [standardu zakładki](docs/ux/home-screen.md).
 - [ ] **Praca na baterii** — dziś pilot działa tylko z USB. W planach: akumulator i tylna
   obudowa, głęboki sen między użyciami z wybudzaniem dotykiem, poziom baterii na ekranie
   i ładowanie przez USB-C.

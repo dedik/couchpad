@@ -353,7 +353,28 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
 
 /* Nakładka celów dotyku */
 .show-touch .screen button { outline: 1px dashed rgba(86,214,160,.7); outline-offset: -1px; }
+.scr[data-scr="home"] .head .kpill { margin-left: auto; }
+.kpill { display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px 0 16px; border-radius: var(--r3); background: var(--surface); border: 1px solid var(--line); color: var(--text); }
+.kpill b { font-size: 15px; font-weight: 500; } .kpill span { font-size: 13px; color: var(--dim); }
+.kpill svg.lucide { width: 18px; height: 18px; color: var(--faint); }
+#rpBody { flex: 1; min-height: 0; padding-bottom: 4px; }
+.rpage { position: absolute; inset: 0; z-index: 5; background: var(--bg); display: flex; overflow: hidden; touch-action: none; }
+.rpmain { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 5px 28px 16px; }
+/* uchwyty: podpowiedź, że przy krawędzi coś jest */
+.rphandle { position: absolute; top: 50%; width: 5px; height: 64px; margin-top: -32px; border-radius: 3px; background: var(--surface-3); z-index: 2; padding: 0; }
+.rphandle::after { content: ""; position: absolute; inset: -20px -14px; }  /* większe pole kliknięcia */
+.rphandle.l { left: 5px; } .rphandle.r { right: 5px; }
+.rpscrim { position: absolute; inset: 0; z-index: 3; background: rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.rpage.open-l .rpscrim, .rpage.open-r .rpscrim { opacity: 1; pointer-events: auto; }
+.rpdrawer { position: absolute; top: 0; bottom: 0; width: var(--rail); z-index: 4; background: var(--surface); padding: 0 10px; display: flex; flex-direction: column; justify-content: center; gap: 8px; transition: transform .22s ease-out; box-shadow: 0 0 30px rgba(0,0,0,.5); }
+.rpdrawer.l { left: 0; border-right: 1px solid var(--line); transform: translateX(-105%); }
+.rpdrawer.r { right: 0; border-left: 1px solid var(--line); transform: translateX(105%); }
+.rpage.open-l .rpdrawer.l, .rpage.open-r .rpdrawer.r { transform: none; }
+.rpdrawer .tab[data-rp-go="home"] { background: var(--accent-soft); }
+.bezel.right .rrail.is-land .rrail-item[aria-selected="true"]::after { right: auto; left: -10px; border-radius: 0 4px 4px 0; }
+.rptitle em { display: block; font-style: normal; font-size: 11px; letter-spacing: .16em; color: var(--faint); margin-top: 2px; }
 </style>
+<link rel="stylesheet" href="../mockup-dom/rooms.css?v=9">
 </head>
 <body>
 <div class="wrap">
@@ -539,8 +560,12 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
               <div class="head">
                 <span class="mark"><i data-lucide="house"></i></span>
                 <span class="title"><b>Dom</b><em>SALON</em></span>
+                <button class="kpill" id="kpPill"><i class="kdot on"></i><b>Klimatyzacja</b><span>Chłodzenie · 22,0°</span><i data-lucide="chevron-right"></i></button>
               </div>
               <div class="body">
+                <!-- Pomieszczenia (mockup-dom/rooms.js). Warianty karty klimy niżej zostają ukryte. -->
+                <div id="rooms" role="group" aria-label="Pomieszczenia"></div>
+                <div class="klima-old" hidden>
                 <div class="klima kv" data-kv="now">
                   <!-- Teraz w firmware: nagłówek u góry, wartości przyklejone do dołu -->
                   <div class="kh"><i class="kdot on"></i><span class="kname"><b>Klimatyzacja</b><em>SALON</em></span><i data-lucide="chevron-right" class="kgo"></i></div>
@@ -586,11 +611,6 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
                     <button class="btn" data-kl="0.5"><i data-lucide="plus"></i></button>
                   </div>
                 </div>
-                <div class="scenes">
-                  <button class="scene" aria-pressed="false"><i data-lucide="film"></i>Film</button>
-                  <button class="scene" aria-pressed="false"><i data-lucide="music"></i>Muzyka</button>
-                  <button class="scene" aria-pressed="false"><i data-lucide="moon"></i>Dobranoc</button>
-                  <button class="scene" aria-pressed="false"><i data-lucide="power"></i>Wszystko off</button>
                 </div>
               </div>
             </section>
@@ -616,6 +636,30 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
               </div>
             </section>
           </main>
+          <!-- Podstrona pomieszczenia (mockup-dom/rooms.js): pełny ekran. Pasek zakładek i pasek
+               pomieszczeń są schowane — wysuwa je przeciągnięcie od lewej / prawej krawędzi
+               (w makiecie także kliknięcie uchwytu). Dotknięcie obok szuflady ją chowa. -->
+          <section class="rpage" id="rpage" hidden>
+            <div class="rpmain">
+              <div class="khead">
+                <button class="kback" id="rpBack" aria-label="Cofnij"><i data-lucide="chevron-left"></i></button>
+                <span class="rptitle"><b id="rpTitle">Salon</b><em id="rpSub">POMIESZCZENIE</em></span><span class="spacer"></span>
+                <button class="power" id="rpPower" aria-pressed="false" aria-label="Zasilanie" hidden><i data-lucide="power"></i></button>
+              </div>
+              <div id="rpBody"></div>
+            </div>
+            <button class="rphandle l" id="rpHandleL" aria-label="Pokaż zakładki"></button>
+            <button class="rphandle r" id="rpHandleR" aria-label="Pokaż pomieszczenia"></button>
+            <div class="rpscrim" id="rpScrim"></div>
+            <nav class="rpdrawer l" id="rpTabs" aria-label="Ekrany">
+                <button class="tab" data-rp-go="tv" aria-label="Telewizor"><img src="../mockup-pulpit/assets/pixel/tv.png" alt=""></button>
+                <button class="tab" data-rp-go="appletv" aria-label="Apple TV"><img src="../mockup-pulpit/assets/pixel/appletv.png" alt=""></button>
+                <button class="tab" data-rp-go="audio" aria-label="Głośniki"><img src="../mockup-pulpit/assets/pixel/audio.png" alt=""></button>
+                <button class="tab" data-rp-go="home" aria-label="Dom"><img src="../mockup-pulpit/assets/pixel/home.png" alt=""></button>
+                <button class="tab" data-rp-go="settings" aria-label="Ustawienia"><img src="../mockup-pulpit/assets/pixel/settings.png" alt=""></button>
+            </nav>
+            <nav class="rpdrawer r rprail" id="rpRail" aria-label="Pomieszczenia"></nav>
+          </section>
 
           <!-- Start: pełny ekran bez paska -->
           <section class="start" id="start">
@@ -743,6 +787,7 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
   </div>
 </div>
 
+<script src="../mockup-dom/rooms.js?v=9"></script>
 <script>
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
@@ -755,7 +800,7 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
     tv: { t: 'Telewizor', shot: '02-tv', plus: ['Źródło i tryb obrazu w nagłówku, w jednym rzędzie (ok. 200 px na każdy). Lewa kolumna zostaje dla kanałów i Cofnij/Menu. Przełącz „TV: wybór”, żeby porównać z obecnym firmware.', 'Dwie strefy: kanały i Cofnij/Menu po lewej, nawigacja po prawej.', 'Krzyżak + kołyski VOL/P w jednym rzędzie, jak w klasycznym pilocie trzymanym oburącz.', 'Mieści się 6 skrótów kanałów zamiast 5 (WP Pilot obok TVP).'], minus: ['Krzyżak 240 px zamiast ~300 px — wysokość 480 to twarde ograniczenie.', 'Kciuk prawej ręki ma krzyżak, ale lewej — kanały; jednoręcznie gorzej niż w pionie.'] },
     appletv: { t: 'Apple TV', shot: '03-appletv', plus: ['Gładzik 330 px po prawej, akcje po lewej. Kliknij/przeciągnij po gładziku.', '„Tekst” otwiera klawiaturę na całą szerokość — klawisze 69 px zamiast ~44 px.'], minus: ['Gładzik nieco mniejszy (330 vs ~420 px w pionie).'] },
     audio: { t: 'Głośniki Z906 — Soundstage', shot: '04-audio', plus: ['Źródło i efekt w nagłówku, obok nazwy — jak na TV. Prawa strona zostaje dla trzech suwaków na pełną wysokość. Przełącz „Z906: wybór”, żeby porównać.', 'Pierścień i suwaki obok siebie: każdy element dostaje pełną wysokość.', 'Suwaki kanałów wyższe (~250 px toru) → precyzyjniejszy krok 2.', 'Przeciągnij po pierścieniu (obrót względny) i po kolumnach kanałów (pion).'], minus: ['Odchodzi od zatwierdzonej kompozycji Soundstage (kolejność pionowa) — wymaga zmiany spec + ADR.'] },
-    home: { t: 'Dom', shot: '05-home', plus: ['Klimatyzacja włączona, cztery warianty karty — przełącznik „Klima”: teraz (firmware), A tarcza, B środek, C szybkie.', 'Klimatyzacja jako duża karta z temperaturą i −/+ wprost na ekranie zakładki.', 'Sceny 2×2 dostają duże pola dotyku.'], minus: ['Przy większej liczbie urządzeń HA potrzebny poziomy przewijany rząd kart.'] },
+    home: { t: 'Dom', shot: '05-home', plus: ['Sześć pomieszczeń 3 × 2 jak ekran startowy, pixelartowa ikona na pokój.', 'Lampka w rogu kafelka: szybkie wł./wył. głównego światła, stan oczekujący do potwierdzenia z HA.', 'Salon → Lampa i Klimatyzacja. Lampa → jasność, barwa, efekt dla całej grupy i każda z 3 żarówek osobno.', 'Klima jako pigułka w nagłówku i jako urządzenie w Salonie.', 'Pokój na pełnym ekranie: zakładki i pasek pomieszczeń schowane, wysuwa je przeciągnięcie od lewej / prawej krawędzi (uchwyty przy krawędziach podpowiadają).'], minus: ['Sceny usunięte.', 'Schowane menu łatwiej przeoczyć; gest przy samej krawędzi trzeba sprawdzić na panelu dotykowym.',  'Klima bez temperatury na wierzchu — tylko pigułka; warianty „Klima” w tej wersji ukryte.'] },
     settings: { t: 'Ustawienia', shot: '06-more', plus: ['Wzorzec lista + szczegół (master-detail): bez przechodzenia na podstrony i wracania.', 'Ekran → Orientacja przełącza w makiecie stronę paska.'], minus: ['Edycja tekstu (hasło Wi-Fi) i tak zasłania cały ekran klawiaturą.'] },
     editor: { t: 'Klawiatura', shot: '07-keyboard-qwerty', plus: ['Pełny QWERTY w 4 rzędach, klawisze 69 × 66 px — dużo wygodniej niż w pionie.'], minus: ['Pisanie oburącz; w dłoni jednoręcznie słabo.'] },
   };
@@ -811,6 +856,47 @@ svg.lucide { width: 22px; height: 22px; stroke-width: 2; }
   function openKp() { go('home'); $('#kpage').hidden = false; }
   $$('[data-kpsel]').forEach(c => c.addEventListener('click', () => { showKp(c.dataset.kpsel); openKp(); }));
   $('#kpOpen').addEventListener('click', openKp);
+  $('#kpPill').addEventListener('click', openKp);
+  /* Dom: pomieszczenia */
+  PilotRooms.grid($('#rooms'), { land: true, toast, open: () => { $('#rpage').hidden = false; } });
+  PilotRooms.rail($('#rpRail'), { land: true });
+  PilotRooms.detail($('#rpBody'), { land: true, openKlima: openKp,
+    nav: ({ title, sub, power }) => {
+      $('#rpTitle').textContent = title; $('#rpSub').textContent = sub;
+      $('#rpPower').hidden = !power;
+      if (power) { $('#rpPower').setAttribute('aria-pressed', String(power.on)); $('#rpPower').classList.toggle('is-pending', power.pending); }
+    } });
+  $('#rpPower').addEventListener('click', () => PilotRooms.power());
+  const rp = $('#rpage');
+  const drawer = side => { rp.classList.toggle('open-l', side === 'l'); rp.classList.toggle('open-r', side === 'r'); };
+  const closeRoom = () => { drawer(null); rp.hidden = true; };
+  $('#rpBack').addEventListener('click', () => { if (!PilotRooms.back()) closeRoom(); });
+  $$('.tab').forEach(t => t.addEventListener('click', () => closeRoom()));
+  $('#rpHandleL').addEventListener('click', () => drawer('l'));
+  $('#rpHandleR').addEventListener('click', () => drawer('r'));
+  $('#rpScrim').addEventListener('click', () => drawer(null));
+  $$('[data-rp-go]').forEach(b => b.addEventListener('click', () => { closeRoom(); go(b.dataset.rpGo); }));
+  // Wybór pokoju z szuflady chowa ją po chwili — widać zaznaczenie, potem nowy pokój.
+  $('#rpRail').addEventListener('click', e => { if (e.target.closest('[data-pick-room]')) setTimeout(() => drawer(null), 180); });
+  // Gest: przeciągnięcie zaczęte przy krawędzi (≤ 28 px ekranu) do środka o ≥ 36 px wysuwa
+  // szufladę; przeciągnięcie otwartej szuflady w stronę krawędzi ją chowa. Współrzędne
+  // w pikselach ekranu 800 × 480 (makieta bywa skalowana).
+  let swipe = null;
+  const local = e => { const r = rp.getBoundingClientRect(); return (e.clientX - r.left) * 800 / r.width; };
+  rp.addEventListener('pointerdown', e => {
+    const x = local(e);
+    const open = rp.classList.contains('open-l') ? 'l' : rp.classList.contains('open-r') ? 'r' : null;
+    swipe = { x, edge: open ? null : x <= 28 ? 'l' : x >= 772 ? 'r' : null, open };
+  });
+  rp.addEventListener('pointermove', e => {
+    if (!swipe) return;
+    const dx = local(e) - swipe.x;
+    if (swipe.edge === 'l' && dx > 36) { drawer('l'); swipe = null; }
+    else if (swipe.edge === 'r' && dx < -36) { drawer('r'); swipe = null; }
+    else if (swipe.open === 'l' && dx < -36) { drawer(null); swipe = null; }
+    else if (swipe.open === 'r' && dx > 36) { drawer(null); swipe = null; }
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => rp.addEventListener(t, () => { swipe = null; }));
   $('#kpBack').addEventListener('click', () => $('#kpage').hidden = true);
   $$('.kname, .kbig, .kt, .kring, .kcenter').forEach(e => e.addEventListener('click', ev => { if (!ev.target.closest('button')) openKp(); }));
   $$('#kpage .kmodes button, #kpage .kmodeTiles button').forEach(b => b.addEventListener('click', () =>
