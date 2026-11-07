@@ -145,7 +145,15 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl) {
     // Wstecz cofa do ekranu startowego; na nim niczego nie zamyka — pilot jest ekranem głównym.
     BackHandler { if (screen != Screen.Start) screen = Screen.Start }
     val homePressed by app.couchpad.pilot.Graph.homePressed.collectAsStateWithLifecycle()
-    LaunchedEffect(homePressed) { if (homePressed > 0) screen = Screen.Start }
+    LaunchedEffect(homePressed) {
+        if (homePressed > 0) {
+            screen = Screen.Start
+            // Zapalenie ekranu albo Home budzi też wygaszacz pilota — inaczej po zapaleniu
+            // telefonu zostawała czarna zasłona z jasnością 1%.
+            asleep = false
+            lastTouch = System.currentTimeMillis()
+        }
+    }
 
     ProvideUnits {
         val landscape = LocalLandscape.current
