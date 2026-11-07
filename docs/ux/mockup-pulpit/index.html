@@ -8,7 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="pulpit.css?v=55">
+<link rel="stylesheet" href="pulpit.css?v=57">
+<link rel="stylesheet" href="../mockup-dom/rooms.css?v=9">
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -149,9 +150,8 @@
         </section>
 
         <section class="scr" data-scr="home" aria-label="Dom" hidden>
-          <p class="cap">Klimat</p>
-          <!-- Kafelek urządzenia: najważniejszy stan na wierzchu, sterowanie piętro niżej -->
-          <button class="device-tile" type="button" data-open="klima" aria-label="Klimatyzacja — otwórz sterowanie">
+          <!-- Klimatyzacja: kompaktowy pasek, dotknięcie otwiera podstronę jak dotąd -->
+          <button class="device-tile is-compact" type="button" data-open="klima" aria-label="Klimatyzacja — otwórz sterowanie">
             <span class="device-head">
               <span class="device-mark" data-icon=""><i data-lucide="snowflake" aria-hidden="true"></i></span>
               <span class="device-name"><b>Klimatyzacja</b><em>SALON</em></span>
@@ -164,14 +164,8 @@
               <span class="device-meta"><b class="device-mode">Chłodzenie</b><span class="device-now">W pokoju 24,0°</span></span>
             </span>
           </button>
-          <p class="cap">Sceny</p>
-          <div class="grid2" data-ctl="scene" role="group" aria-label="Sceny">
-            <button class="tile is-tall" type="button" data-value="film"><i data-lucide="film" aria-hidden="true"></i><span>Film</span></button>
-            <button class="tile is-tall" type="button" data-value="muzyka"><i data-lucide="music" aria-hidden="true"></i><span>Muzyka</span></button>
-            <button class="tile is-tall" type="button" data-value="noc"><i data-lucide="eye-off" aria-hidden="true"></i><span>Dobranoc</span></button>
-            <button class="tile is-tall" type="button" data-value="koniec"><i data-lucide="power" aria-hidden="true"></i><span>Wszystko off</span></button>
-          </div>
-          <div class="scr-fill"></div>
+          <!-- Pomieszczenia (mockup-dom/rooms.js): kafelek = pokój, lampka w rogu = główne światło -->
+          <div id="rooms" role="group" aria-label="Pomieszczenia"></div>
         </section>
 
         <section class="scr" data-scr="settings" aria-label="Ustawienia" hidden>
@@ -270,6 +264,21 @@
       </section>
 
 
+
+      <!-- Pomieszczenie: podstrona jak Wi-Fi itd., treść z mockup-dom/rooms.js -->
+      <section class="page sub" data-page="room" aria-label="Pomieszczenie" hidden>
+        <header class="topbar">
+          <div class="ident">
+            <button class="back" type="button" data-back-sub aria-label="Cofnij"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+            <div><b class="page-title" id="roomTitle">Salon</b><span class="page-room">GŁÓWNE: LAMPA</span></div>
+          </div>
+          <!-- Zasilanie po prawej, jak na każdym ekranie jednego urządzenia (światło, żarówka, efekty) -->
+          <div class="topbar-end"><button class="power" type="button" id="roomPower" hidden><i data-lucide="power" aria-hidden="true"></i></button></div>
+        </header>
+        <!-- Pasek pomieszczeń: przełącza pokój bez cofania do siatki -->
+        <div class="room-rail" id="roomRail" aria-label="Pomieszczenia"></div>
+        <div class="page-body is-scroll"><div id="roomBody"></div></div>
+      </section>
 
       <section class="page sub" data-page="wifi" aria-label="Wi-Fi" hidden>
         <header class="topbar">
@@ -619,6 +628,7 @@
 </div>
 
 <script src="pixel-icons.js?v=55"></script>
+<script src="../mockup-dom/rooms.js?v=9"></script>
 <script>
 (() => {
   // Konfiguracja ekranów. Dodanie ekranu = wpis tutaj + sekcja .scr + zakładka.
@@ -1391,6 +1401,36 @@
   setInterval(render, 1000);  // jak on_tick: granica godziny przełącza styl sama
   icons();
   render();
+})();
+</script>
+<script>
+/* Dom: pomieszczenia (mockup-dom/rooms.js) */
+(() => {
+  const screen = document.getElementById('screen');
+  const roomPage = screen.querySelector('[data-page="room"]');
+  const klimaPage = screen.querySelector('[data-page="klima"]');
+  const showRoom = on => screen.querySelectorAll('.page.sub').forEach(p => { p.hidden = !(on && p.dataset.page === 'room'); });
+  let fromRoom = false;
+  PilotRooms.grid(document.getElementById('rooms'), { open: () => showRoom(true) });
+  PilotRooms.rail(document.getElementById('roomRail'));
+  PilotRooms.detail(document.getElementById('roomBody'), {
+    nav: ({ title, sub, power }) => {
+      roomPage.querySelector('.page-title').textContent = title;
+      roomPage.querySelector('.page-room').textContent = sub;
+      const button = document.getElementById('roomPower');
+      button.hidden = !power;
+      if (power) { button.classList.toggle('is-on', power.on); button.classList.toggle('is-pending', power.pending); }
+    },
+    openKlima: () => { fromRoom = true; showRoom(false); screen.querySelector('.device-tile').click(); },
+  });
+  document.getElementById('roomPower').addEventListener('click', () => PilotRooms.power());
+  // Cofnij: najpierw poziom wewnątrz pokoju, dopiero potem zamknięcie podstrony.
+  roomPage.addEventListener('click', e => {
+    if (e.target.closest('[data-back-sub]') && PilotRooms.back()) e.stopPropagation();
+  }, true);
+  // Klima otwarta z Salonu wraca do Salonu.
+  klimaPage.querySelector('[data-back]').addEventListener('click', () => { if (fromRoom) { fromRoom = false; showRoom(true); } });
+  screen.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { fromRoom = false; }));
 })();
 </script>
 </body>

@@ -4,7 +4,7 @@
 
 ## Zanim zaczniesz
 
-1. Przeczytaj `docs/architecture/README.md`, `docs/architecture/mqtt-contract.md`, `docs/ux/tv-and-z906-ui.md` oraz `docs/operations/ai-handoff.md`.
+1. Przeczytaj `docs/architecture/README.md`, `docs/architecture/mqtt-contract.md`, `docs/ux/tv-and-z906-ui.md` oraz `docs/operations/ai-handoff.md`. Przy pracy nad zakładką Dom — także `docs/ux/home-screen.md` (standard: hierarchia, reguły, komponenty, dodawanie urządzeń).
 2. Sprawdź `git status --short --branch` i nie usuwaj cudzych, niezatwierdzonych zmian.
 3. Przed modyfikacją kodu sprzętowego przeczytaj `docs/hardware/bring-up.md`.
 

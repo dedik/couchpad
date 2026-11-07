@@ -540,7 +540,7 @@ touch on a control really does control the home. The settings screen shows the W
 publishing a screenshot it must be masked. Documentation screenshots are taken in both styles
 (`docs/screenshots/` and `docs/screenshots/light/`, plus `overview.png` and `overview-light.png`)
 and in both orientations (`docs/screenshots/landscape/` and `landscape/light/`, plus
-`overview-landscape*.png`). `tour` only knows portrait; landscape is captured by hand (`shot`, `tap`
+`overview-landscape*.png`). The Home tab has its own set (`05-home`, `10-room`…`14-drawers`) and `overview-home*.png` — see `docs/ux/home-screen.en.md`, section 6; overviews are composed by `tools/overview.py`. `tour` only knows portrait; landscape is captured by hand (`shot`, `tap`
 on the side-rail tabs x = 44, y = 64/152/240/328/416). Remote touch in landscape takes logical
 800 × 480 coordinates. Take a screenshot before a series of taps: after the screen blanks the remote
 returns to the start screen and taps land elsewhere.
@@ -567,6 +567,27 @@ patterns in `ui-architecture.en.md` ("Landscape orientation").
 - Power: 48 px circle, 64 px touch area (`ext_click_area`) — the parent must be 64 px tall.
 - Not checked on the board: finger touch in the new layouts, 270° rotation, the −/+, mode and power
   buttons on the climate card.
+
+## Rooms and lights — 2026-11-07
+
+[ADR 0014](../architecture/adr/0014-rooms-and-lights.en.md), standard
+[`docs/ux/home-screen.en.md`](../ux/home-screen.en.md). Mockups: `docs/ux/mockup-pulpit`,
+`docs/ux/mockup-landscape`, shared `docs/ux/mockup-dom/rooms.js` and `rooms.css`.
+
+- Home: scenes removed, a six-room grid (`ui/screens/screen_home.cpp`), A/C as a strip
+  (portrait) or a header pill (landscape). The large A/C tile is no longer built;
+  `render_climate` only draws the subpage, `open_climate_page` opens it from the room card.
+- Room page: full screen on `lv_layer_sys`. In landscape both rails live in drawers
+  (`build_drawers`): a 28 px edge strip catches the swipe (`PRESSING`, ≥ 36 px) and taps.
+- Light screen like the A/C subpage: the brightness dial is `widgets::Thermostat` in percent
+  mode (`set_percent`, 5–100, step 5), tiles for colour temperature, effect and bulbs. Effects
+  are a picker (`dock_sheet`), choosing closes it. Power in the header on the right.
+- Icons: `tools/draw_room_icons.py` (rooms 48, lamp and bulb 32) → `gen_assets.py`; effect icons
+  `lucide_effects_22` (`tools/gen-fonts.sh`).
+- Contract: `lights` section, `light.*` actions; `HaEvent` is about 3 kB, its queue is in PSRAM.
+  The bridge is deployed on the HA server (backup `…before-lights.20261107-073712`).
+- Lesson: a screenshot does not wake the screen, it shows the last frame. Check `hit` before
+  every tap — an accidental tap on the Apple TV screen launched YouTube and (via CEC) the TV.
 
 ## Next safe step
 

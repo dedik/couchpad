@@ -3,7 +3,7 @@
 [Polski](README.pl.md)
 
 Native firmware for a 4.3" ESP32-P4 touch panel that controls a living room over MQTT:
-an LG TV, an Apple TV, Logitech Z906 speakers and an air conditioner through Home
+an LG TV, an Apple TV, Logitech Z906 speakers, an air conditioner and lights through Home
 Assistant. ESP-IDF, C++17 and LVGL 9 — no web view on the device, so it wakes in about
 two seconds and reacts immediately.
 
@@ -43,6 +43,20 @@ Orientation*; the remote restarts in the new orientation
 Individual landscape screens are in [`docs/screenshots/landscape/`](docs/screenshots/landscape/)
 and [`docs/screenshots/landscape/light/`](docs/screenshots/landscape/light/).
 
+### Home tab
+
+Rooms, a room, the Lamp, the effect list, a single bulb and — in landscape — the room drawer
+that slides in with an edge swipe. The rules new devices follow:
+[`docs/ux/home-screen.en.md`](docs/ux/home-screen.en.md) ([ADR 0014](docs/architecture/adr/0014-rooms-and-lights.en.md)).
+
+![Home tab — portrait](docs/screenshots/overview-home.png)
+
+![Home tab — portrait, light theme](docs/screenshots/overview-home-light.png)
+
+![Home tab — landscape](docs/screenshots/overview-home-landscape.png)
+
+![Home tab — landscape, light theme](docs/screenshots/overview-home-landscape-light.png)
+
 The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
 
 ## What it does
@@ -62,7 +76,10 @@ The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
   `apple_tv.set_keyboard_text` and the `keyboard_focus` sensor ([ADR 0007](docs/architecture/adr/0007-apple-tv-via-home-assistant.en.md)).
 - **Z906** — volume dial with −/+ steps, centre, subwoofer and rear levels, input and
   effect, Decode indicator.
-- **Home** — air conditioner (mode, temperature, fan, swing) and scenes.
+- **Home** — six rooms with pixel-art icons and a quick main-light toggle; inside a room its
+  devices: the Lamp (brightness dial, colour temperature, 16 effects, each bulb separately)
+  and the air conditioner (mode, temperature, fan, swing). Tab standard:
+  [`docs/ux/home-screen.en.md`](docs/ux/home-screen.en.md).
 - **Start screen** after wake-up — clock, weather and the state of every device.
 - **Light and dark theme** — chosen in the settings: fixed or by hours (dark from 18 to 8 by
   default). Switches at runtime, without a restart
@@ -176,8 +193,10 @@ a different layout, adapt `components/transport/z906_client.cpp`.
 
 ## TODO
 
-- [ ] **More Home Assistant entities** — lights, covers, scenes, sensors and other devices
-  on the Home screen, configured from Home Assistant instead of being fixed in the code.
+- [x] **Lights from Home Assistant** — the main light of each room, bulb groups and effects,
+  configured in the bridge (`light_rooms`), not in the code ([ADR 0014](docs/architecture/adr/0014-rooms-and-lights.en.md)).
+- [ ] **More Home Assistant entities** — covers, sensors, sockets and other devices on the Home
+  screen following the [tab standard](docs/ux/home-screen.en.md).
 - [ ] **Battery power** — today the remote runs from USB only. Planned: a battery and a
   rear case, deep sleep between uses with touch wake-up, battery level on screen and
   charging over USB-C.
