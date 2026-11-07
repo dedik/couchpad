@@ -137,6 +137,9 @@ struct Thermostat {
     // Wyłączona klima albo sam nawiew: temperatura nie działa, tarcza gaśnie.
     void set_enabled(bool enabled);
     void set_texts(const char* action, const char* now);
+    // Tryb procentowy (jasność lampy, ADR 0014): wartości to całe procenty, bez
+    // przecinka, jednostka „%”, skala „1%–100%”. Wołać raz, zaraz po utworzeniu.
+    void set_percent();
     // `true` w trakcie gestu i przed wysłaniem serii stuknięć. Wtedy rysowanie ze
     // stanu nie nadpisuje wartości pod palcem.
     bool busy() const { return moved_ || commit_timer_ != nullptr; }
@@ -149,6 +152,7 @@ struct Thermostat {
     float last_angle_ = 0.0F;
     bool moved_ = false;
     bool enabled_ = true;
+    bool percent_ = false;
     lv_timer_t* commit_timer_ = nullptr;
     ValueHandler on_change = nullptr;
     void* context = nullptr;

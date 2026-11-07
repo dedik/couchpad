@@ -34,6 +34,7 @@ struct HaEvent {
     Kind kind = Kind::Offline;
     domain::AppleTvState appletv;
     domain::ClimateState climate;
+    domain::LightsState lights;
 };
 
 class HaClient {
