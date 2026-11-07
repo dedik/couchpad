@@ -1,5 +1,6 @@
 package app.couchpad.pilot
 
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
@@ -20,6 +21,11 @@ import app.couchpad.pilot.ui.haptic
 /** Jedno repozytorium na proces — przeżywa odtworzenie aktywności. */
 object Graph {
     lateinit var repo: PilotRepository
+    /**
+     * Rośnie przy każdym powrocie na ekran startowy: Home, gdy pilot jest ekranem głównym,
+     * oraz każde zapalenie ekranu — po wybudzeniu pilot pokazuje Start (ADR 0010).
+     */
+    val homePressed = kotlinx.coroutines.flow.MutableStateFlow(0)
     fun init(activity: ComponentActivity) {
         if (!::repo.isInitialized) repo = PilotRepository(SettingsStore(activity.applicationContext))
     }
@@ -30,6 +36,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Graph.init(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Launcher: po zapaleniu ekranu pilot pokazuje się od razu, nad ekranem blokady
+        // (bez PIN-u nie trzeba go przesuwać). Zabezpieczona blokada nadal prosi o PIN
+        // przy wyjściu do innych aplikacji.
+        if (Build.VERSION.SDK_INT >= 27) {
+            setShowWhenLocked(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+        }
         // Rysujemy także obok przedniej kamery: w poziomie pasek zakładek wchodzi w ten pas,
         // a ikonę na wysokości kamery odsuwa (Shell.kt, SideRail).
         if (Build.VERSION.SDK_INT >= 28) {
@@ -87,12 +102,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Home przy otwartym pilocie: jak w launcherze — wracamy na ekran startowy.
+        if (intent.hasCategory(Intent.CATEGORY_HOME)) Graph.homePressed.value++
+    }
+
     override fun onStart() {
         super.onStart()
         // Po każdym wybudzeniu: połączenie i świeży stan (ADR 0005). Rozłączenie w tle
         // oszczędza baterię — ponowne połączenie trwa poniżej sekundy.
         Graph.repo.start()
         Graph.repo.wake()
+        Graph.homePressed.value++
     }
 
     override fun onStop() {

@@ -23,6 +23,11 @@ pokój, lampa, efekty, żarówka, klimatyzacja i ustawienia.
   i pokazuje sterowanie dopiero po świeżym stanie (ADR 0005); w tle się rozłącza.
 - **Ekrany jak na płytce,** w pionie (zakładki na dole) i w poziomie (boczny pasek, szuflady
   w zakładce Dom). W poziomie pasek wchodzi w pas obok przedniej kamery.
+- **Launcher:** pilot może być ekranem głównym telefonu — startuje razem z nim, Home wraca
+  na ekran startowy, a po zapaleniu ekranu pilot pokazuje się od razu, nad ekranem blokady
+  (bez PIN-u nie trzeba go przesuwać), zawsze na ekranie startowym (ADR 0010). Ustawia się
+  go w *Ustawienia → Telefon → Ustaw jako ekran główny*; tam też lista aplikacji telefonu
+  i wejście do ustawień Androida.
 - **Ustawienia 1:1:** MQTT (puste identyfikatory wykrywa sam), ekran (orientacja, styl,
   jasność, tryb nocny, wygaszanie), dźwięk, pokój i czas, klawiatura i gładzik, diagnostyka.
 

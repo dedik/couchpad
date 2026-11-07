@@ -142,7 +142,10 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl) {
     LaunchedEffect(asleep) { display.keepScreenOn(!asleep) }
     LaunchedEffect(prefs.orientation) { display.orientation(prefs.orientation) }
 
-    BackHandler(enabled = screen != Screen.Start) { screen = Screen.Start }
+    // Wstecz cofa do ekranu startowego; na nim niczego nie zamyka — pilot jest ekranem głównym.
+    BackHandler { if (screen != Screen.Start) screen = Screen.Start }
+    val homePressed by app.couchpad.pilot.Graph.homePressed.collectAsStateWithLifecycle()
+    LaunchedEffect(homePressed) { if (homePressed > 0) screen = Screen.Start }
 
     ProvideUnits {
         val landscape = LocalLandscape.current
@@ -212,6 +215,8 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl) {
                         .clickable(remember { MutableInteractionSource() }, null) {
                             asleep = false
                             lastTouch = System.currentTimeMillis()
+                            // Po wybudzeniu ekran startowy (ADR 0010), stan pobierany w tle.
+                            screen = Screen.Start
                             repo.wake()
                         },
                 )

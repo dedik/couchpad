@@ -1,6 +1,14 @@
 package app.couchpad.pilot.ui
 
 import android.os.SystemClock
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.graphics.drawable.toBitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -76,6 +84,7 @@ private enum class Page(val title: String, val note: String, val icon: ImageVect
     Place("Pokój i czas", "nazwa pokoju, strefa czasowa", Icons.Rounded.Navigation),
     Keyboard("Klawiatura i gładzik", "tekst na żywo, czułość", Icons.Rounded.Keyboard),
     Diagnostics("Diagnostyka", "IP, łącze z domem, stan urządzeń", Icons.Rounded.List),
+    Phone("Telefon", "ekran główny, aplikacje, Android", Icons.Rounded.PhoneAndroid),
     About("O urządzeniu", "wersja, restart, ustawienia fabryczne", Icons.Rounded.Info),
 }
 
@@ -122,6 +131,7 @@ private fun PageList(state: PilotState, prefs: Preferences, selected: Page?, mod
                 Page.Display -> "${Options.themeLabels[prefs.theme]} · ${prefs.brightness}% · ${Options.timeoutLabels[prefs.timeout]}" to false
                 Page.Sound -> (if (prefs.volumeLimit >= 100) "bez limitu" else "maks. ${prefs.volumeLimit}%") to false
                 Page.Place -> prefs.roomName to false
+                Page.Phone -> (if (isDefaultHome(LocalContext.current)) "ekran główny" else "") to true
                 else -> "" to false
             }
             Card(Modifier.fillMaxWidth().height(64.u), radius = 16, selected = p == selected, onClick = { open(p) }) {
@@ -240,6 +250,7 @@ private fun PageContent(page: Page, state: PilotState, repo: PilotRepository, pr
                     InfoRow("Rewizja stanu", if (state.home.revision >= 0) state.home.revision.toString() else "—", false)
                     InfoRow("Kanały TV", state.channels.size.toString(), state.channels.isNotEmpty())
                 }
+                Page.Phone -> PhonePage()
                 Page.About -> AboutPage(repo)
             }
             Spacer(Modifier.height(24.u))
@@ -296,6 +307,81 @@ private fun PlacePage(repo: PilotRepository, prefs: Preferences) {
     }
     Group("Strefa czasowa") {
         Segmented(Options.timeZoneLabels, prefs.timeZone) { i -> repo.updatePreferences { it.copy(timeZone = i) } }
+    }
+}
+
+/** Czy pilot jest domyślnym ekranem głównym (launcherem) telefonu. */
+private fun isDefaultHome(context: Context): Boolean {
+    val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+    val resolved = context.packageManager.resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY)
+    return resolved?.activityInfo?.packageName == context.packageName
+}
+
+private data class PhoneApp(val label: String, val intent: Intent, val icon: ImageBitmap?)
+
+private fun launchableApps(context: Context): List<PhoneApp> {
+    val pm = context.packageManager
+    val query = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+    return pm.queryIntentActivities(query, 0)
+        .filter { it.activityInfo.packageName != context.packageName }
+        .map { info ->
+            val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                .setClassName(info.activityInfo.packageName, info.activityInfo.name)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+            val icon = runCatching { info.loadIcon(pm).toBitmap(96, 96).asImageBitmap() }.getOrNull()
+            PhoneApp(info.loadLabel(pm).toString(), intent, icon)
+        }
+        .sortedBy { it.label.lowercase() }
+}
+
+/**
+ * Pilot jako launcher zabiera ekran główny, więc stąd wychodzi się do reszty telefonu:
+ * wybór ekranu głównego, ustawienia Androida i lista aplikacji.
+ */
+@Composable
+private fun PhonePage() {
+    val context = LocalContext.current
+    var isHome by remember { mutableStateOf(isDefaultHome(context)) }
+    val apps = remember { launchableApps(context) }
+    // Po powrocie z systemowego wyboru ekranu głównego odświeżamy stan.
+    val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.DisposableEffect(lifecycle) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) isHome = isDefaultHome(context)
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    InfoRow("Ekran główny", if (isHome) "pilot" else "inny launcher", isHome)
+    Note(
+        if (isHome) "Pilot startuje razem z telefonem, Home wraca do niego, a po zapaleniu ekranu pokazuje się od razu."
+        else "Ustaw pilota jako ekran główny: będzie startował razem z telefonem i pojawiał się po zapaleniu ekranu."
+    )
+    Button(if (isHome) "Zmień ekran główny" else "Ustaw jako ekran główny", Modifier.fillMaxWidth(), accent = !isHome) {
+        val intent = Intent(android.provider.Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }
+            .onFailure { context.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+    }
+    Button("Ustawienia Androida", Modifier.fillMaxWidth()) {
+        context.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+    Group("Aplikacje") {
+        Column(verticalArrangement = Arrangement.spacedBy(8.u)) {
+            for (app in apps) {
+                Card(Modifier.fillMaxWidth().height(56.u), radius = 14, onClick = {
+                    runCatching { context.startActivity(app.intent) }
+                }) {
+                    Row(Modifier.fillMaxSize().padding(horizontal = 14.u), verticalAlignment = Alignment.CenterVertically) {
+                        if (app.icon != null) {
+                            androidx.compose.foundation.Image(app.icon, null, Modifier.size(32.u))
+                            Spacer(Modifier.width(14.u))
+                        }
+                        T(app.label, 15, FontWeight.Medium, modifier = Modifier.weight(1f))
+                        Icon(Icons.Rounded.ChevronRight, null, tint = C.faint, modifier = Modifier.size(20.u))
+                    }
+                }
+            }
+        }
     }
 }
 
