@@ -19,6 +19,9 @@
 # KLIMATYZACJA (ADR 0009): encja `climate.living_room_ac` (Midea), odczytana 2026-11-02.
 # Tryby, zakres, krok i opcje bierzemy z jej atrybutów, nie z tego pliku.
 #
+# W DOMU (ADR 0015): średnia temperatura i wilgotność z czujników pomieszczeń jedzie
+# w wiadomości pogody (`indoor`); lista czujników w skrypcie „Pilot — opublikuj pogodę”.
+#
 # OŚWIETLENIE (ADR 0014): główne światło pomieszczeń w `light_rooms` niżej. Pilot dostaje
 # krótkie identyfikatory (`lampa`, `lampa_lewa`), encje zna tylko ten plik. Lampa w salonie
 # to grupa `light.living_room_lamp` z trzech żarówek WiZ, odczytana 2026-11-07.
@@ -91,6 +94,19 @@ script:
     sequence:
       - variables:
           weather_entity: weather.forecast_home
+          # W domu (ADR 0015): czujniki pomieszczeń. Kuchnia jest w salonie, przedpokój
+          # w biurze, więc te cztery obejmują całe mieszkanie. Bez NSPaneli i termostatów —
+          # nagrzewają się same i zawyżają średnią. Te same encje są w wyzwalaczach „Pilot — pogoda”.
+          indoor_temperature:
+            - sensor.living_room_temperature
+            - sensor.bedroom_temperature
+            - sensor.office_temperature
+            - sensor.bathroom_temperature
+          indoor_humidity:
+            - sensor.living_room_humidity
+            - sensor.bedroom_humidity
+            - sensor.office_humidity
+            - sensor.bathroom_humidity
       - if: "{{ states(weather_entity) not in ['unavailable', 'unknown', 'none'] }}"
         then:
           - service: mqtt.publish
@@ -99,10 +115,20 @@ script:
               retain: true
               qos: 1
               payload: >-
-                {{ {'condition': states(weather_entity),
-                    'temperature': state_attr(weather_entity, 'temperature') | float(0),
-                    'night': is_state('sun.sun', 'below_horizon')}
-                   | tojson }}
+                {% set bad = ['unavailable', 'unknown', 'none', ''] %}
+                {% set t = indoor_temperature | map('states') | reject('in', bad) | map('float') | list %}
+                {% set h = indoor_humidity | map('states') | reject('in', bad) | map('float') | list %}
+                {% set out = {'condition': states(weather_entity),
+                              'temperature': state_attr(weather_entity, 'temperature') | float(0),
+                              'night': is_state('sun.sun', 'below_horizon')} %}
+                {% if t | count > 0 %}
+                  {% set indoor = {'temperature': ((t | sum) / (t | count)) | round(1)} %}
+                  {% if h | count > 0 %}
+                    {% set indoor = dict(indoor, humidity=((h | sum) / (h | count)) | round(0) | int) %}
+                  {% endif %}
+                  {% set out = dict(out, indoor=indoor) %}
+                {% endif %}
+                {{ out | tojson }}
 
   multimedia_remote_publish:
     alias: Pilot — opublikuj snapshot
@@ -731,6 +757,18 @@ automation:
       # więc wschód i zachód słońca też dają nową wiadomość.
       - platform: state
         entity_id: sun.sun
+        to: ~
+      # W domu (ADR 0015): zmiana któregokolwiek czujnika pomieszczenia.
+      - platform: state
+        entity_id:
+          - sensor.living_room_temperature
+          - sensor.bedroom_temperature
+          - sensor.office_temperature
+          - sensor.bathroom_temperature
+          - sensor.living_room_humidity
+          - sensor.bedroom_humidity
+          - sensor.office_humidity
+          - sensor.bathroom_humidity
         to: ~
     action:
       # Po starcie HA broker i encja potrzebują chwili, jak przy snapshocie.

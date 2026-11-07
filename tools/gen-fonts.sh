@@ -56,6 +56,8 @@ gen ubuntu_b_26 Ubuntu-Bold.ttf    26 "$charset"
 num="0x2C,0x30-0x3A,0x2014"
 gen ubuntu_b_46_num Ubuntu-Bold.ttf 46 "$num"
 gen ubuntu_b_64_num Ubuntu-Bold.ttf 64 "$num"
+# 96 px: zegar ekranu startowego w poziomie (sama godzina: cyfry, dwukropek, pauza).
+gen ubuntu_b_96_num Ubuntu-Bold.ttf 96 "0x30-0x3A,0x2014"
 
 # Ikony trybów klimatyzacji: pięć znaków z Lucide 0.460.0 (licencja ISC), te same co w makiecie
 # docs/ux/mockup-landscape. Plik TTF jest w pakiecie npm `lucide-static@0.460.0` (font/lucide.ttf):
