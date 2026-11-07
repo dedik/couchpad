@@ -60,7 +60,11 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    Pas przy przedniej kamerze (poziom): okno rysuje w wycięciu (SHORT_EDGES), boczny
    pasek zakładek stoi przy krawędzi wyświetlacza, a ikona na wysokości kamery jest
    odsunięta o szerokość wycięcia (`Shell.kt`, `SideRail`); ekrany bez paska omijają pas.
-3. Tryb „tylko pilot” (aplikacja jako launcher), autostart po włączeniu telefonu.
+3. ~~Tryb „tylko pilot”~~ — aplikacja jest launcherem (filtr HOME): startuje z telefonem,
+   Home i każde zapalenie ekranu wracają na Start, okno pokazuje się nad ekranem blokady
+   (`setShowWhenLocked`), Wstecz na Starcie niczego nie zamyka. Ustawienia → Telefon: wybór
+   ekranu głównego (systemowy), ustawienia Androida, lista aplikacji. Domyślny launcher
+   wybiera użytkownik — aplikacja go nie przestawia.
 4. Galaxy S5: test na Androidzie 6.
 
 ---

@@ -5,6 +5,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Lista aplikacji telefonu w Ustawienia → Telefon (Android 11+ wymaga deklaracji). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:label="Pilot"
         android:icon="@drawable/px_tv"
@@ -12,16 +20,29 @@
         android:usesCleartextTraffic="true"
         android:theme="@android:style/Theme.Material.NoActionBar">
 
+        <!--
+            Pilot jako ekran główny telefonu (launcher): startuje razem z telefonem, przycisk
+            Home wraca do niego, a po zapaleniu ekranu pokazuje się nad ekranem blokady
+            (setShowWhenLocked w MainActivity). stateNotNeeded i singleTask jak w typowym
+            launcherze: jedna instancja, bez odtwarzania stanu po zabiciu procesu.
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:clearTaskOnLaunch="true"
             android:screenOrientation="fullSensor"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode">
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|smallestScreenSize|navigation|keyboard">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
