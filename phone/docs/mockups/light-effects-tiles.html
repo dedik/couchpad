@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Efekty lampy — kafle</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+:root {
+  --bg:#0A0B0E; --surface:#14161B; --surface2:#1C1F26; --surface3:#282C35; --line:#30353F;
+  --text:#F3F5F9; --dim:#98A0AE; --faint:#626A78; --accent:#F2A93B; --accentInk:#17120A;
+  --accentSoft:rgba(242,169,59,.16); --page:#050608;
+}
+:root[data-theme="light"] {
+  --bg:#EEF0F3; --surface:#FFFFFF; --surface2:#E4E7EC; --surface3:#CFD4DC; --line:#D9DDE4;
+  --text:#15171C; --dim:#586070; --faint:#878F9D; --accent:#E08A12; --accentInk:#1A1206;
+  --accentSoft:rgba(224,138,18,.16); --page:#D5D9DF;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, system-ui, sans-serif; }
+.top { max-width:1400px; margin:0 auto; padding:24px 16px 8px; display:flex; flex-wrap:wrap; gap:12px; align-items:baseline; justify-content:space-between; }
+.top h1 { font-size:22px; margin:0; font-weight:700; }
+.top p { margin:4px 0 0; color:var(--dim); font-size:14px; max-width:780px; line-height:1.45; }
+.top button { font:inherit; font-size:13px; background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:999px; padding:8px 14px; cursor:pointer; }
+.stage { max-width:1400px; margin:0 auto; padding:16px; display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start; }
+.col { display:flex; flex-direction:column; gap:10px; }
+.col h2 { font-size:15px; margin:0; font-weight:500; }
+.col .sub { font-size:12.5px; color:var(--dim); max-width:360px; line-height:1.4; margin:0; }
+
+/* telefon: 360×760 dp */
+.phone { width:360px; height:760px; border-radius:36px; background:var(--bg); border:8px solid #000; overflow:hidden; position:relative; box-shadow:0 20px 60px rgba(0,0,0,.35); display:flex; flex-direction:column; }
+.phone.land { width:760px; height:360px; }
+.scroll { flex:1; overflow-y:auto; padding:0 18px 18px; scrollbar-width:none; }
+.scroll::-webkit-scrollbar { display:none; }
+.tabs { height:62px; flex:none; display:flex; justify-content:space-around; align-items:center; background:var(--bg); }
+.tabs span { width:52px; height:40px; border-radius:14px; display:grid; place-items:center; color:var(--faint); }
+.tabs span.on { background:var(--accentSoft); color:var(--accent); }
+
+.hdr { display:flex; align-items:center; gap:14px; padding:22px 0 12px; }
+.round { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:var(--surface2); border:1px solid var(--line); color:var(--text); flex:none; }
+.round.pw { margin-left:auto; background:var(--accent); color:var(--accentInk); border:none; }
+.hdr b { display:block; font-size:20px; font-weight:700; }
+.hdr small { display:block; font-size:11px; color:var(--dim); letter-spacing:.04em; margin-top:2px; }
+
+.cap { font-size:11.5px; color:var(--dim); letter-spacing:.06em; margin:18px 0 8px; font-weight:500; }
+.dialbox { position:relative; width:250px; height:230px; margin:6px auto 0; }
+.dialbox svg { width:100%; height:100%; }
+.dialtext { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding-bottom:28px; }
+.dialtext .c { font-size:11px; color:var(--dim); letter-spacing:.06em; }
+.dialtext .v { font-size:56px; font-weight:700; line-height:1.05; }
+.dialtext .v sup { font-size:20px; }
+.dialtext .d { font-size:13px; color:var(--dim); min-height:16px; }
+
+.swatches { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.swatches i { height:38px; border-radius:10px; display:block; transition:opacity .2s; }
+.swatches i.sel { outline:2px solid var(--accent); outline-offset:-2px; }
+.swatches.off i { opacity:.25; }
+.swlbl { display:flex; justify-content:space-between; font-size:11px; color:var(--faint); margin-top:5px; }
+
+/* kafle efektów */
+.grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.tile { border-radius:14px; background:var(--surface2); color:var(--dim); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; height:72px; cursor:pointer; border:1px solid transparent; user-select:none; transition:background .15s; padding:0 4px; }
+.tile:active { background:var(--surface3); }
+.tile svg { width:22px; height:22px; }
+.tile span { font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.tile.sel { background:var(--accentSoft); border-color:var(--accent); color:var(--accent); }
+.tile.big svg { width:34px; height:34px; }
+.tile.big span { font-size:14px; font-weight:500; }
+.tile.more { color:var(--text); }
+.klima { display:flex; gap:8px; height:152px; }
+.klima .big { flex:6; height:auto; }
+.klima .rest { flex:10; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:8px; }
+.klima .rest .tile { height:auto; }
+
+.bulbs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.bulb { height:76px; border-radius:14px; border:1px solid var(--accent); background:var(--accentSoft); color:var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:12px; font-weight:500; }
+.bulb svg { width:20px; height:20px; }
+
+/* poziom */
+.land .body { flex:1; display:flex; min-height:0; }
+.land .side { width:62px; display:flex; flex-direction:column; justify-content:space-around; align-items:center; }
+.land .left { width:260px; padding:0 0 0 6px; display:flex; flex-direction:column; }
+.land .left .dialbox { width:220px; height:200px; margin:10px auto 0; }
+.land .hdr { padding:8px 0 0; }
+.land .right { flex:1; overflow-y:auto; padding:8px 18px 16px 8px; scrollbar-width:none; }
+.land .right { overflow:hidden; display:flex; flex-direction:column; padding:0 18px 6px 8px; }
+.land .cap { margin:8px 0 5px; font-size:10.5px; }
+.land .swatches i { height:24px; border-radius:8px; }
+.land .swlbl { margin-top:3px; font-size:10px; }
+.land .grid6 { display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
+.land .grid6 .tile { height:42px; gap:3px; border-radius:11px; }
+.land .grid6 .tile svg { width:17px; height:17px; }
+.land .grid6 .tile span { font-size:10px; }
+.land .bulbs .bulb { height:38px; flex-direction:row; gap:8px; border-radius:11px; font-size:11.5px; }
+.land .bulbs .bulb svg { width:17px; height:17px; }
+.land .klima { height:112px; }
+.land .k6 { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; grid-template-rows:1fr 1fr; gap:8px; height:112px; }
+.land .k6 .tile { height:auto; }
+.land .k6 .big { grid-row:span 2; }
+.land .k6 .more { grid-column:4; grid-row:1 / span 2; }
+.land .bulbs.tall .bulb { height:58px; flex-direction:column; gap:3px; }
+
+/* lista wyboru (wariant B → „Więcej”) */
+.sheet { position:absolute; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; }
+.sheet.open { display:flex; }
+.sheet .panel { width:100%; max-height:78%; background:var(--surface); border-radius:22px 22px 0 0; padding:16px 18px 20px; overflow-y:auto; }
+.sheet .panel b { display:block; font-size:16px; margin-bottom:12px; }
+.note { font-size:12px; color:var(--dim); background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 12px; line-height:1.45; max-width:360px; }
+.note code { font-size:11.5px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>Efekty lampy jako kafle — aplikacja Android</h1>
+    <p>Dziś efekt to jeden wiersz „EFEKT · Bez efektu”, który otwiera listę. Propozycja: kafle z ikoną nad nazwą, jak tryby klimatyzacji (<code>ModeTile</code>). Kliknij kafel, żeby zobaczyć stan z efektem (podpis tarczy, wygaszona barwa). Panel ESP32 zostaje bez zmian.</p>
+  </div>
+  <button id="theme">Jasny / ciemny</button>
+</div>
+
+<div class="stage">
+  <div class="col">
+    <h2>A · Siatka wszystkich efektów</h2>
+    <p class="sub">4 kolumny, „Brak” zawsze pierwszy, jeden dotyk zmienia efekt. 16 efektów + Brak = 5 rzędów (~400 dp); strona i tak się przewija.</p>
+    <div class="phone" id="pA"></div>
+  </div>
+  <div class="col">
+    <h2>B · Układ jak klimatyzacja</h2>
+    <p class="sub">Wybrany efekt na dużym kaflu, obok 3 kolejne i kafel „Więcej”, który otwiera dzisiejszą listę. Krócej, ale ulubione trzeba gdzieś ustalić.</p>
+    <div class="phone" id="pB"></div>
+  </div>
+  <div class="col">
+    <h2>A · Poziom, ściśnięte — wszystkie efekty bez scrolla</h2>
+    <p class="sub">6 kolumn × 3 rzędy, kafle 42 dp, mniejsza barwa, żarówki w jednym niskim rzędzie.</p>
+    <div class="phone land" id="pL"></div>
+    <h2>B · Poziom — 6 kafli bez scrolla</h2>
+    <p class="sub">Duży wybrany + 4 kafle + „Więcej”. Kafle obok to najczęściej wybierane efekty tej lampy; gdy efekt jest włączony, pierwszy z nich to zawsze „Brak”. Klikaj (też w „Więcej”) i patrz, jak kolejność się zmienia.</p>
+    <div class="phone land" id="pLB"></div>
+    <div class="note" id="usage"></div>
+    <div class="note">
+      <b>Do ustalenia</b><br>
+      • A jest najprostsze i najszybsze w użyciu; rekomenduję A.<br>
+      • W B trzeba zdecydować, które 4 efekty stoją obok wybranego (kolejność z <code>HomeCatalog</code>? ostatnio używane?).<br>
+      • To świadome odstępstwo od zasady 1:1 z panelem — dopiszę je do <code>phone/docs/PROGRESS.md</code>.<br>
+      • Lampa bez efektów: sekcja znika jak dziś.
+    </div>
+  </div>
+</div>
+
+<script>
+const EFFECTS = [
+  ['', 'Brak', 'ban'], ['Cozy', 'Przytulnie', 'sofa'], ['Relax', 'Relaks', 'flower-2'], ['TV time', 'Seans TV', 'tv'],
+  ['Candlelight', 'Świeca', 'flame'], ['Warm white', 'Ciepła biel', 'lamp'], ['Golden white', 'Złota biel', 'sun'],
+  ['Daylight', 'Dzienne', 'sun-medium'], ['Cool white', 'Zimna biel', 'snowflake'], ['Focus', 'Skupienie', 'scan-eye'],
+  ['Night light', 'Nocne', 'moon'], ['Bedtime', 'Do snu', 'bed'], ['Wake-up', 'Pobudka', 'sunrise'],
+  ['Pulse', 'Puls', 'heart-pulse'], ['Steampunk', 'Steampunk', 'cog'], ['Diwali', 'Diwali', 'party-popper'], ['Alarm', 'Alarm', 'alarm-clock'],
+];
+const SW = ['#FFC175','#8E7A5A','#8E846C','#8E8A80','#8C8C8C','#848A96','#748096'];
+const state = { A: 'Cozy', B: 'Cozy', L: 'Cozy', LB: 'Cozy' };
+// licznik wyborów per lampa (w aplikacji: SettingsStore → SharedPreferences, klucz np. effects.<light_id>)
+const usage = { 'Cozy': 9, 'TV time': 6, 'Candlelight': 4, 'Night light': 3, 'Relax': 1 };
+function frequent(cur, n) {
+  const order = EFFECTS.map(e => e[0]).filter(id => id && id !== cur);
+  return order.map((id, i) => [id, usage[id] || 0, i]).sort((a, b) => b[1] - a[1] || a[2] - b[2]).slice(0, n).map(x => x[0]);
+}
+
+const ic = n => `<i data-lucide="${n}"></i>`;
+const eff = id => EFFECTS.find(e => e[0] === id);
+
+function dial(effect, w) {
+  const r = 100, cx = 125, cy = 118, a0 = 135, sweep = 270, pct = .6;
+  const pt = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
+  const arc = (from, to) => { const [x1, y1] = pt(from), [x2, y2] = pt(to); return `M${x1} ${y1} A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}`; };
+  const end = a0 + sweep * pct, [kx, ky] = pt(end);
+  return `<div class="dialbox"><svg viewBox="0 0 250 230">
+    <path d="${arc(a0, a0 + sweep)}" stroke="var(--surface3)" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="${arc(a0, end)}" stroke="var(--accent)" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="${kx}" cy="${ky}" r="13" fill="#fff"/></svg>
+    <div class="dialtext"><div class="c">${effect ? 'EFEKT' : 'JASNOŚĆ'}</div><div class="v">60<sup>%</sup></div><div class="d">${effect ? eff(effect)[1] : ''}</div></div></div>`;
+}
+const header = () => `<div class="hdr"><div class="round">${ic('chevron-left')}</div><div><b>Lampa</b><small>SALON · 3 ŻARÓWKI</small></div><div class="round pw">${ic('power')}</div></div>`;
+const swatches = effect => `<div class="cap">BARWA</div><div class="swatches ${effect ? 'off' : ''}">${SW.map((c, i) => `<i style="background:${c}" class="${i === 0 && !effect ? 'sel' : ''}"></i>`).join('')}</div>
+  <div class="swlbl"><span>ciepła</span><span>${effect ? 'barwa nie działa w efekcie' : ''}</span><span>zimna</span></div>`;
+const bulbs = () => `<div class="cap">ŻARÓWKI</div><div class="bulbs">${['LEWA', 'ŚRODKOWA', 'PRAWA'].map(n => `<div class="bulb">${ic('lightbulb')}<span>${n}</span><span>60%</span></div>`).join('')}</div>`;
+const tile = (e, sel, key, cls = '') => `<div class="tile ${cls} ${sel ? 'sel' : ''}" data-k="${key}" data-id="${e[0]}">${ic(e[2])}<span>${e[1]}</span></div>`;
+const tabs = () => `<div class="tabs">${['tv', 'monitor-play', 'speaker', 'house', 'settings'].map((n, i) => `<span class="${i === 3 ? 'on' : ''}">${ic(n)}</span>`).join('')}</div>`;
+
+function gridA(key, cls = 'grid4') {
+  return `<div class="cap">EFEKT · CAŁA LAMPA</div><div class="grid4 ${cls}">${EFFECTS.map(e => tile(e, e[0] === state[key], key)).join('')}</div>`;
+}
+function klimaB() {
+  const cur = state.B, sel = eff(cur);
+  const others = EFFECTS.filter(e => e[0] !== cur).slice(0, 3);
+  return `<div class="cap">EFEKT · CAŁA LAMPA</div><div class="klima">${tile(sel, cur !== '', 'B', 'big')}
+    <div class="rest">${others.map(e => tile(e, false, 'B')).join('')}
+    <div class="tile more" data-more="1">${ic('layout-grid')}<span>Więcej · ${EFFECTS.length - 4}</span></div></div></div>`;
+}
+
+function k6() {
+  const cur = state.LB, sel = eff(cur);
+  const ids = cur ? [''].concat(frequent(cur, 3)) : frequent(cur, 4);
+  const others = ids.map(eff);
+  return `<div class="cap">EFEKT · CAŁA LAMPA</div><div class="k6">${tile(sel, cur !== '', 'LB', 'big')}${others.map(e => tile(e, false, 'LB')).join('')}
+    <div class="tile more" data-more="sheetLB">${ic('layout-grid')}<span>Więcej · ${EFFECTS.length - 5}</span></div></div>`;
+}
+
+function render() {
+  pA.innerHTML = `<div class="scroll">${header()}${dial(state.A)}${swatches(state.A)}${gridA('A')}${bulbs()}</div>${tabs()}`;
+  pB.innerHTML = `<div class="scroll">${header()}${dial(state.B)}${swatches(state.B)}${klimaB()}${bulbs()}</div>${tabs()}
+    <div class="sheet" id="sheet"><div class="panel"><b>Efekt</b><div class="grid4">${EFFECTS.map(e => tile(e, e[0] === state.B, 'B')).join('')}</div></div></div>`;
+  const land = (key, effects, bulbCls) => `<div style="padding:0 18px">${header()}</div><div class="body"><div class="left">${dial(state[key])}</div>
+    <div class="right">${swatches(state[key]).replace('class="cap"', 'class="cap" style="margin-top:0"')}${effects}${bulbs().replace('class="bulbs"', `class="bulbs ${bulbCls}"`)}</div></div>`;
+  pL.innerHTML = land('L', `<div class="cap">EFEKT · CAŁA LAMPA</div><div class="grid6">${EFFECTS.map(e => tile(e, e[0] === state.L, 'L')).join('')}</div>`, '');
+  pLB.innerHTML = land('LB', k6(), 'tall') + `<div class="sheet" id="sheetLB"><div class="panel"><b>Efekt</b><div class="grid4" style="grid-template-columns:repeat(6,1fr)">${EFFECTS.map(e => tile(e, e[0] === state.LB, 'LB')).join('')}</div></div></div>`;
+  const top = Object.entries(usage).sort((a, b) => b[1] - a[1]);
+  document.getElementById('usage').innerHTML = '<b>Licznik wyborów (Salon · Lampa)</b><br>' + top.map(([id, n]) => `${eff(id)[1]} ×${n}`).join(' · ') +
+    '<br><span style="color:var(--faint)">Zapis lokalnie w telefonie, bez nowych tematów MQTT. Remis → kolejność z listy HA.</span>';
+  lucide.createIcons();
+}
+
+document.addEventListener('click', ev => {
+  const more = ev.target.closest('[data-more]');
+  if (more) { document.getElementById(more.dataset.more === 'sheetLB' ? 'sheetLB' : 'sheet').classList.add('open'); return; }
+  const t = ev.target.closest('.tile[data-k]');
+  if (t) {
+    if (t.dataset.k === 'LB' && t.dataset.id && t.dataset.id !== state.LB) usage[t.dataset.id] = (usage[t.dataset.id] || 0) + 1;
+    state[t.dataset.k] = t.dataset.id; render(); return;
+  }
+  if (ev.target.classList.contains('sheet')) ev.target.classList.remove('open');
+});
+document.getElementById('theme').onclick = () => {
+  const r = document.documentElement;
+  r.dataset.theme = r.dataset.theme === 'light' ? 'dark' : 'light';
+};
+render();
+</script>
+</body>
+</html>

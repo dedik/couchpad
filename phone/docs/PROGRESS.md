@@ -86,6 +86,16 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    ekranu głównego (systemowy), ustawienia Androida, lista aplikacji. Domyślny launcher
    wybiera użytkownik — aplikacja go nie przestawia.
 4. Galaxy S5: test na Androidzie 6.
+5. ~~Efekty lampy jako kafle~~ (2026-11-08) — **świadome odstępstwo od 1:1 z panelem**
+   (panel zostaje przy wierszu „EFEKT” z listą, bo ma mniej miejsca). Na ekranie Lampa
+   kafle jak tryby klimy (`ui/home/EffectTiles.kt`): bieżący efekt na dużym kaflu, obok
+   najczęściej wybierane efekty tej lampy (gdy efekt włączony, pierwszy to zawsze „Brak”),
+   ostatni kafel „Więcej · N” otwiera pełną listę. Pion: 3 + Więcej, poziom: 4 + Więcej na
+   całą wysokość; w obu orientacjach ekran mieści się bez przewijania. Liczniki wyborów są
+   tylko w telefonie (`SettingsStore`, klucz `effect_usage`, JSON lampa → efekt → liczba;
+   kasuje je reset fabryczny), bez nowych tematów MQTT; remis rozstrzyga kolejność z HA
+   (`data/EffectUsage.kt`, test `EffectUsageTest`). Makieta:
+   `docs/mockups/light-effects-tiles.html`.
 
 ---
 

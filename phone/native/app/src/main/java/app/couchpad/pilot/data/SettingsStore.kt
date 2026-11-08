@@ -2,6 +2,7 @@ package app.couchpad.pilot.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONObject
 
 /** Ustawienia pilota w prywatnych SharedPreferences aplikacji (`shared_prefs/pilot.xml`). */
 class SettingsStore(context: Context) {
@@ -67,6 +68,21 @@ class SettingsStore(context: Context) {
             .putInt("trackpad_step", p.trackpadStep)
             .putInt("volume_limit", p.volumeLimit)
             .apply()
+    }
+
+    /** Liczniki wyborów efektów: lampa → efekt → ile razy wybrany (`effect_usage`, JSON). */
+    fun loadEffectUsage(): Map<String, Map<String, Int>> {
+        val root = runCatching { JSONObject(string("effect_usage", "{}")) }.getOrNull() ?: return emptyMap()
+        return root.keys().asSequence().associateWith { light ->
+            val counts = root.optJSONObject(light) ?: JSONObject()
+            counts.keys().asSequence().associateWith { counts.optInt(it) }
+        }
+    }
+
+    fun saveEffectUsage(usage: Map<String, Map<String, Int>>) {
+        val root = JSONObject()
+        usage.forEach { (light, counts) -> root.put(light, JSONObject(counts)) }
+        prefs.edit().putString("effect_usage", root.toString()).apply()
     }
 
     /** Ustawienia fabryczne: broker, identyfikatory i wszystkie preferencje. */
