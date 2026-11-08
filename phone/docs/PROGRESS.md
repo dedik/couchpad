@@ -133,6 +133,7 @@ SDK: `platforms;android-34`, `build-tools;34.0.0`, `ndk;27.2.12479018`, `cmake;3
 
 ## Uwagi
 
-- Firmware w `../firmware` nie jest modyfikowany przez ten projekt.
-- LVGL bierzemy z `../firmware/managed_components/lvgl__lvgl` (9.2.2).
+- Aplikacja jest w katalogu `phone/` repozytorium firmware'u (od 2026-11-08; wcześniej
+  osobne repozytorium obok). Firmware od niej nie zależy i nie jest przez nią zmieniany.
+- LVGL (port SDL) bierzemy z `../managed_components/lvgl__lvgl` (9.2.2).
 - `platform/lv_kconfig_phone.h` to kopia opcji `CONFIG_LV_*` z sdkconfig firmware'u.
