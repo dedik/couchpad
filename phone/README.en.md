@@ -13,9 +13,13 @@ MQTT contract. This repository does not change the firmware.
 
 ![Landscape screens](docs/screenshots/overview-landscape.png)
 
+![Portrait screens — light theme](docs/screenshots/overview-portrait-light.png)
+
+![Landscape screens — light theme](docs/screenshots/overview-landscape-light.png)
+
 All screens: [`docs/screenshots/portrait/`](docs/screenshots/portrait/) and
 [`docs/screenshots/landscape/`](docs/screenshots/landscape/) — Start, TV, Apple TV, Z906, Home,
-room, lamp, effects, bulb, air conditioning and settings.
+room, lamp, effects, bulb, air conditioning and settings; light theme in the `light/` subfolders.
 
 ## What it does
 
@@ -51,7 +55,8 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 Broker details are entered on the phone (Settings → MQTT). They never reach the repository.
 
-Screenshots from a connected phone: `tools/screenshots.sh portrait|landscape`.
+Screenshots from a connected phone: `tools/screenshots.sh portrait|landscape [light]`
+(with `light` in the light theme, into `docs/screenshots/<orientation>/light/`).
 
 ## LVGL port (reference)
 
