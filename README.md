@@ -71,6 +71,10 @@ does not depend on it.
 
 ![Android app — landscape](docs/screenshots/phone/overview-landscape.png)
 
+![Android app — portrait, light theme](docs/screenshots/phone/overview-portrait-light.png)
+
+![Android app — landscape, light theme](docs/screenshots/phone/overview-landscape-light.png)
+
 ## What it does
 
 - **TV** — power state, input and picture mode, D-pad, volume and channel rockers, four
