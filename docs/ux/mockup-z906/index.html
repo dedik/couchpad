@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Z906 — warianty kanałów</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+:root {
+  --bg:#0A0B0E; --surface:#14161B; --surface2:#1C1F26; --surface3:#282C35; --line:#30353F;
+  --text:#F3F5F9; --dim:#98A0AE; --faint:#626A78; --accent:#F2A93B; --accentInk:#17120A;
+  --accentSoft:rgba(242,169,59,.16); --page:#050608; --frame:#000;
+}
+:root[data-theme="light"] {
+  --bg:#EEF0F3; --surface:#FFFFFF; --surface2:#E4E7EC; --surface3:#CFD4DC; --line:#D9DDE4;
+  --text:#15171C; --dim:#586070; --faint:#878F9D; --accent:#E08A12; --accentInk:#1A1206;
+  --accentSoft:rgba(224,138,18,.16); --page:#D5D9DF; --frame:#2a2d33;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, system-ui, sans-serif; }
+.top { max-width:1500px; margin:0 auto; padding:24px 16px 8px; }
+.top h1 { font-size:22px; margin:0 0 6px; }
+.top p { margin:0; color:var(--dim); font-size:14px; max-width:900px; line-height:1.45; }
+.bar { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; align-items:center; }
+.bar button { font:inherit; font-size:13px; background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:999px; padding:8px 14px; cursor:pointer; }
+.bar button.on { background:var(--accentSoft); border-color:var(--accent); color:var(--accent); }
+.bar .sep { width:1px; height:24px; background:var(--line); margin:0 6px; }
+.desc { max-width:1500px; margin:0 auto; padding:10px 16px 0; font-size:13.5px; color:var(--dim); line-height:1.5; }
+.desc b { color:var(--text); font-weight:500; }
+.stage { max-width:1500px; margin:0 auto; padding:16px; display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; }
+.col { display:flex; flex-direction:column; gap:8px; }
+.col h2 { font-size:14px; margin:0; font-weight:500; color:var(--dim); }
+.holder { position:relative; overflow:hidden; border-radius:22px; border:6px solid var(--frame); box-shadow:0 18px 50px rgba(0,0,0,.35); }
+.scr { position:absolute; left:0; top:0; transform-origin:0 0; background:var(--bg); display:flex; color:var(--text); }
+
+/* ekran w jednostkach projektu (1 u = 1 px panelu) */
+.portrait { flex-direction:column; }
+.landscape { flex-direction:row; }
+.hdr { display:flex; align-items:center; gap:14px; height:72px; padding:0 24px; flex:none; }
+.appicon { width:44px; height:44px; border-radius:12px; background:var(--surface2); display:grid; place-items:center; color:var(--accent); }
+.hdr b { display:block; font-size:19px; font-weight:700; }
+.hdr small { display:block; font-size:11px; color:var(--dim); letter-spacing:.12em; margin-top:2px; }
+.pill { height:32px; padding:0 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; gap:8px; font-size:13px; color:var(--dim); }
+.pill i.dot { width:7px; height:7px; border-radius:50%; background:var(--faint); display:block; }
+.pw { width:48px; height:48px; border-radius:50%; display:grid; place-items:center; background:var(--accentSoft); border:1px solid var(--accent); color:var(--accent); }
+.sel { display:flex; gap:10px; align-items:center; padding:0 24px; height:72px; flex:none; }
+.sel .ic { color:var(--faint); width:28px; display:grid; place-items:center; }
+.selbtn { flex:1; height:60px; border-radius:16px; background:var(--surface2); display:grid; place-items:center; font-size:14px; font-weight:500; border-bottom:3px solid var(--accent); }
+.dialwrap { position:relative; display:grid; place-items:center; flex:none; }
+.dialwrap > svg { position:absolute; inset:0; overflow:visible; }
+.dialc { position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.mute { width:52px; height:52px; border-radius:50%; background:var(--surface2); display:grid; place-items:center; color:var(--text); }
+.vol { font-size:64px; font-weight:700; line-height:1; }
+.voll { font-size:11px; color:var(--dim); letter-spacing:.08em; }
+.pm { position:absolute; display:flex; gap:24px; }
+.rb { width:64px; height:64px; border-radius:50%; background:var(--surface2); border:1px solid var(--line); display:grid; place-items:center; color:var(--text); cursor:pointer; user-select:none; }
+.tabs { height:80px; flex:none; display:flex; justify-content:space-around; align-items:center; border-top:1px solid var(--line); padding:0 16px; }
+.tab { width:80px; height:64px; border-radius:16px; display:grid; place-items:center; color:var(--faint); }
+.tab.on { background:var(--accentSoft); color:var(--accent); }
+.rail { width:88px; flex:none; display:flex; flex-direction:column; justify-content:space-around; align-items:center; border-right:1px solid var(--line); padding:12px 0; }
+.rail .tab { width:72px; height:72px; }
+.cap { font-size:11px; color:var(--dim); letter-spacing:.14em; font-weight:500; }
+.lv-head { display:flex; justify-content:space-between; align-items:baseline; }
+.lv-head .hint { font-size:11px; color:var(--faint); }
+
+/* A — kafle kanałów */
+.tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.chtile { border-radius:16px; background:var(--surface2); padding:12px 12px 14px; display:flex; flex-direction:column; gap:8px; touch-action:none; cursor:ns-resize; user-select:none; }
+.chtile .t { display:flex; align-items:center; justify-content:space-between; color:var(--dim); }
+.chtile .t span { font-size:11px; letter-spacing:.12em; font-weight:500; }
+.chtile .v { font-size:30px; font-weight:700; text-align:center; line-height:1; }
+.chtile .row { display:flex; align-items:center; gap:8px; }
+.mini { width:30px; height:30px; border-radius:50%; background:var(--surface3); display:grid; place-items:center; color:var(--text); cursor:pointer; flex:none; }
+.track { flex:1; height:6px; border-radius:3px; background:var(--surface3); position:relative; overflow:hidden; }
+.track b { position:absolute; left:0; top:0; bottom:0; background:var(--accent); border-radius:3px; }
+
+/* B — mikser */
+.mix { display:flex; flex-direction:column; gap:8px; }
+.mrow { height:60px; border-radius:16px; background:var(--surface2); display:flex; align-items:center; gap:12px; padding:0 10px 0 14px; touch-action:none; user-select:none; cursor:ew-resize; }
+.mrow .ic { color:var(--dim); width:22px; display:grid; place-items:center; flex:none; }
+.mrow .nm { width:86px; font-size:14px; font-weight:500; flex:none; }
+.mrow .mtrack { flex:1; height:8px; border-radius:4px; background:var(--surface3); position:relative; }
+.mrow .mtrack b { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--accent); }
+.mrow .mtrack i { position:absolute; top:50%; width:20px; height:20px; margin:-10px 0 0 -10px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+.mrow .val { width:34px; text-align:right; font-size:17px; font-weight:700; flex:none; }
+
+/* C — mini-tarcze */
+.rings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.ring { border-radius:16px; background:var(--surface2); display:flex; flex-direction:column; align-items:center; padding:12px 6px 10px; gap:6px; touch-action:none; user-select:none; cursor:ns-resize; }
+.ring .rg { position:relative; width:96px; height:88px; display:grid; place-items:center; }
+.ring .rg > svg { position:absolute; inset:0; }
+.ring .rg .n { font-size:26px; font-weight:700; margin-top:4px; }
+.ring .lb { font-size:11px; letter-spacing:.12em; color:var(--dim); font-weight:500; }
+.ring .pmrow { display:flex; gap:10px; }
+.note { max-width:1500px; margin:0 auto 32px; padding:0 16px; }
+.note div { font-size:13px; color:var(--dim); background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 14px; line-height:1.5; max-width:900px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Z906 — nowy wygląd kanałów (Center · Subwoofer · Tył)</h1>
+  <p>Dziś trzy wysokie, pełne bursztynowe słupki zajmują pół ekranu i wizualnie przebijają tarczę głośności. Trzy propozycje w języku zakładki Dom (kafle surface-2, akcent tylko na wartości). Reszta ekranu bez zmian: nagłówek, źródło i efekt, tarcza z wyciszeniem i −/+. Kanały działają w makiecie: −/+ albo przeciągnięcie kafla.</p>
+  <div class="bar" id="bar">
+    <button data-v="A">A · Kafle kanałów</button>
+    <button data-v="B">B · Mikser (paski poziome)</button>
+    <button data-v="C" class="on">C · Mini-tarcze</button>
+    <button data-v="0">Dziś</button>
+    <span class="sep"></span>
+    <button id="theme">Jasny / ciemny</button>
+  </div>
+</div>
+<div class="desc" id="desc"></div>
+<div class="stage">
+  <div class="col"><h2>Pilot · pion (480×800)</h2><div class="holder" id="f1"></div></div>
+  <div class="col"><h2>Android · pion (Galaxy M23, ~480×1070 u)</h2><div class="holder" id="f3"></div></div>
+  <div class="col"><h2>Pilot · poziom (800×480)</h2><div class="holder" id="f2"></div>
+    <h2 style="margin-top:12px">Android · poziom (~1070×480 u)</h2><div class="holder" id="f4"></div></div>
+</div>
+<div class="note"><div>
+  <b>Przeliczanie.</b> Historia HA (sierpień–listopad 2026) pokazuje, że Center, Subwoofer i Tył przyjmują tylko te same wartości co głośność: 0, 2, 5, 7, 9, 12… — czyli 44 poziomy wzmacniacza (0–43) przeliczone na procent. Dzisiejszy krok 2 % często nie zmienia poziomu i kończy się brakiem potwierdzenia.
+  W nowym widoku −/+ i przeciąganie liczą w poziomach (jak −/+ głośności), a łuk i liczba pokazują poziom przeliczony na procent. Liczba poziomów jest parametrem kanału.
+  Spec `tv-and-z906-ui.md` (pkt 5, „trzy pionowe suwaki”) zostanie zastąpiony tym układem przy wdrożeniu.
+</div></div>
+
+<script>
+const DESC = {
+  A: '<b>A · Kafle kanałów</b> — trzy kafle jak żarówki na ekranie lampy: podpis, duża liczba, cienki pasek poziomu i −/+ po bokach. Najbliżej reszty interfejsu, najmniej miejsca (≈120 u), tarcza znów dominuje.',
+  B: '<b>B · Mikser</b> — trzy wiersze jak w mikserze: ikona, nazwa, poziomy suwak z gałką i wartość. Czytelne „ile czego”, naturalny poziomy gest; zajmuje ≈200 u.',
+  C: '<b>C · Mini-tarcze</b> — trzy małe łuki 270° jak tarcza głośności, liczba w środku, −/+ pod spodem, bez nagłówka sekcji. Wartości to procent poziomu wzmacniacza (0–43): −/+ i przeciąganie idą o jeden poziom (≈2,3 %), więc każda zmiana jest osiągalna i potwierdzana.',
+  0: '<b>Dziś</b> — trzy pionowe słupki ze specyfikacji Soundstage, dla porównania.',
+};
+// Z906 nie ma 0–100: każdy kanał ma poziomy wzmacniacza (0–43), a kontroler odsyła je
+// jako procent. Pokazujemy tylko osiągalne wartości, −/+ i przeciąganie idą o poziom.
+// `max` per kanał — gdyby inny kanał miał mniej poziomów, wystarczy go zmienić.
+const CH = [
+  { id: 'center', name: 'Center', cap: 'CENTER', icon: 'speaker', max: 43, level: 38 },
+  { id: 'sub', name: 'Subwoofer', cap: 'SUBWOOFER', icon: 'audio-lines', max: 43, level: 29 },
+  { id: 'rear', name: 'Tył', cap: 'TYŁ', icon: 'move-horizontal', max: 43, level: 30 },
+];
+const VOL_MAX = 43;
+const pct = (level, max) => Math.round(level * 100 / max);
+CH.forEach(c => Object.defineProperty(c, 'v', { get() { return pct(this.level, this.max); } }));
+let variant = 'C', volLevel = 16;
+const ic = (n, s = 24) => `<i data-lucide="${n}" style="width:${s}px;height:${s}px"></i>`;
+
+function arc(cx, cy, r, from, to) {
+  const p = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
+  const [x1, y1] = p(from), [x2, y2] = p(to);
+  return `M${x1} ${y1} A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}`;
+}
+function dial(size) {
+  const volume = pct(volLevel, VOL_MAX);
+  const r = size / 2 - 14, c = size / 2, end = 135 + 270 * volume / 100;
+  const k = [c + r * Math.cos(end * Math.PI / 180), c + r * Math.sin(end * Math.PI / 180)];
+  return `<div class="dialwrap" style="width:${size}px;height:${size}px">
+    <svg viewBox="0 0 ${size} ${size}"><path d="${arc(c, c, r, 135, 405)}" stroke="var(--surface3)" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <path d="${arc(c, c, r, 135, end)}" stroke="var(--accent)" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <circle cx="${k[0]}" cy="${k[1]}" r="13" fill="#fff"/></svg>
+    <div class="dialc" style="margin-top:-${size * 0.12}px"><div class="mute">${ic('volume-2', 26)}</div><div class="vol">${volume}</div><div class="voll">głośność</div></div>
+    <div class="pm" style="bottom:${size * 0.02}px"><div class="rb" data-vol="-1">${ic('minus', 28)}</div><div class="rb" data-vol="1">${ic('plus', 28)}</div></div></div>`;
+}
+const header = wide => `<div class="hdr"><div class="appicon">${ic('music', 24)}</div><div><b>Z906</b><small>SALON</small></div>
+  ${wide ? `<div style="flex:1;display:flex;gap:10px;margin-left:24px">${selectors(true)}</div>` : '<div style="flex:1"></div>'}
+  <div class="pill"><i class="dot"></i>Decode</div><div class="pw">${ic('power', 26)}</div></div>`;
+const selectors = inline => `${inline ? '' : '<div class="sel">'}<div class="ic">${ic('usb', 22)}</div><div class="selbtn">Optical 1</div><div class="ic">${ic('music-2', 22)}</div><div class="selbtn">Bez efektu</div>${inline ? '' : '</div>'}`;
+const TABS = ['tv', 'monitor-play', 'speaker', 'house', 'settings'];
+const tabs = () => `<div class="tabs">${TABS.map((n, i) => `<div class="tab ${i === 2 ? 'on' : ''}">${ic(n, 30)}</div>`).join('')}</div>`;
+const rail = () => `<div class="rail">${TABS.map((n, i) => `<div class="tab ${i === 2 ? 'on' : ''}">${ic(n, 30)}</div>`).join('')}</div>`;
+
+function levels(wide) {
+  const head = '';
+  if (variant === 'A') return head + `<div class="tiles">${CH.map((c, i) => `
+    <div class="chtile" data-ch="${i}" data-axis="y"><div class="t"><span>${c.cap}</span>${ic(c.icon, 16)}</div>
+      <div class="row"><div class="mini" data-d="-1" data-i="${i}">${ic('minus', 18)}</div><div class="v" style="flex:1">${c.v}</div><div class="mini" data-d="1" data-i="${i}">${ic('plus', 18)}</div></div>
+      <div class="track"><b style="width:${c.v}%"></b></div></div>`).join('')}</div>`;
+  if (variant === 'B') return head + `<div class="mix">${CH.map((c, i) => `
+    <div class="mrow" data-ch="${i}" data-axis="x"><div class="ic">${ic(c.icon, 20)}</div><div class="nm">${c.name}</div>
+      <div class="mini" data-d="-1" data-i="${i}">${ic('minus', 16)}</div>
+      <div class="mtrack"><b style="width:${c.v}%"></b><i style="left:${c.v}%"></i></div>
+      <div class="mini" data-d="1" data-i="${i}">${ic('plus', 16)}</div>
+      <div class="val">${c.v}</div></div>`).join('')}</div>`;
+  if (variant === 'C') return head + `<div class="rings">${CH.map((c, i) => {
+    const e = 135 + 270 * c.v / 100;
+    return `<div class="ring" data-ch="${i}" data-axis="y"><div class="rg"><svg viewBox="0 0 96 88">
+      <path d="${arc(48, 48, 38, 135, 405)}" stroke="var(--surface3)" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="${arc(48, 48, 38, 135, e)}" stroke="var(--accent)" stroke-width="8" fill="none" stroke-linecap="round"/></svg>
+      <span class="n">${c.v}</span></div><span class="lb">${c.cap}</span>
+      <div class="pmrow"><div class="mini" data-d="-1" data-i="${i}">${ic('minus', 16)}</div><div class="mini" data-d="1" data-i="${i}">${ic('plus', 16)}</div></div></div>`;
+  }).join('')}</div>`;
+  // dziś: pionowe słupki
+  const h = wide ? 300 : 170;
+  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;text-align:center">${CH.map((c, i) => `
+    <div data-ch="${i}" data-axis="y" style="display:flex;flex-direction:column;align-items:center;gap:8px;touch-action:none;cursor:ns-resize">
+      <span style="font-size:12px;color:var(--dim);letter-spacing:.08em">${c.name}</span><b style="font-size:15px">${c.v}</b>
+      <div style="width:56px;height:${h}px;border-radius:14px;background:var(--surface2);position:relative;overflow:hidden"><div style="position:absolute;left:0;right:0;bottom:0;height:${c.v}%;background:var(--accent);border-radius:14px"></div></div></div>`).join('')}</div>`;
+}
+
+// w, h — rozmiar w jednostkach; scale — piksele na stronie
+function screen(el, w, h, wide, scale) {
+  el.style.width = w * scale + 'px'; el.style.height = h * scale + 'px';
+  const tall = h > 800 || w > 800;
+  let html;
+  if (!wide) {
+    const dsize = 300;
+    html = `<div class="scr portrait" style="width:${w}px;height:${h}px;transform:scale(${scale})">
+      ${h > 800 ? '<div style="height:28px;flex:none"></div>' : ''}${header(false)}${selectors(false)}
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:${tall ? 'space-evenly' : 'space-between'};padding:${variant === '0' ? '4px' : '12px'} 24px 14px;gap:12px">
+        <div style="display:grid;place-items:center">${dial(variant === '0' && !tall ? 290 : dsize)}</div>
+        <div>${levels(false)}</div></div>${tabs()}</div>`;
+  } else {
+    const dsize = 300;
+    html = `<div class="scr landscape" style="width:${w}px;height:${h}px;transform:scale(${scale})">${rail()}
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0">${header(true)}
+        <div style="flex:1;display:flex;align-items:center;gap:${tall ? 56 : 28}px;padding:0 ${tall ? 56 : 24}px 16px ${tall ? 40 : 20}px">
+          <div style="flex:none">${dial(dsize)}</div>
+          <div style="flex:1;min-width:0">${levels(true)}</div></div></div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function render() {
+  screen(f1, 480, 800, false, 0.5);
+  screen(f3, 480, 1070, false, 0.5);
+  screen(f2, 800, 480, true, 0.6);
+  screen(f4, 1070, 480, true, 0.6);
+  document.getElementById('desc').innerHTML = DESC[variant];
+  lucide.createIcons();
+}
+
+document.getElementById('bar').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]');
+  if (!b) return;
+  variant = b.dataset.v;
+  document.querySelectorAll('#bar button[data-v]').forEach(x => x.classList.toggle('on', x === b));
+  render();
+});
+document.getElementById('theme').onclick = () => {
+  const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'light' ? 'dark' : 'light';
+};
+const clampL = (l, max) => Math.max(0, Math.min(max, l));
+document.addEventListener('click', e => {
+  const m = e.target.closest('[data-d]');
+  if (m) { const c = CH[+m.dataset.i]; c.level = clampL(c.level + +m.dataset.d, c.max); render(); return; }
+  const v = e.target.closest('[data-vol]');
+  if (v) { volLevel = clampL(volLevel + +v.dataset.vol, VOL_MAX); render(); }
+});
+// względne przeciąganie: ~120 px ekranu pilota na pełny zakres
+let drag = null;
+document.addEventListener('pointerdown', e => {
+  const t = e.target.closest('[data-ch]');
+  if (!t || e.target.closest('[data-d]')) return;
+  drag = { i: +t.dataset.ch, axis: t.dataset.axis, x: e.clientX, y: e.clientY, l0: CH[+t.dataset.ch].level };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const d = drag.axis === 'x' ? e.clientX - drag.x : drag.y - e.clientY;
+  const c = CH[drag.i];
+  const nl = clampL(Math.round(drag.l0 + d / 60 * c.max), c.max);
+  if (nl !== c.level) { c.level = nl; render(); }
+});
+document.addEventListener('pointerup', () => { drag = null; });
+render();
+</script>
+</body>
+</html>

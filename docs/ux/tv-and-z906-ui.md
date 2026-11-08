@@ -47,7 +47,7 @@ To jedyny zaakceptowany kierunek ekranu dźwięku. Nie redukować go do małej k
 2. Wiersz informacji: bieżące źródło i efekt, np. `OPTICAL 1 · STEREO 2.1`.
 3. Duży centralny pierścień głośności z liczbą procentową oraz dyskretną dekoracją orbitalną. Wyciszenie jest małym okrągłym przyciskiem z boku pierścienia.
 4. Poziomy wybór źródła: `PC`, `RCA`, `O1`, `O2`, `COX`, `AUX`.
-5. Sekcja „Scena dźwiękowa”: trzy pionowe suwaki `Center`, `Subwoofer`, `Tył`; bieżąca wartość 0–100 znajduje się nad właściwym suwakiem.
+5. Kanały `Center`, `Subwoofer`, `Tył` pod tarczą (w poziomie obok niej): trzy kafle z małą tarczą 270° jak pierścień głośności, wartością w środku, podpisem wersalikami i −/+ pod spodem. Bez nagłówka sekcji i podpowiedzi. Makieta: `docs/ux/mockup-z906/` (wariant C, 2026-11-08); zastąpiła trzy wysokie pionowe suwaki, które wizualnie przebijały tarczę głośności.
 6. Wybór efektu: `Stereo 3D`, `2.1`, `4.1`, `Bez efektu`.
 7. Wskaźnik `Decode` (dekodowanie 5.1; innego Z906 nie ma, więc bez liczby) i stan aktywności — dziś pastylka w nagłówku. To wskaźnik, nie przycisk.
 8. Wspólny dolny pasek zakładek, odseparowany małą przerwą od stopki dekodowania.
@@ -60,7 +60,7 @@ To jedyny zaakceptowany kierunek ekranu dźwięku. Nie redukować go do małej k
 | Wyciszenie | `z906.muted` | mały przycisk akcji |
 | Pierścień | `z906.volume_percent` | 0–100, wysyłka max 10/s i finalna po puszczeniu; sterowanie obrotem względnym (niżej) |
 | Źródło | `z906.source` + lista opcji | rzeczywiste opcje z HA |
-| Center/Subwoofer/Tył | odpowiednie numery HA | 0–100, krok 2; przeciąganie względne (niżej) |
+| Center/Subwoofer/Tył | odpowiednie numery HA | procent poziomu wzmacniacza (0–43); −/+ i przeciąganie o poziom (niżej) |
 | Efekt | `z906.effect` + lista opcji | rzeczywiste opcje z HA |
 | Decode 5.1 | stan binarny | tylko odczyt |
 
@@ -71,11 +71,11 @@ To jedyny zaakceptowany kierunek ekranu dźwięku. Nie redukować go do małej k
 - Środek pierścienia (obszar z liczbą) jest strefą martwą — przy nim kąt jest niestabilny, więc ruch tam nie zmienia wartości.
 - Polecenie `z906.volume.set` wysyłane jest dopiero po faktycznej zmianie wartości.
 
-### Gest suwaków kanałów
+### Kanały: poziomy i gest
 
-- Center, Subwoofer i Tył też zmieniają się **względnie**: o pionowy ruch palca, w górę głośniej, w dół ciszej. Dotknięcie nie przestawia suwaka w miejsce palca.
-- Polem chwytu jest cała kolumna kanału (etykieta, wartość i suwak), a nie tylko wąski tor suwaka.
-- Około 120 px ruchu odpowiada pełnemu zakresowi 0–100 — wolniej niż sam tor suwaka, co ułatwia precyzyjne ustawienie z krokiem 2.
+- Kanały mają te same 44 poziomy wzmacniacza (0–43) co głośność, a kontroler odsyła poziom jako procent: osiągalne są tylko 0, 2, 5, 7, 9, 12… (historia HA 2026-11-08 — Center, Subwoofer i Tył przyjmowały wyłącznie te wartości). Dlatego −/+ zmienia kanał o **jeden poziom** (ok. 2,3 %), a nie o 2 % — krok o 2 % często nie zmieniał poziomu i kończył się brakiem potwierdzenia. Przytrzymanie −/+ powtarza krok.
+- Przeciąganie jest **względne**: pionowy ruch palca po kaflu, w górę głośniej, w dół ciszej; dotknięcie nie skacze do palca. Polem chwytu jest cały kafel poza −/+. Około 180 px ruchu na panelu (150 u w aplikacji) to pełny zakres; wartość przeskakuje po poziomach.
+- Liczba poziomów jest parametrem kanału (`widgets::make_level(…, steps, …)`, w aplikacji `Z906.maxLevel`), nie stałą „100”.
 - `z906.level.set` wysyłane jest dopiero po faktycznej zmianie wartości; zasady oczekiwania na snapshot są takie jak dla pierścienia.
 
 Dokładne obecne encje Home Assistant są w `../integrations/z906.md`. Firmware nie używa ich bezpośrednio; mapuje je bridge po stronie Home Assistant do kontraktu MQTT.
@@ -91,7 +91,7 @@ Dokładne obecne encje Home Assistant są w `../integrations/z906.md`. Firmware 
 
 - **Łączenie z domem:** pełny ekran z symbolem domu w orbitach, tytułem i trzema krokami `Wi-Fi · MQTT · Synchronizacja`. Żadnych kafelków ani wartości urządzeń w tle.
 - **Brak połączenia z domem:** ta sama kompozycja z ikoną braku sieci, krokiem zakończonym błędem, komunikatem, że zapamiętany stan nie jest pokazywany, oraz dużym przyciskiem `Ponów`.
-- **Oczekiwanie:** tapnięta kontrolka pulsuje fioletowym obrysem; wybór przesuwa się dopiero po snapshocie. Suwak śledzi palec, a jego wartość pulsuje do potwierdzenia.
+- **Oczekiwanie:** tapnięta kontrolka pulsuje fioletowym obrysem; wybór przesuwa się dopiero po snapshocie. Kanał śledzi palec, a jego wartość pulsuje do potwierdzenia.
 - **Brak potwierdzenia:** po limicie czasu kontrolka wraca do poprzedniej wartości i krótko sygnalizuje błąd czerwonym obrysem.
 - **Urządzenie niedostępne:** panel TV lub Z906 jest wyszarzony i nieaktywny, na środku karta „Telewizor niedostępny” / „Z906 niedostępny”. Dolny pasek zakładek nadal działa; włącznik niedostępnego urządzenia w nagłówku jest wyłączony.
 

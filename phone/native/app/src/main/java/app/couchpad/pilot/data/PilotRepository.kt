@@ -239,6 +239,12 @@ class PilotRepository(private val store: SettingsStore) {
         z906("volume", percent.coerceIn(0, _prefs.value.volumeLimit).toString(), Pending.Z906.volume)
     fun z906Level(channel: Z906Channel, percent: Int) =
         z906(channel.topic, percent.coerceIn(0, 100).toString(), Pending.Z906.level(channel))
+    /** −/+ kanału o [levels] poziomów wzmacniacza; bez znanej wartości nic nie robi. */
+    fun z906LevelStep(channel: Z906Channel, levels: Int) {
+        val v = _state.value.z906.level(channel) ?: return
+        val next = Z906.stepLevel(v, levels)
+        if (next != v) z906Level(channel, next)
+    }
     fun z906Source(source: String) = z906("source", source, Pending.Z906.source)
     fun z906Effect(effect: String) = z906("effect", effect, Pending.Z906.effect)
 

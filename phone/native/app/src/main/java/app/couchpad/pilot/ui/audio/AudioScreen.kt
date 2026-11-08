@@ -40,7 +40,6 @@ import app.couchpad.pilot.ui.components.OptionDialog
 import app.couchpad.pilot.ui.components.Pill
 import app.couchpad.pilot.ui.components.RoundButton
 import app.couchpad.pilot.ui.components.SelectorButton
-import app.couchpad.pilot.ui.components.VerticalSlider
 import app.couchpad.pilot.ui.components.VolumeDial
 import app.couchpad.pilot.ui.components.asChoices
 import app.couchpad.pilot.ui.theme.C
@@ -50,7 +49,7 @@ import app.couchpad.pilot.ui.theme.u
 
 private enum class AudioDialog { Source, Effect }
 
-/** Z906 w układzie Soundstage (tv-and-z906-ui.md): tarcza głośności i trzy suwaki poziomów. */
+/** Z906 w układzie Soundstage (tv-and-z906-ui.md): tarcza głośności i trzy mini-tarcze kanałów. */
 @Composable
 fun AudioScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
     val z = state.z906
@@ -72,12 +71,16 @@ fun AudioScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
             VolumeCenter(z, shown, onMute = { repo.z906Mute(!z.muted) }, onStep = repo::z906VolumeStep)
         }
     }
-    val sliders: @Composable (Modifier) -> Unit = { modifier ->
-        Row(modifier, horizontalArrangement = Arrangement.SpaceBetween) {
+    // Kanały jako mini-tarcze z −/+ (o poziom wzmacniacza), bez nagłówka sekcji.
+    val channels: @Composable (Modifier) -> Unit = { modifier ->
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.u)) {
             for (channel in Z906Channel.values()) {
-                VerticalSlider(channel.label, z.level(channel), Modifier.width(80.u), state.isPending(Pending.Z906.level(channel))) {
-                    repo.z906Level(channel, it)
-                }
+                ChannelRing(
+                    channel.label.uppercase(), z.level(channel), state.isPending(Pending.Z906.level(channel)),
+                    Modifier.weight(1f),
+                    onChange = { repo.z906Level(channel, it) },
+                    onStep = { repo.z906LevelStep(channel, it) },
+                )
             }
         }
     }
@@ -99,7 +102,9 @@ fun AudioScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
         if (landscape) {
             Row(Modifier.fillMaxSize().padding(horizontal = 24.u, vertical = 12.u)) {
                 Box(Modifier.weight(0.5f).fillMaxHeight(), contentAlignment = Alignment.Center) { dial(Modifier.fillMaxHeight()) }
-                sliders(Modifier.weight(0.5f).fillMaxHeight().padding(start = 24.u))
+                Box(Modifier.weight(0.5f).fillMaxHeight().padding(start = 24.u), contentAlignment = Alignment.Center) {
+                    channels(Modifier.fillMaxWidth())
+                }
             }
         } else {
             selectors(Modifier.fillMaxWidth().padding(horizontal = 24.u))
@@ -107,7 +112,7 @@ fun AudioScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
             Box(Modifier.fillMaxWidth().weight(1.25f).padding(horizontal = 40.u), contentAlignment = Alignment.Center) {
                 dial(Modifier.fillMaxWidth())
             }
-            sliders(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 40.u, vertical = 12.u))
+            channels(Modifier.fillMaxWidth().padding(start = 24.u, end = 24.u, top = 8.u, bottom = 20.u))
         }
     }
 

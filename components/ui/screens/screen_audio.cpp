@@ -159,8 +159,6 @@ namespace {
 // Poziom: źródło i efekt w nagłówku, jak źródło i tryb obrazu na TV. W wierszu 672 px:
 // znak 44, nazwa, wybór 340, Decode, zasilanie 48.
 constexpr int32_t kHeaderSelectorsW = 340;
-// Poziom: tor suwaka kanału na całą wysokość prawej strony (pion: 170 px).
-constexpr int32_t kWideLevelTrackH = 300;
 
 void build_header_selectors(Context& context) {
     AudioScreen& screen = context.audio;
@@ -226,9 +224,12 @@ void build_levels(Context& context, lv_obj_t* parent) {
     lv_obj_set_flex_align(levels, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_START,
                           LV_FLEX_ALIGN_START);
 
-    screen.center = widgets::make_level(levels, "Center", &on_center, &context);
-    screen.subwoofer = widgets::make_level(levels, "Subwoofer", &on_subwoofer, &context);
-    screen.rear = widgets::make_level(levels, "Tył", &on_rear, &context);
+    // Kanały mają te same 44 poziomy (0–43) co głośność — potwierdzone historią HA
+    // 2026-11-08 — więc −/+ i gest idą o poziom wzmacniacza.
+    screen.center = widgets::make_level(levels, "CENTER", domain::kZ906MaxLevel, &on_center, &context);
+    screen.subwoofer =
+        widgets::make_level(levels, "SUBWOOFER", domain::kZ906MaxLevel, &on_subwoofer, &context);
+    screen.rear = widgets::make_level(levels, "TYŁ", domain::kZ906MaxLevel, &on_rear, &context);
 }
 
 }  // namespace
@@ -257,9 +258,6 @@ void build_audio(Context& context, lv_obj_t* parent) {
                               LV_FLEX_ALIGN_START);
         build_header_selectors(context);
         build_levels(context, right);
-        for (widgets::Level* level : {screen.center, screen.subwoofer, screen.rear}) {
-            lv_obj_set_height(level->bar, kWideLevelTrackH);
-        }
     } else {
         build_selectors(context, screen.section);
         build_dial(context, widgets::make_fill(screen.section));

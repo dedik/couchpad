@@ -13,8 +13,15 @@ object Z906 {
     /** 44 poziomy wzmacniacza (0–43): −/+ liczą w poziomach, nie w procentach. */
     const val maxLevel = 43
 
-    private fun levelOf(percent: Int) = (percent * maxLevel + 50) / 100
-    private fun percentOf(level: Int) = (level * 100 + maxLevel / 2) / maxLevel
+    fun levelOf(percent: Int) = (percent * maxLevel + 50) / 100
+    fun percentOf(level: Int) = (level * 100 + maxLevel / 2) / maxLevel
+
+    /**
+     * Kanał (Center, Subwoofer, Tył) po kroku o [levels] poziomów. Kanały mają te same 44
+     * poziomy co głośność (historia HA 2026-11-08: tylko 0, 2, 5, 7, 9, 12…), więc krok
+     * o 2 % często nie zmieniał poziomu i kończył się brakiem potwierdzenia.
+     */
+    fun stepLevel(percent: Int, levels: Int): Int = percentOf((levelOf(percent) + levels).coerceIn(0, maxLevel))
 
     /**
      * Głośność po kroku o [levels] poziomów wzmacniacza, nie wyżej niż [limit] procent.

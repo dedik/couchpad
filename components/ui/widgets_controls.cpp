@@ -17,8 +17,6 @@ constexpr int32_t kDialSize = 296;
 constexpr int32_t kDialRing = 22;
 constexpr int32_t kDialKnobPad = 3;     // uchwyt = szerokość łuku + 2 × 3 = 28 px
 constexpr int32_t kDialDeadZone = 30;   // środek tarczy: kąt jest tam niestabilny
-constexpr int32_t kLevelTrackW = 56;
-constexpr int32_t kLevelTrackH = 170;
 constexpr int32_t kLevelTravel = 180;   // 180 px ruchu w pionie to pełny zakres
 
 }  // namespace
@@ -490,12 +488,32 @@ Thermostat* make_thermostat(lv_obj_t* parent, ValueHandler on_change, void* cont
     return thermo;
 }
 
-// ============================= kolumna poziomu =============================
+// ============================= kanał =============================
 
-void Level::set_value(int32_t value) {
-    value_ = clamp100(value);
-    lv_bar_set_value(bar, value_, LV_ANIM_OFF);
+namespace {
+
+constexpr int32_t kChannelArc = 88;      // średnica małej tarczy
+constexpr int32_t kChannelArcWidth = 8;
+constexpr int32_t kChannelStep = 36;     // −/+ pod tarczą
+
+int32_t percent_of_level(int32_t level, int32_t steps) {
+    return (level * 100 + steps / 2) / steps;
+}
+int32_t level_of_percent(int32_t percent, int32_t steps) {
+    return (percent * steps + 50) / 100;
+}
+
+}  // namespace
+
+void Level::set_value(int32_t percent) {
+    value_ = clamp100(percent);
+    lv_arc_set_value(arc, value_);
     lv_label_set_text_fmt(value_label, "%d", static_cast<int>(value_));
+}
+
+int32_t Level::stepped(int32_t levels) const {
+    const int32_t level = std::clamp(level_of_percent(value_, steps) + levels, int32_t{0}, steps);
+    return percent_of_level(level, steps);
 }
 
 void Level::set_status(domain::ControlStatus status) {
@@ -505,17 +523,28 @@ void Level::set_status(domain::ControlStatus status) {
         : status == domain::ControlStatus::Pending ? theme::accent()
                                                    : theme::danger(),
         LV_PART_MAIN);
-    set_status_outline(bar, status);
+    set_status_outline(root, status);
 }
 
 namespace {
+
+void level_commit(Level& level, int32_t next) {
+    if (next == level.value_) {
+        return;
+    }
+    level.set_value(next);
+    level.set_status(domain::ControlStatus::Pending);
+    if (level.on_change != nullptr) {
+        level.on_change(level.context, level.value_, true);
+    }
+}
 
 void level_event(lv_event_t* event) {
     auto* level = static_cast<Level*>(lv_event_get_user_data(event));
     const lv_event_code_t code = lv_event_get_code(event);
 
     if (code == LV_EVENT_PRESSED) {
-        level->accumulator_ = static_cast<float>(level->value_);
+        level->accumulator_ = static_cast<float>(level_of_percent(level->value_, level->steps));
         level->moved_ = false;
         return;
     }
@@ -528,9 +557,11 @@ void level_event(lv_event_t* event) {
         if (vect.y == 0) {
             return;
         }
-        const float delta = static_cast<float>(-vect.y) / static_cast<float>(kLevelTravel) * 100.0F;
-        level->accumulator_ = std::clamp(level->accumulator_ + delta, 0.0F, 100.0F);
-        const int32_t next = step2(static_cast<int32_t>(level->accumulator_));
+        const float steps = static_cast<float>(level->steps);
+        const float delta = static_cast<float>(-vect.y) / static_cast<float>(kLevelTravel) * steps;
+        level->accumulator_ = std::clamp(level->accumulator_ + delta, 0.0F, steps);
+        const int32_t next =
+            percent_of_level(static_cast<int32_t>(std::lround(level->accumulator_)), level->steps);
         if (next != level->value_) {
             level->moved_ = true;
             level->set_value(next);
@@ -547,44 +578,80 @@ void level_event(lv_event_t* event) {
     }
 }
 
+lv_obj_t* level_step(lv_obj_t* parent, const char* symbol, PlainHandler on_press, Level* level) {
+    lv_obj_t* button = make_step_button(parent, symbol, true, on_press, level);
+    lv_obj_set_size(button, kChannelStep, kChannelStep);
+    lv_obj_set_style_bg_color(button, theme::surface3(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(button, 0, LV_PART_MAIN);
+    lv_obj_set_style_text_font(button, theme::font_icon_sm(), LV_PART_MAIN);
+    return button;
+}
+
 }  // namespace
 
-Level* make_level(lv_obj_t* parent, const char* name, ValueHandler on_change, void* context) {
+Level* make_level(lv_obj_t* parent, const char* name, int32_t steps, ValueHandler on_change,
+                  void* context) {
     auto* level = static_cast<Level*>(lv_malloc_zeroed(sizeof(Level)));
     level->on_change = on_change;
     level->context = context;
+    level->steps = steps > 0 ? steps : 100;
 
     level->root = plain(parent);
     lv_obj_set_flex_grow(level->root, 1);
+    lv_obj_set_width(level->root, 0);
     lv_obj_set_height(level->root, LV_SIZE_CONTENT);
-    lv_obj_set_style_pad_ver(level->root, theme::kS2, LV_PART_MAIN);
-    lv_obj_set_style_radius(level->root, theme::kR3, LV_PART_MAIN);
-    theme::make_column(level->root, theme::kS2);
+    lv_obj_set_style_pad_top(level->root, theme::kS3, LV_PART_MAIN);
+    lv_obj_set_style_pad_bottom(level->root, theme::kS3, LV_PART_MAIN);
+    lv_obj_set_style_radius(level->root, theme::kR2, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(level->root, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(level->root, theme::surface2(), LV_PART_MAIN);
+    theme::make_column(level->root, 6);
     lv_obj_set_flex_align(level->root, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
                           LV_FLEX_ALIGN_CENTER);
     lv_obj_add_flag(level->root, LV_OBJ_FLAG_CLICKABLE);
 
-    level->name_label = make_cap(level->root, name);
+    // Mała tarcza jak pierścień głośności: 270° otwarte u dołu, wartość w środku.
+    level->arc = lv_arc_create(level->root);
+    lv_obj_remove_style_all(level->arc);
+    // lv_arc jest klikalny i obraca się do palca — dotyk ma prowadzić kafel.
+    lv_obj_remove_flag(level->arc, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_size(level->arc, kChannelArc, kChannelArc);
+    lv_arc_set_rotation(level->arc, 135);
+    lv_arc_set_bg_angles(level->arc, 0, 270);
+    lv_arc_set_range(level->arc, 0, 100);
+    lv_obj_set_style_arc_width(level->arc, kChannelArcWidth, LV_PART_MAIN);
+    lv_obj_set_style_arc_color(level->arc, theme::surface3(), LV_PART_MAIN);
+    lv_obj_set_style_arc_rounded(level->arc, true, LV_PART_MAIN);
+    lv_obj_set_style_arc_width(level->arc, kChannelArcWidth, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(level->arc, theme::accent(), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(level->arc, true, LV_PART_INDICATOR);
+    // Łuk otwarty u dołu zostawia pusty dół kwadratu: podpis wchodzi pod niego.
+    lv_obj_set_style_margin_bottom(level->arc, -kChannelArc / 6, LV_PART_MAIN);
 
-    level->value_label = lv_label_create(level->root);
+    level->value_label = lv_label_create(level->arc);
     lv_obj_remove_style_all(level->value_label);
-    lv_obj_set_style_text_font(level->value_label, theme::font_b15(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(level->value_label, theme::font_b26(), LV_PART_MAIN);
     lv_obj_set_style_text_color(level->value_label, theme::text(), LV_PART_MAIN);
     lv_label_set_text(level->value_label, "0");
+    lv_obj_center(level->value_label);
 
-    level->bar = lv_bar_create(level->root);
-    lv_obj_remove_style_all(level->bar);
-    // lv_bar jest klikalny po lv_obj: zabierałby dotyk kolumnie, która prowadzi gest.
-    lv_obj_remove_flag(level->bar, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_size(level->bar, kLevelTrackW, kLevelTrackH);
-    lv_obj_set_style_bg_opa(level->bar, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(level->bar, theme::surface2(), LV_PART_MAIN);
-    lv_obj_set_style_radius(level->bar, theme::kR2, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(level->bar, LV_OPA_COVER, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(level->bar, theme::accent(), LV_PART_INDICATOR);
-    lv_obj_set_style_radius(level->bar, theme::kR2, LV_PART_INDICATOR);
-    lv_bar_set_range(level->bar, 0, 100);
-    lv_bar_set_value(level->bar, 0, LV_ANIM_OFF);
+    level->name_label = make_cap(level->root, name);
+
+    lv_obj_t* steps_row = plain(level->root);
+    lv_obj_set_size(steps_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    theme::make_row(steps_row, theme::kS2);
+    level_step(steps_row, LV_SYMBOL_MINUS,
+               [](void* raw) {
+                   auto& self = *static_cast<Level*>(raw);
+                   level_commit(self, self.stepped(-1));
+               },
+               level);
+    level_step(steps_row, LV_SYMBOL_PLUS,
+               [](void* raw) {
+                   auto& self = *static_cast<Level*>(raw);
+                   level_commit(self, self.stepped(1));
+               },
+               level);
 
     lv_obj_add_event_cb(level->root, level_event, LV_EVENT_PRESSED, level);
     lv_obj_add_event_cb(level->root, level_event, LV_EVENT_PRESSING, level);
@@ -593,6 +660,7 @@ Level* make_level(lv_obj_t* parent, const char* name, ValueHandler on_change, vo
     lv_obj_add_event_cb(
         level->root, [](lv_event_t* event) { lv_free(lv_event_get_user_data(event)); },
         LV_EVENT_DELETE, level);
+    level->set_value(0);
     return level;
 }
 

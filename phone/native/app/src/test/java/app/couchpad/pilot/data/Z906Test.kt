@@ -42,4 +42,13 @@ class Z906Test {
         assertEquals(false, Z906State(available = true).withTopic("availability", "offline")!!.available)
         assertNull(Z906State().withTopic("state/unknown", "1"))
     }
+
+    @Test
+    fun `channel step moves one amplifier level and stays in range`() {
+        // Wartości z historii HA: 86, 88, 91 to sąsiednie poziomy.
+        assertEquals(91, Z906.stepLevel(88, 1))
+        assertEquals(86, Z906.stepLevel(88, -1))
+        assertEquals(100, Z906.stepLevel(100, 1))
+        assertEquals(0, Z906.stepLevel(2, -3))
+    }
 }

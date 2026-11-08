@@ -179,27 +179,34 @@ Thermostat* make_thermostat(lv_obj_t* parent, ValueHandler on_change, void* cont
 // Temperatura z dziesiątych na tekst z przecinkiem: 225 → „22,5”.
 void format_tenths(char* out, std::size_t size, int32_t tenths);
 
-// ---------- Kolumna poziomu (.level) ----------
-// Nie lv_slider — ten również skacze do dotyku. Gest pionowy obsłużony ręcznie,
-// polem chwytu jest cała kolumna.
+// ---------- Kanał (.level) ----------
+// Kafel kanału Z906: mała tarcza 270° z wartością w środku, podpis i −/+ pod spodem.
+// Wartość to procent, ale wzmacniacz ma tylko `steps` poziomów (Z906: 43), a kontroler
+// odsyła poziom jako procent — dlatego −/+ i przeciąganie idą o poziom, a nie o procent,
+// i każda zmiana jest osiągalna. Gest jest względny (pionowy ruch po kaflu, dotknięcie nie
+// skacze do palca); polem chwytu jest cały kafel poza −/+.
 struct Level {
     lv_obj_t* root = nullptr;
-    lv_obj_t* bar = nullptr;
+    lv_obj_t* arc = nullptr;
     lv_obj_t* name_label = nullptr;
     lv_obj_t* value_label = nullptr;
 
-    void set_value(int32_t value);
+    void set_value(int32_t percent);
     int32_t value() const { return value_; }
     void set_status(domain::ControlStatus status);
+    // Procent `levels` poziomów od bieżącego (w granicach 0…steps).
+    int32_t stepped(int32_t levels) const;
 
     int32_t value_ = 0;
-    float accumulator_ = 0.0F;
+    int32_t steps = 43;
+    float accumulator_ = 0.0F;   // w poziomach
     bool moved_ = false;
     ValueHandler on_change = nullptr;
     void* context = nullptr;
 };
 
-Level* make_level(lv_obj_t* parent, const char* name, ValueHandler on_change, void* context);
+Level* make_level(lv_obj_t* parent, const char* name, int32_t steps, ValueHandler on_change,
+                  void* context);
 
 // ---------- Krzyżak (.pad) ----------
 lv_obj_t* make_dpad(lv_obj_t* parent, KeyHandler on_key, void* context);
