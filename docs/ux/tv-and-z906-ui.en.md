@@ -47,7 +47,7 @@ This is the only accepted direction for the sound screen. Do not reduce it to a 
 2. Info row: current source and effect, e.g. `OPTICAL 1 · STEREO 2.1`.
 3. A large central volume ring with a percentage number and a discreet orbital decoration. Mute is a small round button beside the ring.
 4. Horizontal source selector: `PC`, `RCA`, `O1`, `O2`, `COX`, `AUX`.
-5. "Scena dźwiękowa" (Soundstage) section: three vertical sliders `Center`, `Subwoofer`, `Tył` (Rear); the current value 0–100 is shown above the respective slider.
+5. Channels `Center`, `Subwoofer`, `Tył` (Rear) below the dial (next to it in landscape): three tiles with a small 270° dial like the volume ring, the value in the middle, an upper-case label and −/+ below. No section heading or hint. Mockup: `docs/ux/mockup-z906/` (variant C, 2026-11-08); it replaced the three tall vertical sliders that visually overpowered the volume dial.
 6. Effect selector: `Stereo 3D`, `2.1`, `4.1`, `Bez efektu` (No effect).
 7. `Decode` indicator (5.1 decoding; the Z906 has no other, so no number) and activity state — now a pill in the header. This is an indicator, not a button.
 8. The shared bottom tab bar, separated by a small gap from the decode footer.
@@ -60,7 +60,7 @@ This is the only accepted direction for the sound screen. Do not reduce it to a 
 | Mute | `z906.muted` | small action button |
 | Ring | `z906.volume_percent` | 0–100, sent at most 10/s plus a final value on release; controlled by relative rotation (below) |
 | Source | `z906.source` + option list | real options from HA |
-| Center/Subwoofer/Rear | corresponding HA numbers | 0–100, step 2; relative dragging (below) |
+| Center/Subwoofer/Rear | corresponding HA numbers | percent of the amplifier level (0–43); −/+ and dragging by one level (below) |
 | Effect | `z906.effect` + option list | real options from HA |
 | Decode 5.1 | binary state | read-only |
 
@@ -71,11 +71,11 @@ This is the only accepted direction for the sound screen. Do not reduce it to a 
 - The centre of the ring (the area with the number) is a dead zone — the angle is unstable there, so movement there does not change the value.
 - The `z906.volume.set` command is sent only after the value has actually changed.
 
-### Channel slider gesture
+### Channels: levels and gesture
 
-- Center, Subwoofer and Rear also change **relatively**: by vertical finger movement, up is louder, down quieter. A tap does not move the slider to the finger position.
-- The grab area is the whole channel column (label, value and slider), not just the narrow slider track.
-- About 120 px of movement corresponds to the full 0–100 range — slower than the slider track itself, which makes precise adjustment in steps of 2 easier.
+- The channels have the same 44 amplifier levels (0–43) as the volume, and the controller reports the level back as a percentage: only 0, 2, 5, 7, 9, 12… are reachable (HA history 2026-11-08 — Center, Subwoofer and Rear only ever took these values). So −/+ changes a channel by **one level** (about 2.3 %), not by 2 % — a 2 % step often did not change the level and ended without confirmation. Holding −/+ repeats the step.
+- Dragging is **relative**: vertical finger movement over the tile, up is louder, down quieter; a tap does not jump to the finger. The grab area is the whole tile except −/+. About 180 px of movement on the panel (150 u in the app) is the full range; the value snaps to levels.
+- The number of levels is a channel parameter (`widgets::make_level(…, steps, …)`, `Z906.maxLevel` in the app), not a fixed "100".
 - `z906.level.set` is sent only after the value has actually changed; the rules for waiting for the snapshot are the same as for the ring.
 
 The exact current Home Assistant entities are in `../integrations/z906.md`. The firmware does not use them directly; the bridge on the Home Assistant side maps them to the MQTT contract.
@@ -91,7 +91,7 @@ The exact current Home Assistant entities are in `../integrations/z906.md`. The 
 
 - **Connecting to home:** full screen with a house symbol in orbits, a title and three steps `Wi-Fi · MQTT · Synchronizacja` (Synchronisation). No tiles or device values in the background.
 - **No connection to home:** the same composition with a no-network icon, a step that ended in error, a message that the remembered state is not shown, and a large `Ponów` (Retry) button.
-- **Pending:** the tapped control pulses with a purple outline; the selection moves only after the snapshot. A slider follows the finger, and its value pulses until confirmed.
+- **Pending:** the tapped control pulses with a purple outline; the selection moves only after the snapshot. A channel follows the finger, and its value pulses until confirmed.
 - **No confirmation:** after the timeout the control returns to the previous value and briefly signals an error with a red outline.
 - **Device unavailable:** the TV or Z906 panel is greyed out and inactive, with a "Telewizor niedostępny" (TV unavailable) / "Z906 niedostępny" (Z906 unavailable) card in the middle. The bottom tab bar still works; the unavailable device's power switch in the header is disabled.
 

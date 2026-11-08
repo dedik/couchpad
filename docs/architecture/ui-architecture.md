@@ -33,7 +33,7 @@ W orientacji poziomej ([ADR 0013](adr/0013-landscape-orientation.md)) te same za
 | HA | krótkie akcje | świadomie wybrane skróty, nie pełny dashboard |
 | Settings | konfiguracja | Wi-Fi, MQTT, jasność, informacje o wersji |
 
-Widok Z906 używa zaakceptowanego układu **Soundstage**: centralnego pierścienia głośności, poziomego wyboru źródła, trzech pionowych suwaków kanałów, wyboru efektu oraz statusu dekodowania. Nie zastępujemy go uproszczoną kartą statusową.
+Widok Z906 używa zaakceptowanego układu **Soundstage**: centralnego pierścienia głośności, poziomego wyboru źródła, trzech kafli kanałów z małymi tarczami i −/+ (krok o poziom wzmacniacza), wyboru efektu oraz statusu dekodowania. Nie zastępujemy go uproszczoną kartą statusową.
 
 ## Zasady wydajności
 

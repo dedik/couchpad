@@ -33,7 +33,7 @@ In landscape ([ADR 0013](adr/0013-landscape-orientation.en.md)) the same tabs si
 | HA | quick actions | deliberately chosen shortcuts, not a full dashboard |
 | Settings | configuration | Wi-Fi, MQTT, brightness, version information |
 
-The Z906 view uses the approved **Soundstage** layout: a central volume ring, a horizontal source selector, three vertical channel sliders, an effect selector and the decoding status. We do not replace it with a simplified status card.
+The Z906 view uses the approved **Soundstage** layout: a central volume ring, a horizontal source selector, three channel tiles with small dials and −/+ (one amplifier level per step), an effect selector and the decoding status. We do not replace it with a simplified status card.
 
 ## Performance rules
 
