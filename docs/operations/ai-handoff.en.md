@@ -9,6 +9,7 @@ The project has two **completely independent Git repositories** in the `../` dir
 | Repository | Purpose | Status |
 | --- | --- | --- |
 | `../firmware` | native remote software | architecture, MQTT contract, UX specification, three mockups, board bring-up and **firmware running on hardware: five Dashboard screens, Wi-Fi via the ESP32-C6 and Z906 control directly over MQTT** |
+| `../firmware/phone` | the remote on an Android phone (in this repository since 2026-11-08) | native Kotlin/Compose app in `phone/native`, SDL/LVGL port as reference; status in `phone/docs/PROGRESS.md` |
 | `../enclosure` | rear enclosure for later battery use | separate scope; do not mix with firmware |
 
 The target hardware is the Guition `JC4880P443C_I_W_Y`: the ESP32-P4 runs the application, the display and touch, and the ESP32-C6 handles connectivity. The 4.3-inch IPS 480 × 800 portrait display is to be treated as a high-quality screen — the UI should look like a finished consumer product, not an admin panel.

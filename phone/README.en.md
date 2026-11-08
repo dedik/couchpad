@@ -6,8 +6,8 @@ The Couchpad remote (TV, Apple TV, Logitech Z906, lights and air conditioning th
 Assistant) as an Android app. Prototype: Galaxy M23 5G; target: Galaxy S5 (Android 6).
 
 The main app is a **native Kotlin + Jetpack Compose app in [`native/`](native/)**. It mirrors
-the board firmware's interface and settings (`../firmware`) one to one and speaks the same
-MQTT contract. This repository does not change the firmware.
+the board firmware's interface and settings (the root of this repository, [`../`](../README.md))
+one to one and speaks the same MQTT contract. The firmware does not depend on the app.
 
 ![Portrait screens](docs/screenshots/overview-portrait.png)
 

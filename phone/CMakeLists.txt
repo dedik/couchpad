@@ -4,7 +4,7 @@ project(pilot_phone C CXX)
 # Pilot na telefonie: współdzielone komponenty firmware'u (ui, application, domain,
 # core, storage, transport) z repozytorium obok, na warstwie zgodności ESP-IDF/FreeRTOS.
 # Tego katalogu nie zmieniamy z tego repozytorium — tylko z niego czytamy.
-set(PILOT_FIRMWARE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../firmware" CACHE PATH "Repozytorium firmware'u")
+set(PILOT_FIRMWARE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." CACHE PATH "Katalog firmware'u (korzeń repozytorium)")
 get_filename_component(FW "${PILOT_FIRMWARE_DIR}" ABSOLUTE)
 set(LVGL_DIR "${FW}/managed_components/lvgl__lvgl" CACHE PATH "Źródła LVGL 9.2 (managed_components firmware'u)")
 

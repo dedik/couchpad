@@ -62,16 +62,16 @@ pomieszczeń wysuwana gestem od krawędzi. Zasady, według których dochodzą ko
 Ten sam pilot działa też jako natywna aplikacja na Androida (Kotlin + Jetpack Compose) — na
 przykład na starym telefonie ustawionym jako ekran główny i odłożonym na kanapę. Odwzorowuje
 1:1 ekrany i ustawienia tego firmware'u, w pionie i w poziomie, i mówi tym samym kontraktem
-MQTT, więc w Home Assistancie nie wymaga niczego więcej. Jest w osobnym repozytorium;
+MQTT, więc w Home Assistancie nie wymaga niczego więcej. Jest w katalogu [`phone/`](phone/README.md);
 firmware od niej nie zależy.
 
-![Aplikacja na Androida — pion](docs/screenshots/phone/overview-portrait.png)
+![Aplikacja na Androida — pion](phone/docs/screenshots/overview-portrait.png)
 
-![Aplikacja na Androida — poziom](docs/screenshots/phone/overview-landscape.png)
+![Aplikacja na Androida — poziom](phone/docs/screenshots/overview-landscape.png)
 
-![Aplikacja na Androida — pion, styl jasny](docs/screenshots/phone/overview-portrait-light.png)
+![Aplikacja na Androida — pion, styl jasny](phone/docs/screenshots/overview-portrait-light.png)
 
-![Aplikacja na Androida — poziom, styl jasny](docs/screenshots/phone/overview-landscape-light.png)
+![Aplikacja na Androida — poziom, styl jasny](phone/docs/screenshots/overview-landscape-light.png)
 
 ## Co potrafi
 

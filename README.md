@@ -64,16 +64,16 @@ The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
 The same remote also runs as a native Android app (Kotlin + Jetpack Compose) — for example
 on an old phone set as the home screen and left on the couch. It copies this firmware's
 screens and settings one to one, in portrait and landscape, and speaks the same MQTT contract,
-so it needs nothing extra in Home Assistant. It lives in a separate repository; the firmware
-does not depend on it.
+so it needs nothing extra in Home Assistant. It lives in [`phone/`](phone/README.en.md); the
+firmware does not depend on it.
 
-![Android app — portrait](docs/screenshots/phone/overview-portrait.png)
+![Android app — portrait](phone/docs/screenshots/overview-portrait.png)
 
-![Android app — landscape](docs/screenshots/phone/overview-landscape.png)
+![Android app — landscape](phone/docs/screenshots/overview-landscape.png)
 
-![Android app — portrait, light theme](docs/screenshots/phone/overview-portrait-light.png)
+![Android app — portrait, light theme](phone/docs/screenshots/overview-portrait-light.png)
 
-![Android app — landscape, light theme](docs/screenshots/phone/overview-landscape-light.png)
+![Android app — landscape, light theme](phone/docs/screenshots/overview-landscape-light.png)
 
 ## What it does
 

@@ -6,8 +6,8 @@ Pilot Couchpad (TV, Apple TV, Logitech Z906, światła i klimatyzacja przez Home
 jako aplikacja na Androida. Prototyp: Galaxy M23 5G, docelowo Galaxy S5 (Android 6).
 
 Aplikacja główna to **natywna aplikacja Kotlin + Jetpack Compose w [`native/`](native/)**.
-Odwzorowuje 1:1 interfejs i ustawienia firmware'u płytki (`../firmware`) i mówi tym samym
-kontraktem MQTT. Firmware nie jest przez to repozytorium zmieniany.
+Odwzorowuje 1:1 interfejs i ustawienia firmware'u płytki (katalog główny tego repozytorium,
+[`../`](../README.pl.md)) i mówi tym samym kontraktem MQTT. Firmware od aplikacji nie zależy.
 
 ![Ekrany w pionie](docs/screenshots/overview-portrait.png)
 

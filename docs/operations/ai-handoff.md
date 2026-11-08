@@ -9,6 +9,7 @@ Projekt ma dwa **całkowicie niezależne repozytoria Git** w katalogu `../`:
 | Repozytorium | Cel | Stan |
 | --- | --- | --- |
 | `../firmware` | natywne oprogramowanie pilota | architektura, kontrakt MQTT, specyfikacja UX, trzy makiety, bring-up płytki oraz **działający na sprzęcie firmware: pięć ekranów Pulpitu, Wi-Fi przez ESP32-C6 i sterowanie Z906 wprost po MQTT** |
+| `../firmware/phone` | pilot na telefonie z Androidem (od 2026-11-08 w tym repozytorium) | natywna aplikacja Kotlin/Compose w `phone/native`, port SDL/LVGL jako referencja; stan w `phone/docs/PROGRESS.md` |
 | `../enclosure` | tylna obudowa do późniejszego użycia baterii | osobny zakres; nie mieszać z firmware |
 
 Docelowy sprzęt to Guition `JC4880P443C_I_W_Y`: ESP32-P4 realizuje aplikację, ekran i dotyk, a ESP32-C6 łączność. Ekran IPS 4,3 cala 480 × 800 w pionie ma być traktowany jako ekran wysokiej jakości — UI ma wyglądać jak gotowy produkt konsumencki, nie panel administracyjny.
