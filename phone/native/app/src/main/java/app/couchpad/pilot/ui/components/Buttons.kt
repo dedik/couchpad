@@ -38,6 +38,7 @@ fun Card(
     modifier: Modifier = Modifier,
     radius: Int = 20,
     selected: Boolean = false,
+    background: Color? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -47,7 +48,7 @@ fun Card(
     Box(
         modifier
             .clip(shape)
-            .background(if (pressed) C.surface2 else C.surface)
+            .background(background ?: if (pressed) C.surface2 else C.surface)
             .border(1.u, if (selected) C.accent else C.line, shape)
             .then(if (onClick != null) Modifier.tap(interaction = interaction, onClick = onClick) else Modifier),
     ) { content() }

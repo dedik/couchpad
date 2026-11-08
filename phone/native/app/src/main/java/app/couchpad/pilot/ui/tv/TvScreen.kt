@@ -82,7 +82,7 @@ fun TvScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
         )
     }
     val channel: @Composable (Modifier, Pair<String, Int>) -> Unit = { modifier, (name, logo) ->
-        Card(modifier, radius = 16, onClick = { repo.tvChannel(name) }) {
+        Card(modifier, radius = 16, background = C.logoPlate, onClick = { repo.tvChannel(name) }) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Logo(logo, 40.u) }
         }
     }
