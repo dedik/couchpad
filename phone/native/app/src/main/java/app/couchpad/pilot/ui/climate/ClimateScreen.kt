@@ -1,5 +1,7 @@
 package app.couchpad.pilot.ui.climate
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import app.couchpad.pilot.data.ClimateState
 import app.couchpad.pilot.data.Pending
@@ -27,8 +33,8 @@ import app.couchpad.pilot.ui.components.Dial
 import app.couchpad.pilot.ui.components.OptionDialog
 import app.couchpad.pilot.ui.components.PageHeader
 import app.couchpad.pilot.ui.components.PowerButton
-import app.couchpad.pilot.ui.components.Segmented
 import app.couchpad.pilot.ui.components.asChoices
+import app.couchpad.pilot.ui.components.tap
 import app.couchpad.pilot.ui.oneDecimal
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.Caption
@@ -65,10 +71,10 @@ fun ClimateScreen(state: PilotState, repo: PilotRepository, back: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(10.u),
                 ) {
                     Caption("TRYB")
-                    Modes(c, repo)
+                    Modes(c, state, repo)
                     Spacer(Modifier.height(8.u))
                     Caption("NAWIEW")
-                    Airflow(c, state, Modifier.fillMaxWidth().height(80.u)) { dialog = it }
+                    Airflow(c, state, Modifier.fillMaxWidth().height(68.u)) { dialog = it }
                 }
             }
             else -> {
@@ -76,7 +82,7 @@ fun ClimateScreen(state: PilotState, repo: PilotRepository, back: () -> Unit) {
                     TemperatureDial(c, state, repo, Modifier.fillMaxWidth())
                 }
                 Column(Modifier.fillMaxWidth().padding(horizontal = 24.u, vertical = 16.u), verticalArrangement = Arrangement.spacedBy(12.u)) {
-                    Modes(c, repo)
+                    Modes(c, state, repo)
                     Airflow(c, state, Modifier.fillMaxWidth().height(88.u)) { dialog = it }
                 }
             }
@@ -116,11 +122,77 @@ private fun TemperatureDial(c: ClimateState, state: PilotState, repo: PilotRepos
     )
 }
 
+/**
+ * Tryby jako kafle z ikoną nad nazwą (makieta P1 z firmware'u): wybrany tryb na dużym kaflu
+ * po lewej przez wszystkie rzędy, pozostałe po dwa w rzędzie. Wybrany ma miękkie
+ * bursztynowe tło i obwódkę, reszta leży na surface-2 bez obwódki.
+ */
 @Composable
-private fun Modes(c: ClimateState, repo: PilotRepository) {
+private fun Modes(c: ClimateState, state: PilotState, repo: PilotRepository) {
     val modes = c.hvacModes.filter { it != "off" }
     if (modes.isEmpty()) return
-    Segmented(modes.map(ClimateLabels::mode), modes.indexOf(c.hvacMode)) { i -> repo.climateMode(modes[i]) }
+    val chosen = if (c.on) modes.indexOf(c.hvacMode) else -1
+    val big = chosen.coerceAtLeast(0)
+    val others = modes.indices.filter { it != big }
+    val rows = ((others.size + 1) / 2).coerceAtLeast(1)
+    val gap = 8.u
+    val pending = state.isPending(Pending.Climate.mode)
+    val tile: @Composable (Int, Boolean, Modifier) -> Unit = { i, large, modifier ->
+        ModeTile(modes[i], large, selected = i == chosen, pending = pending && i == chosen, modifier) {
+            repo.climateMode(modes[i])
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().height((72 * rows + 8 * (rows - 1)).u),
+        horizontalArrangement = Arrangement.spacedBy(gap),
+    ) {
+        tile(big, true, Modifier.weight(6f).fillMaxHeight())
+        Column(Modifier.weight(10f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gap)) {
+            others.chunked(2).forEach { pair ->
+                Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    pair.forEach { tile(it, false, Modifier.weight(1f).fillMaxHeight()) }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeTile(
+    id: String,
+    large: Boolean,
+    selected: Boolean,
+    pending: Boolean,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(14.u)
+    val ink = if (selected) C.accent else C.dim
+    Column(
+        modifier
+            .clip(shape)
+            .background(if (selected) C.accentSoft else C.surface2)
+            .then(
+                when {
+                    pending -> Modifier.border(1.u, C.accentPending, shape)
+                    selected -> Modifier.border(1.u, C.accent, shape)
+                    else -> Modifier
+                },
+            )
+            .tap(onClick = onClick),
+        verticalArrangement = Arrangement.spacedBy(if (large) 10.u else 6.u, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(ClimateLabels.icon(id), null, tint = ink, modifier = Modifier.size(if (large) 36.u else 24.u))
+        T(
+            ClimateLabels.mode(id),
+            if (large) 15 else 13,
+            if (large) FontWeight.Medium else FontWeight.Normal,
+            ink,
+            maxLines = 1,
+        )
+    }
 }
 
 /** Moc nawiewu i żaluzje — tylko te, które encja ma. */
@@ -148,6 +220,22 @@ private fun androidx.compose.foundation.layout.RowScope.OptionCard(
     pending: Boolean,
     onClick: () -> Unit,
 ) {
+    if (LocalLandscape.current) {
+        // Poziom jak w firmware (P1): pole na surface-2 bez obwódki, podpis i wartość na środku;
+        // obwódka tylko przy oczekiwaniu.
+        val shape = RoundedCornerShape(14.u)
+        Column(
+            Modifier.weight(1f).fillMaxHeight().clip(shape).background(C.surface2)
+                .then(if (pending) Modifier.border(1.u, C.accentPending, shape) else Modifier)
+                .tap(onClick = onClick),
+            verticalArrangement = Arrangement.spacedBy(6.u, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Caption(caption)
+            T(value.ifEmpty { "—" }, 15, FontWeight.Bold)
+        }
+        return
+    }
     Card(Modifier.weight(1f).fillMaxHeight(), radius = 18, selected = pending, onClick = onClick) {
         Column(Modifier.fillMaxSize().padding(horizontal = 16.u), verticalArrangement = Arrangement.Center) {
             Caption(caption)
