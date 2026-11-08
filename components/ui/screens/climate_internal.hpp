@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include "../ui_internal.hpp"
+#include "images.h"
 
 namespace ui::climate {
 
@@ -38,11 +39,26 @@ inline constexpr Name kModeNames[] = {
     {"fan_only", "Wentylator"},
 };
 
-// Ikona kafla trybu (poziom), jak w makiecie.
-inline constexpr Name kModeIcons[] = {
-    {"heat_cool", theme::kIconAuto}, {"auto", theme::kIconAuto}, {"cool", theme::kIconCool},
-    {"heat", theme::kIconHeat},      {"dry", theme::kIconDry},   {"fan_only", theme::kIconFan},
+// Ikona kafla trybu (poziom): pixel art z tools/draw_option_icons.py, 24 px na małym
+// kaflu, 48 px na dużym kaflu wybranego trybu.
+struct ModeIcon {
+    const char* id;
+    const lv_image_dsc_t* icon;
+    const lv_image_dsc_t* large;
 };
+inline const ModeIcon kModeIcons[] = {
+    {"heat_cool", &icon_mode_auto, &icon_mode_auto_large}, {"auto", &icon_mode_auto, &icon_mode_auto_large},
+    {"cool", &icon_mode_cool, &icon_mode_cool_large},       {"heat", &icon_mode_heat, &icon_mode_heat_large},
+    {"dry", &icon_mode_dry, &icon_mode_dry_large},          {"fan_only", &icon_mode_fan_only, &icon_mode_fan_only_large},
+};
+inline const lv_image_dsc_t* mode_icon(const char* id, bool large) {
+    for (const ModeIcon& item : kModeIcons) {
+        if (std::strcmp(item.id, id) == 0) {
+            return large ? item.large : item.icon;
+        }
+    }
+    return large ? &icon_mode_auto_large : &icon_mode_auto;
+}
 
 // Podpis nad temperaturą na tarczy, wersalikami jak każda etykieta.
 inline constexpr Name kModeActions[] = {

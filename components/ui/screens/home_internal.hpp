@@ -36,14 +36,15 @@ inline constexpr std::size_t kClimateRoom = 0;
 struct EffectDef {
     const char* id;
     const char* label;
-    const char* icon;   // znak z font_effect_icon() (Lucide), jak w makiecie
+    const lv_image_dsc_t* icon;    // pixel art 24 px (tools/draw_option_icons.py)
+    const lv_image_dsc_t* large;   // ten sam w 2 x: duży kafel bieżącego efektu
 };
 
 inline constexpr std::size_t kEffectCount = 16;
 extern const EffectDef kEffectNames[kEffectCount];
 
-// Ikona (znak font_effect_icon) i polska nazwa efektu; pusty identyfikator to „bez efektu”.
-const char* effect_icon(const char* id);
+// Ikona (24 px, z `large` 48 px) i polska nazwa efektu; pusty identyfikator to „bez efektu”.
+const lv_image_dsc_t* effect_icon(const char* id, bool large = false);
 const char* effect_label(const char* id);
 
 // Barwa: od ciepłej do zimnej, stałe kolory poza paletą (nie zmieniają się ze stylem).

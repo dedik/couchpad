@@ -71,8 +71,9 @@ Dom (siatka pomieszczeń)
 8. **Oba układy.** Każdy nowy ekran ma wersję pionową (480 × 800) i poziomą (800 × 480),
    najpierw w makietach, potem w firmware.
 9. **Ikony:** pomieszczenia i urządzenia — pixel art (`tools/draw_room_icons.py`, siatka 48
-   albo 32, skala całkowita 1×/2×). Opcje (tryby, efekty) — Lucide 0.460.0 jako font
-   (`tools/gen-fonts.sh`).
+   albo 32, skala całkowita 1×/2×). Opcje (tryby klimy, efekty lampy) — też pixel art
+   (`tools/draw_option_icons.py`, siatka 24: mały kafel i wiersz listy 1×, duży kafel 2×;
+   makieta `docs/ux/mockup-option-icons/`), od 2026-11-08 zamiast czcionki Lucide.
 10. **Podpisy wersalikami** (`make_cap`), także z polskimi znakami: etykiety z HA przechodzą
     przez `upper_pl` („Środkowa” → „ŚRODKOWA”).
 
@@ -158,7 +159,7 @@ tła — zamyka bez zmian.
 
 ### 4.7 Kafle efektów
 
-Efekt całej lampy to siatka kafli jak tryby klimy (4.4: ikona Lucide nad nazwą, wybrany na
+Efekt całej lampy to siatka kafli jak tryby klimy (4.4: ikona pixel art nad nazwą, wybrany na
 miękkim akcencie z obwódką), nie wiersz z listą. Pierwszy, większy kafel to bieżący efekt
 (albo „Brak”); obok najczęściej wybierane efekty tej lampy, przy włączonym efekcie pierwszy
 z nich to zawsze „Brak”; ostatni kafel „Więcej · N” otwiera listę wyboru (4.6) ze wszystkimi.

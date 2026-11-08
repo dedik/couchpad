@@ -563,8 +563,8 @@ patterns in `ui-architecture.en.md` ("Landscape orientation").
   every boot showed "no connection to home" for a few seconds.
 - On weak Wi-Fi (−90 dBm, reason 201) the connection can take a minute; the overlay then shows the
   MQTT step although it is waiting for Wi-Fi — to fix.
-- Climate mode icons are five Lucide 0.460.0 glyphs (`lucide_modes_24/36.c`,
-  `tools/gen-fonts.sh` with `LUCIDE_TTF`).
+- Climate mode icons are pixel art `icon_mode_*` (`tools/draw_option_icons.py` →
+  `gen_assets.py`); until 2026-11-08 they were Lucide glyphs.
 - Power: 48 px circle, 64 px touch area (`ext_click_area`) — the parent must be 64 px tall.
 - Not checked on the board: finger touch in the new layouts, 270° rotation, the −/+, mode and power
   buttons on the climate card.
@@ -584,7 +584,7 @@ patterns in `ui-architecture.en.md` ("Landscape orientation").
   mode (`set_percent`, 5–100, step 5), tiles for colour temperature, effect and bulbs. Effects
   are a picker (`dock_sheet`), choosing closes it. Power in the header on the right.
 - Icons: `tools/draw_room_icons.py` (rooms 48, lamp and bulb 32) → `gen_assets.py`; effect icons
-  `lucide_effects_22` (`tools/gen-fonts.sh`).
+  `icon_fx_*` from `tools/draw_option_icons.py` (24 grid, 1× and 2×).
 - Contract: `lights` section, `light.*` actions; `HaEvent` is about 3 kB, its queue is in PSRAM.
   The bridge is deployed on the HA server (backup `…before-lights.20261107-073712`).
 - Lesson: a screenshot does not wake the screen, it shows the last frame. Check `hit` before

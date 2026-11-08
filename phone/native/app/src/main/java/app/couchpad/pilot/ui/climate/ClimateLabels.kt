@@ -1,13 +1,6 @@
 package app.couchpad.pilot.ui.climate
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AcUnit
-import androidx.compose.material.icons.rounded.Air
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Thermostat
-import androidx.compose.material.icons.rounded.WaterDrop
-import androidx.compose.material.icons.rounded.WbSunny
-import androidx.compose.ui.graphics.vector.ImageVector
+import app.couchpad.pilot.R
 
 /** Nazwy z firmware'u (screen_climate.cpp): identyfikatory HA → polskie podpisy. */
 internal object ClimateLabels {
@@ -30,14 +23,14 @@ internal object ClimateLabels {
         "Right" to "Prawo",
     )
 
-    /** Ikony trybów: odpowiedniki Lucide z firmware'u (kModeIcons: sparkles, snowflake, sun, fan, droplets). */
+    /** Ikony trybów: pixel art 24 x 24 z firmware'u (tools/draw_option_icons.py, `px_mode_*`). */
     private val icons = mapOf(
-        "heat_cool" to Icons.Rounded.AutoAwesome, "auto" to Icons.Rounded.AutoAwesome, "cool" to Icons.Rounded.AcUnit,
-        "heat" to Icons.Rounded.WbSunny, "dry" to Icons.Rounded.WaterDrop, "fan_only" to Icons.Rounded.Air,
+        "heat_cool" to R.drawable.px_mode_auto, "auto" to R.drawable.px_mode_auto, "cool" to R.drawable.px_mode_cool,
+        "heat" to R.drawable.px_mode_heat, "dry" to R.drawable.px_mode_dry, "fan_only" to R.drawable.px_mode_fan_only,
     )
 
     fun mode(id: String) = modes[id] ?: id
-    fun icon(id: String): ImageVector = icons[id] ?: Icons.Rounded.Thermostat
+    fun icon(id: String): Int = icons[id] ?: R.drawable.px_mode_auto
     fun caption(id: String) = captions[id] ?: id.uppercase()
     fun fan(id: String) = fans[id] ?: id
     fun swing(id: String) = swings[id] ?: id

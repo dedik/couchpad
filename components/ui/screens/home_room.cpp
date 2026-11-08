@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include "home_internal.hpp"
+#include "images.h"
 
 // Zakładka Dom: podstrona pomieszczenia — nagłówek, pasek pokoi, karty urządzeń i stos
 // poziomów (pokój → światło → żarówka).
@@ -139,7 +140,8 @@ void build_room_view(Context& context, bool wide) {
         LV_EVENT_CLICKED, &context);
 
     screen.climate = make_card(cards, wide, context);
-    screen.climate.icon = make_text(screen.climate.well, theme::font_mode_icon_lg(), theme::accent());
+    screen.climate.icon = lv_image_create(screen.climate.well);
+    lv_image_set_src(screen.climate.icon, &icon_mode_cool_large);
     lv_label_set_text(screen.climate.name, "Klimatyzacja");
     lv_obj_add_event_cb(screen.climate.root, open_climate, LV_EVENT_CLICKED, &context);
 
@@ -303,7 +305,6 @@ void render_room_view(Context& context, const domain::RoomLight* room) {
         } else {
             lv_label_set_text(screen.climate.note, "");
         }
-        lv_label_set_text(screen.climate.icon, theme::kIconCool);
         const bool on = state.climate_fresh() && climate.is_on();
         paint_glow(screen.climate.well, on ? 1 : 0);
     }

@@ -563,8 +563,8 @@ NVS `orient`, restart po zmianie. Każdy ekran i podstrona mają układ poziomy;
   start pokazywał przez kilka sekund „Brak połączenia z domem”.
 - Przy słabym Wi-Fi (−90 dBm, powód 201) połączenie potrafi przyjść po minucie; nakładka
   pokazuje wtedy krok MQTT, choć czeka Wi-Fi — do poprawy.
-- Ikony trybów klimatyzacji to pięć znaków Lucide 0.460.0 (`lucide_modes_24/36.c`,
-  `tools/gen-fonts.sh` z `LUCIDE_TTF`).
+- Ikony trybów klimatyzacji to pixel art `icon_mode_*` (`tools/draw_option_icons.py` →
+  `gen_assets.py`); do 2026-11-08 były to znaki Lucide.
 - Zasilanie: koło 48 px, pole dotyku 64 px (`ext_click_area`) — rodzic musi mieć 64 px wysokości.
 - Nie sprawdzone na płytce: dotyk palcem w nowych układach, obrót 270°, przyciski −/+, tryb
   i zasilanie na karcie klimatyzacji.
@@ -584,7 +584,8 @@ NVS `orient`, restart po zmianie. Każdy ekran i podstrona mają układ poziomy;
 - Widok światła jak podstrona klimy: tarcza jasności to `widgets::Thermostat` w trybie
   procentowym (`set_percent`, zakres 5–100, krok 5), obok kafle barwy, efektu i żarówek.
   Zasilanie światła, żarówki i efektów w nagłówku po prawej; skróty na kafelkach zostają.
-- Ikony: `tools/draw_room_icons.py` (pomieszczenia 48, lampa i żarówka 32) → `gen_assets.py`.
+- Ikony: `tools/draw_room_icons.py` (pomieszczenia 48, lampa i żarówka 32) → `gen_assets.py`;
+  ikony efektów `icon_fx_*` z `tools/draw_option_icons.py` (siatka 24, 1× i 2×).
 - Kontrakt: sekcja `lights`, akcje `light.*`; `HaEvent` ma ok. 3 kB, kolejka w PSRAM.
 - Bridge wdrożony na serwerze HA (kopia `…before-lights.20261107-073712`, `check_config`,
   przeładowanie skryptów i automatyzacji bez restartu). Standard: `docs/ux/home-screen.md`.

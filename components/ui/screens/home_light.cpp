@@ -128,7 +128,6 @@ constexpr int32_t kEffectColsWide[] = {LV_GRID_FR(3), LV_GRID_FR(2), LV_GRID_FR(
                                        LV_GRID_TEMPLATE_LAST};
 constexpr int32_t kEffectRowsTall[] = {72, LV_GRID_TEMPLATE_LAST};
 constexpr int32_t kEffectRowsWide[] = {64, 64, LV_GRID_TEMPLATE_LAST};
-constexpr char kMoreIcon[] = "\xEE\x84\x85";  // Lucide layout-grid
 
 const char* kelvin_name(std::size_t step) {
     static const char* const kNames[kKelvinSteps] = {"bardzo ciepła", "ciepła", "ciepła biel",
@@ -231,8 +230,7 @@ void build_light_view(Context& context, bool wide) {
         theme::make_column(cell.root, i == 0 && wide ? 10 : i == 0 ? 4 : 6);
         lv_obj_set_flex_align(cell.root, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_hor(cell.root, 6, LV_PART_MAIN);
-        cell.icon = make_text(cell.root, i == 0 ? theme::font_effect_icon_lg() : theme::font_effect_icon(),
-                              theme::dim());
+        cell.icon = lv_image_create(cell.root);
         cell.label = make_text(cell.root, i == 0 ? theme::font_m15() : theme::font_r13(), theme::dim());
         lv_obj_set_width(cell.label, LV_PCT(100));
         lv_obj_set_style_text_align(cell.label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
@@ -296,9 +294,10 @@ void build_effect_picker(Context& context) {
         tile.context = &context;
         tile.index = i;
         tile.row = widgets::make_list_row(screen.effect_picker.body, "", "", "", "", &on_effect, &tile);
-        // Wiersz wyboru: ikona efektu zamiast symbolu, bez opisu i strzałki.
-        tile.icon = lv_obj_get_child(tile.row.root, 0);
-        lv_obj_set_style_text_font(tile.icon, theme::font_effect_icon(), LV_PART_MAIN);
+        // Wiersz wyboru: obrazek efektu w miejscu symbolu, bez opisu i strzałki.
+        lv_obj_add_flag(lv_obj_get_child(tile.row.root, 0), LV_OBJ_FLAG_HIDDEN);
+        tile.icon = lv_image_create(tile.row.root);
+        lv_obj_move_to_index(tile.icon, 0);
         lv_obj_add_flag(lv_obj_get_child(tile.row.root, -1), LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(tile.row.note, LV_OBJ_FLAG_HIDDEN);
     }
@@ -475,12 +474,10 @@ void render_effect_tiles(Context& context, const domain::RoomLight& room) {
 
     auto paint = [&](RoomScreen::EffectCell& cell, const char* name, bool selected) {
         cell.name.assign(name);
-        lv_label_set_text(cell.icon, effect_icon(name));
+        lv_image_set_src(cell.icon, effect_icon(name, &cell == &screen.effect_cells[0]));
         lv_label_set_text(cell.label, name[0] != '\0' ? effect_label(name) : "Brak");
         paint_tile(cell.root, selected);
-        const lv_color_t ink = selected ? theme::accent() : theme::dim();
-        lv_obj_set_style_text_color(cell.icon, ink, LV_PART_MAIN);
-        lv_obj_set_style_text_color(cell.label, ink, LV_PART_MAIN);
+        lv_obj_set_style_text_color(cell.label, selected ? theme::accent() : theme::dim(), LV_PART_MAIN);
         lv_obj_set_style_opa(cell.root, fresh ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
         set_visible(cell.root, true);
     };
@@ -499,10 +496,9 @@ void render_effect_tiles(Context& context, const domain::RoomLight& room) {
     const std::size_t hidden = others > shown ? others - shown : 0;
     set_visible(more.root, hidden > 0);
     if (hidden > 0) {
-        lv_label_set_text(more.icon, kMoreIcon);
+        lv_image_set_src(more.icon, &icon_fx_more);
         lv_label_set_text_fmt(more.label, "Więcej · %u", static_cast<unsigned>(hidden));
         paint_tile(more.root, false);
-        lv_obj_set_style_text_color(more.icon, theme::dim(), LV_PART_MAIN);
         lv_obj_set_style_text_color(more.label, theme::text(), LV_PART_MAIN);
         lv_obj_set_style_opa(more.root, fresh ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
     }
@@ -522,12 +518,11 @@ void render_effect_picker(Context& context, const domain::RoomLight& room) {
         RoomScreen::EffectTile& tile = screen.effects[slot++];
         tile.name.assign(name);
         lv_label_set_text(tile.row.title, name[0] != '\0' ? effect_label(name) : "Brak");
-        lv_label_set_text(tile.icon, effect_icon(name));
+        lv_image_set_src(tile.icon, effect_icon(name));
         const bool current = state.lights_fresh() && room.effect == name;
         lv_label_set_text(tile.row.value, current ? "aktywny" : "");
         lv_obj_set_style_border_color(tile.row.root, current ? theme::accent() : theme::line(),
                                       LV_PART_MAIN);
-        lv_obj_set_style_text_color(tile.icon, current ? theme::accent() : theme::dim(), LV_PART_MAIN);
         set_visible(tile.row.root, true);
     };
     place("");

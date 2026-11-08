@@ -39,6 +39,7 @@ import app.couchpad.pilot.ui.oneDecimal
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.Caption
 import app.couchpad.pilot.ui.theme.LocalLandscape
+import app.couchpad.pilot.ui.theme.Pixel
 import app.couchpad.pilot.ui.theme.T
 import app.couchpad.pilot.ui.theme.u
 
@@ -184,7 +185,7 @@ private fun ModeTile(
         verticalArrangement = Arrangement.spacedBy(if (large) 10.u else 6.u, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(ClimateLabels.icon(id), null, tint = ink, modifier = Modifier.size(if (large) 36.u else 24.u))
+        Pixel(ClimateLabels.icon(id), if (large) 48.u else 24.u)
         T(
             ClimateLabels.mode(id),
             if (large) 15 else 13,

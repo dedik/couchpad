@@ -1,25 +1,5 @@
 package app.couchpad.pilot.ui.home
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AcUnit
-import androidx.compose.material.icons.rounded.Alarm
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Bedtime
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Celebration
-import androidx.compose.material.icons.rounded.CenterFocusStrong
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.MonitorHeart
-import androidx.compose.material.icons.rounded.Nightlight
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Spa
-import androidx.compose.material.icons.rounded.Tv
-import androidx.compose.material.icons.rounded.WbIncandescent
-import androidx.compose.material.icons.rounded.WbSunny
-import androidx.compose.material.icons.rounded.WbTwilight
-import androidx.compose.material.icons.rounded.Weekend
-import androidx.compose.ui.graphics.vector.ImageVector
 import app.couchpad.pilot.R
 
 /** Pomieszczenie zakładki Dom (screen_home.cpp): identyfikator z bridge'u, nazwa, ikona. */
@@ -41,29 +21,30 @@ internal const val ClimateRoom = "salon"
 
 /** Efekty HA → polska nazwa i ikona (odpowiedniki ikon Lucide z firmware'u). */
 internal object Effects {
-    private data class Effect(val label: String, val icon: ImageVector)
+    /** Ikona to pixel art 24 x 24 z firmware'u (tools/draw_option_icons.py, `px_fx_*`). */
+    private data class Effect(val label: String, val icon: Int)
 
     private val known = mapOf(
-        "Cozy" to Effect("Przytulnie", Icons.Rounded.Weekend),
-        "Relax" to Effect("Relaks", Icons.Rounded.Spa),
-        "TV time" to Effect("Seans TV", Icons.Rounded.Tv),
-        "Candlelight" to Effect("Świeca", Icons.Rounded.LocalFireDepartment),
-        "Warm white" to Effect("Ciepła biel", Icons.Rounded.WbIncandescent),
-        "Golden white" to Effect("Złota biel", Icons.Rounded.WbSunny),
-        "Daylight" to Effect("Dzienne", Icons.Rounded.LightMode),
-        "Cool white" to Effect("Zimna biel", Icons.Rounded.AcUnit),
-        "Focus" to Effect("Skupienie", Icons.Rounded.CenterFocusStrong),
-        "Night light" to Effect("Nocne", Icons.Rounded.Nightlight),
-        "Bedtime" to Effect("Do snu", Icons.Rounded.Bedtime),
-        "Wake-up" to Effect("Pobudka", Icons.Rounded.WbTwilight),
-        "Pulse" to Effect("Puls", Icons.Rounded.MonitorHeart),
-        "Steampunk" to Effect("Steampunk", Icons.Rounded.Settings),
-        "Diwali" to Effect("Diwali", Icons.Rounded.Celebration),
-        "Alarm" to Effect("Alarm", Icons.Rounded.Alarm),
+        "Cozy" to Effect("Przytulnie", R.drawable.px_fx_cozy),
+        "Relax" to Effect("Relaks", R.drawable.px_fx_relax),
+        "TV time" to Effect("Seans TV", R.drawable.px_fx_tv),
+        "Candlelight" to Effect("Świeca", R.drawable.px_fx_candle),
+        "Warm white" to Effect("Ciepła biel", R.drawable.px_fx_warm),
+        "Golden white" to Effect("Złota biel", R.drawable.px_fx_golden),
+        "Daylight" to Effect("Dzienne", R.drawable.px_fx_daylight),
+        "Cool white" to Effect("Zimna biel", R.drawable.px_fx_cool),
+        "Focus" to Effect("Skupienie", R.drawable.px_fx_focus),
+        "Night light" to Effect("Nocne", R.drawable.px_fx_night),
+        "Bedtime" to Effect("Do snu", R.drawable.px_fx_bedtime),
+        "Wake-up" to Effect("Pobudka", R.drawable.px_fx_wakeup),
+        "Pulse" to Effect("Puls", R.drawable.px_fx_pulse),
+        "Steampunk" to Effect("Steampunk", R.drawable.px_fx_steampunk),
+        "Diwali" to Effect("Diwali", R.drawable.px_fx_diwali),
+        "Alarm" to Effect("Alarm", R.drawable.px_fx_alarm),
     )
 
     fun name(id: String) = if (id.isEmpty()) "Bez efektu" else known[id]?.label ?: id
-    fun icon(id: String) = if (id.isEmpty()) Icons.Rounded.Block else known[id]?.icon ?: Icons.Rounded.AutoAwesome
+    fun icon(id: String) = if (id.isEmpty()) R.drawable.px_fx_none else known[id]?.icon ?: R.drawable.px_mode_auto
 }
 
 /** „1 ŻARÓWKA”, „3 ŻARÓWKI”, „5 ŻARÓWEK”. */

@@ -12,19 +12,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.GridView
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import app.couchpad.pilot.R
 import app.couchpad.pilot.data.EffectUsage
 import app.couchpad.pilot.ui.components.tap
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.LocalLandscape
+import app.couchpad.pilot.ui.theme.Pixel
 import app.couchpad.pilot.ui.theme.T
 import app.couchpad.pilot.ui.theme.u
 
@@ -62,7 +60,7 @@ internal fun EffectTiles(
     }
     val more: @Composable (Modifier) -> Unit = { modifier ->
         if (hidden > 0) {
-            EffectTile(Icons.Rounded.GridView, "Więcej · $hidden", large = false, selected = false, pending = false, modifier, onClick = onMore)
+            EffectTile(R.drawable.px_fx_more, "Więcej · $hidden", large = false, selected = false, pending = false, modifier, onClick = onMore)
         } else {
             Spacer(modifier)
         }
@@ -101,7 +99,7 @@ internal fun EffectTiles(
 /** Kafel efektu: ikona nad nazwą; wybrany na miękkim bursztynie z obwódką (jak ModeTile klimy). */
 @Composable
 private fun EffectTile(
-    icon: ImageVector,
+    icon: Int,
     label: String,
     large: Boolean,
     selected: Boolean,
@@ -124,10 +122,11 @@ private fun EffectTile(
             )
             .tap(onClick = onClick)
             .padding(horizontal = 6.u),
-        verticalArrangement = Arrangement.spacedBy(if (large) 10.u else 6.u, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(if (large) 8.u else 6.u, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(icon, null, tint = ink, modifier = Modifier.size(if (large) 36.u else 24.u))
+        // Pixel art 24 x 24: mały kafel 1 x, duży 2 x — bez wygładzania.
+        Pixel(icon, if (large) 48.u else 24.u)
         T(label, if (large) 15 else 13, if (large) FontWeight.Medium else FontWeight.Normal, ink, maxLines = 1)
     }
 }
