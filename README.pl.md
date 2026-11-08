@@ -69,6 +69,10 @@ firmware od niej nie zależy.
 
 ![Aplikacja na Androida — poziom](docs/screenshots/phone/overview-landscape.png)
 
+![Aplikacja na Androida — pion, styl jasny](docs/screenshots/phone/overview-portrait-light.png)
+
+![Aplikacja na Androida — poziom, styl jasny](docs/screenshots/phone/overview-landscape-light.png)
+
 ## Co potrafi
 
 - **TV** — stan zasilania, źródło i tryb obrazu, krzyżak, kołyski głośności i kanałów,
