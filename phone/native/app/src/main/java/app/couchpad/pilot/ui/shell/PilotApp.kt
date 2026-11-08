@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import app.couchpad.pilot.ui.components.LocalOverlay
+import app.couchpad.pilot.ui.components.Overlay
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -110,7 +113,8 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
     // telefonu zostawała czarna zasłona z jasnością 1%.
     LaunchedEffect(home) { if (home > 0) wakeUp() }
 
-    ProvideUnits {
+    val overlay = remember { Overlay() }
+    CompositionLocalProvider(LocalOverlay provides overlay) { ProvideUnits {
         val content: @Composable (Modifier) -> Unit = { modifier ->
             Box(modifier) {
                 AnimatedContent(
@@ -159,6 +163,8 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
                     if (screen != Screen.Start) TabBar(screen) { screen = it }
                 }
             }
+            // Listy wyboru nad całym ekranem, pod zasłoną uśpienia.
+            overlay.Content()
             if (asleep) {
                 // Uśpiony pilot: czarny ekran zabiera pierwsze dotknięcie i budzi pilota na
                 // ekranie startowym (ADR 0010), a stan pobiera się w tle (ADR 0005).
@@ -170,7 +176,7 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
                 )
             }
         }
-    }
+    } }
 }
 
 @Composable
