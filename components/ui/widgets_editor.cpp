@@ -198,17 +198,16 @@ void matrix_base_style(lv_obj_t* matrix, const lv_font_t* font) {
     lv_obj_set_style_radius(matrix, theme::kR3, LV_PART_ITEMS);
     lv_obj_set_style_bg_opa(matrix, LV_OPA_TRANSP, LV_PART_ITEMS);
     // Wciśnięty klawisz wygląda jak zaznaczony na Apple TV: jasne pole, ciemny znak.
-    lv_obj_set_style_bg_opa(matrix, LV_OPA_COVER, LV_PART_ITEMS | LV_STATE_PRESSED);
-    lv_obj_set_style_bg_color(matrix, theme::text(), LV_PART_ITEMS | LV_STATE_PRESSED);
-    lv_obj_set_style_text_color(matrix, theme::bg(), LV_PART_ITEMS | LV_STATE_PRESSED);
-    lv_obj_set_style_bg_opa(matrix, LV_OPA_COVER, LV_PART_ITEMS | LV_STATE_CHECKED);
-    lv_obj_set_style_bg_color(matrix, theme::text(), LV_PART_ITEMS | LV_STATE_CHECKED);
-    lv_obj_set_style_text_color(matrix, theme::bg(), LV_PART_ITEMS | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(matrix, LV_OPA_COVER, theme::selector(LV_PART_ITEMS, LV_STATE_PRESSED));
+    lv_obj_set_style_bg_color(matrix, theme::text(), theme::selector(LV_PART_ITEMS, LV_STATE_PRESSED));
+    lv_obj_set_style_text_color(matrix, theme::bg(), theme::selector(LV_PART_ITEMS, LV_STATE_PRESSED));
+    lv_obj_set_style_bg_opa(matrix, LV_OPA_COVER, theme::selector(LV_PART_ITEMS, LV_STATE_CHECKED));
+    lv_obj_set_style_bg_color(matrix, theme::text(), theme::selector(LV_PART_ITEMS, LV_STATE_CHECKED));
+    lv_obj_set_style_text_color(matrix, theme::bg(), theme::selector(LV_PART_ITEMS, LV_STATE_CHECKED));
 }
 
 lv_obj_t* key_action(lv_obj_t* parent, const char* symbol, const char* text) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
+    lv_obj_t* button = make_bare_button(parent);
     lv_obj_set_height(button, 56);
     lv_obj_set_flex_grow(button, symbol != nullptr ? 1 : 2);
     lv_obj_set_style_radius(button, theme::kR3, LV_PART_MAIN);
@@ -248,11 +247,11 @@ void build_keys(TextEditor& editor) {
     lv_obj_set_style_bg_color(editor.key_tabs, theme::surface(), LV_PART_MAIN);
     lv_obj_set_style_pad_all(editor.key_tabs, 4, LV_PART_MAIN);
     lv_obj_set_style_text_color(editor.key_tabs, theme::dim(), LV_PART_ITEMS);
-    lv_obj_set_style_bg_opa(editor.key_tabs, LV_OPA_COVER, LV_PART_ITEMS | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_opa(editor.key_tabs, LV_OPA_COVER, theme::selector(LV_PART_ITEMS, LV_STATE_CHECKED));
     lv_obj_set_style_bg_color(editor.key_tabs, theme::surface3(),
-                              LV_PART_ITEMS | LV_STATE_CHECKED);
+                              theme::selector(LV_PART_ITEMS, LV_STATE_CHECKED));
     lv_obj_set_style_text_color(editor.key_tabs, theme::text(),
-                                LV_PART_ITEMS | LV_STATE_CHECKED);
+                                theme::selector(LV_PART_ITEMS, LV_STATE_CHECKED));
     lv_buttonmatrix_set_map(editor.key_tabs, const_cast<const char**>(kKeyTabs));
     lv_buttonmatrix_set_button_ctrl_all(editor.key_tabs, LV_BUTTONMATRIX_CTRL_CHECKABLE);
     lv_buttonmatrix_set_one_checked(editor.key_tabs, true);
@@ -377,8 +376,7 @@ void live_send(lv_timer_t* timer) {
 
 // Przycisk-chip w nagłówku edytora: ikona i krótki napis.
 lv_obj_t* head_chip(lv_obj_t* parent, const char* symbol) {
-    lv_obj_t* chip = lv_button_create(parent);
-    lv_obj_remove_style_all(chip);
+    lv_obj_t* chip = make_bare_button(parent);
     lv_obj_set_height(chip, 48);
     lv_obj_set_width(chip, LV_SIZE_CONTENT);
     lv_obj_set_style_pad_hor(chip, theme::kS3, LV_PART_MAIN);
@@ -573,22 +571,14 @@ void open_text_editor(TextEditor& editor, const char* caption, const char* title
     editor.on_accept = on_accept;
     editor.accept_context = context;
     editor.on_change = nullptr;   // ustawiany po wpisaniu wartości startowej
-    if (on_change != nullptr) {
-        lv_obj_remove_flag(editor.live_toggle, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_add_flag(editor.live_toggle, LV_OBJ_FLAG_HIDDEN);
-    }
+    set_visible(editor.live_toggle, on_change != nullptr);
 
     lv_label_set_text(editor.caption, caption);
     lv_label_set_text(editor.title, title);
     editor.secret = mode == EditorMode::Secret;
     lv_textarea_set_password_mode(editor.field, editor.secret);
     lv_label_set_text(lv_obj_get_child(editor.reveal, 0), LV_SYMBOL_EYE_OPEN);
-    if (editor.secret) {
-        lv_obj_remove_flag(editor.reveal, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_add_flag(editor.reveal, LV_OBJ_FLAG_HIDDEN);
-    }
+    set_visible(editor.reveal, editor.secret);
     lv_textarea_set_text(editor.field, value != nullptr ? value : "");
     editor.on_change = on_change;
     // Port i inne liczby otwierają się od razu na cyfrach.

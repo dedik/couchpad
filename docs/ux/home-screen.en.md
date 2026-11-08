@@ -12,7 +12,7 @@ inventing its own. Architectural decisions are in
 Mockups: [`mockup-pulpit`](mockup-pulpit/index.html) (portrait),
 [`mockup-landscape`](mockup-landscape/index.html) (landscape), shared logic
 [`mockup-dom/rooms.js`](mockup-dom/rooms.js) and [`rooms.css`](mockup-dom/rooms.css).
-Code: `components/ui/screens/screen_home.cpp`.
+Code: `components/ui/screens/screen_home.cpp` and `home_*.cpp` (files described in [`home_internal.hpp`](../../components/ui/screens/home_internal.hpp)).
 
 | Home | Room | Lamp |
 | --- | --- | --- |
@@ -179,7 +179,7 @@ Firmware limits: 3 rooms with a light, 4 bulbs per group, 16 effects.
 
 ### A new room
 
-Rooms are a fixed list in `screen_home.cpp` (`kRooms`: id, name, name in capitals, icons) and
+Rooms are a fixed list in `home_common.cpp` (`kRooms`: id, name, name in capitals, icons) and
 in `rooms.js`. A seventh room changes the grid (today 6 = 2 × 3 / 3 × 2) — a design decision,
 not just an entry.
 

@@ -83,9 +83,7 @@ void on_picker_row(void* raw) {
     if (row.index >= data.options->size()) {
         return;
     }
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetOption;
-    intent.control = control;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetOption, control);
     // Nazwa służy oczekiwaniu na ekranie, identyfikator — poleceniu.
     intent.text = (*data.options)[row.index];
     intent.payload.assign(id_at(*data.ids, row.index));
@@ -103,8 +101,7 @@ void make_channel_row(Context& context, std::size_t index) {
     row.context = &context;
     row.index = index;
 
-    row.root = lv_button_create(context.tv.channel_page.body);
-    lv_obj_remove_style_all(row.root);
+    row.root = widgets::make_bare_button(context.tv.channel_page.body);
     lv_obj_add_style(row.root, &theme::styles().list_row, LV_PART_MAIN);
     lv_obj_set_size(row.root, LV_PCT(100), 76);
     theme::make_row(row.root, theme::kS3);
@@ -151,11 +148,7 @@ void sync_channel_rows(Context& context) {
         lv_label_set_text(row.number, channel.number.c_str());
         lv_label_set_text(row.name, channel.name.c_str());
     }
-    if (count == 0) {
-        lv_obj_remove_flag(screen.channel_empty, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_add_flag(screen.channel_empty, LV_OBJ_FLAG_HIDDEN);
-    }
+    widgets::set_visible(screen.channel_empty, count == 0);
     screen.channel_revision_shown = revision;
 }
 
@@ -173,9 +166,7 @@ void on_channel_row(void* raw) {
         return;
     }
     const domain::Channel& channel = list->items[row.index];
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::Momentary;
-    intent.control = domain::ControlId::TvChannel;
+    domain::UiIntent intent = make_intent(domain::IntentKind::Momentary, domain::ControlId::TvChannel);
     intent.text = channel.name;
     intent.payload.assign(channel.id.c_str());
     on_channel_back(&context);
@@ -190,17 +181,14 @@ void on_channel(void* raw, std::size_t index) {
         widgets::show_page(context.tv.channel_page, true);
         return;
     }
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::Momentary;
-    intent.control = domain::ControlId::TvChannel;
+    domain::UiIntent intent = make_intent(domain::IntentKind::Momentary, domain::ControlId::TvChannel);
     intent.text.assign(kChannelIds[index]);
     dispatch(context, intent);
 }
 
 void on_key(void* raw, domain::NavKey key) {
     auto& context = *static_cast<Context*>(raw);
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::Navigate;
+    domain::UiIntent intent = make_intent(domain::IntentKind::Navigate);
     intent.key = key;
     intent.target.assign("tv");
     dispatch(context, intent);
@@ -222,9 +210,7 @@ void step_volume(Context& context, int32_t delta) {
         return;
     }
     value = next;
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetValue;
-    intent.control = domain::ControlId::ZVolume;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetValue, domain::ControlId::ZVolume);
     intent.value = static_cast<uint8_t>(value);
     dispatch(context, intent);
 }
@@ -233,9 +219,7 @@ void on_volume_up(void* raw) { step_volume(*static_cast<Context*>(raw), kVolumeS
 void on_volume_down(void* raw) { step_volume(*static_cast<Context*>(raw), -kVolumeStep); }
 
 void step_channel(Context& context, bool up) {
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::Momentary;
-    intent.control = domain::ControlId::TvChannelStep;
+    domain::UiIntent intent = make_intent(domain::IntentKind::Momentary, domain::ControlId::TvChannelStep);
     intent.flag = up;
     dispatch(context, intent);
 }

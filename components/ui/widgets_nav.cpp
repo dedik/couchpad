@@ -36,8 +36,7 @@ struct KeyBinding {
 
 lv_obj_t* pad_key(lv_obj_t* parent, const char* symbol, domain::NavKey key, KeyHandler handler,
                   void* context, int32_t size, int32_t radius) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
+    lv_obj_t* button = make_bare_button(parent);
     lv_obj_set_size(button, size, size);
     lv_obj_set_style_radius(button, radius, LV_PART_MAIN);
     lv_obj_set_style_text_color(button, theme::dim(), LV_PART_MAIN);
@@ -86,8 +85,7 @@ lv_obj_t* make_dpad(lv_obj_t* parent, KeyHandler on_key, void* context) {
                               theme::kR4);
     lv_obj_set_pos(right, kPadSize - kPadKey - 2, kPadKeyMid);
 
-    lv_obj_t* ok = lv_button_create(pad);
-    lv_obj_remove_style_all(ok);
+    lv_obj_t* ok = make_bare_button(pad);
     lv_obj_set_size(ok, kPadOk, kPadOk);
     lv_obj_set_pos(ok, kPadOkPos, kPadOkPos);
     lv_obj_set_style_radius(ok, LV_RADIUS_CIRCLE, LV_PART_MAIN);
@@ -145,8 +143,7 @@ void bind_press(lv_obj_t* button, bool repeat, PlainHandler handler, void* conte
 
 lv_obj_t* rocker_key(lv_obj_t* parent, const char* symbol, bool repeat, PlainHandler handler,
                      void* context) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
+    lv_obj_t* button = make_bare_button(parent);
     lv_obj_set_size(button, kRockerWidth - 4, kRockerKey);
     lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_text_color(button, theme::dim(), LV_PART_MAIN);
@@ -161,8 +158,7 @@ lv_obj_t* rocker_key(lv_obj_t* parent, const char* symbol, bool repeat, PlainHan
 
 lv_obj_t* make_step_button(lv_obj_t* parent, const char* symbol, bool repeat,
                            PlainHandler on_press, void* context) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
+    lv_obj_t* button = make_bare_button(parent);
     lv_obj_set_size(button, 72, 72);
     lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(button, LV_OPA_COVER, LV_PART_MAIN);

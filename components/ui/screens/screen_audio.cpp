@@ -14,9 +14,7 @@ const char* effect_name(const domain::Label& full) {
 }
 
 void send_option(Context& context, domain::ControlId control, const domain::Label& value) {
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetOption;
-    intent.control = control;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetOption, control);
     intent.text = value;
     dispatch(context, intent);
 }
@@ -88,9 +86,7 @@ void render_value(widgets::Segmented& segmented, const domain::AppState& state,
 }
 
 void send_value(Context& context, domain::ControlId control, int32_t value) {
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetValue;
-    intent.control = control;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetValue, control);
     intent.value = static_cast<uint8_t>(value);
     dispatch(context, intent);
 }
@@ -142,9 +138,7 @@ void on_rear(void* raw, int32_t value, bool) {
 
 void on_mute(void* raw) {
     auto& context = *static_cast<Context*>(raw);
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetMuted;
-    intent.control = domain::ControlId::ZMute;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetMuted, domain::ControlId::ZMute);
     intent.flag = !context.controller->state().snapshot().z906.muted;
     dispatch(context, intent);
 }
@@ -332,7 +326,7 @@ void render_audio(Context& context) {
                                 LV_PART_MAIN);
     lv_obj_set_style_bg_color(screen.mute, z906.muted ? theme::danger() : theme::surface2(),
                               LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(screen.mute, z906.muted ? theme::kDangerSoftOpa : LV_OPA_COVER,
+    lv_obj_set_style_bg_opa(screen.mute, z906.muted ? theme::kDangerSoftOpa : theme::kOpaCover,
                             LV_PART_MAIN);
     widgets::set_status_outline(screen.mute, state.status_of(domain::ControlId::ZMute));
 

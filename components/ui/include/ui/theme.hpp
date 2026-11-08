@@ -62,6 +62,15 @@ inline lv_color_t logo_plate() { return lv_color_hex(0x16181d); }
 // Miękkie tła z makiety to ten sam kolor z krycia 14% i 13%.
 inline constexpr lv_opa_t kAccentSoftOpa = 36;
 inline constexpr lv_opa_t kDangerSoftOpa = 33;
+// Krycie „brak” jako lv_opa_t — do wyrażeń warunkowych z kAccentSoftOpa i kDangerSoftOpa
+// (LV_OPA_* to wyliczenie, mieszanie typów w `?:` daje ostrzeżenie).
+inline constexpr lv_opa_t kOpaTransp = LV_OPA_TRANSP;
+inline constexpr lv_opa_t kOpaCover = LV_OPA_COVER;
+
+// Selektor części i stanu (LV_PART_* i LV_STATE_* to różne wyliczenia).
+constexpr lv_style_selector_t selector(uint32_t part, uint32_t state) {
+    return static_cast<lv_style_selector_t>(part) | static_cast<lv_style_selector_t>(state);
+}
 
 // ---------- Promienie ----------
 inline constexpr int32_t kR1 = 10;

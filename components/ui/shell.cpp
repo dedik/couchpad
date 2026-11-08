@@ -41,8 +41,7 @@ void on_power(void* raw) {
     auto& context = *static_cast<Context*>(raw);
     const auto& snapshot = context.controller->state().snapshot();
 
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetPower;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetPower);
     switch (context.screen) {
         case ScreenId::Tv:
             intent.control = domain::ControlId::TvPower;
@@ -70,8 +69,7 @@ void on_open_settings(void* raw) {
 
 void on_retry(void* raw) {
     auto& context = *static_cast<Context*>(raw);
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::RequestSync;
+    domain::UiIntent intent = make_intent(domain::IntentKind::RequestSync);
     dispatch(context, intent);
 }
 
@@ -179,8 +177,7 @@ void build_tabbar(Context& context) {
     }
 
     for (std::size_t i = 0; i < kScreenCount; ++i) {
-        lv_obj_t* tab = lv_button_create(shell.tabbar);
-        lv_obj_remove_style_all(tab);
+        lv_obj_t* tab = widgets::make_bare_button(shell.tabbar);
         if (rail) {
             lv_obj_set_size(tab, LV_PCT(100), theme::kRailTab);
         } else {
@@ -403,7 +400,7 @@ void render_shell(Context& context) {
 
     for (std::size_t i = 0; i < kScreenCount; ++i) {
         const bool selected = i == index;
-        lv_obj_set_style_bg_opa(shell.tabs[i], selected ? theme::kAccentSoftOpa : LV_OPA_TRANSP,
+        lv_obj_set_style_bg_opa(shell.tabs[i], selected ? theme::kAccentSoftOpa : theme::kOpaTransp,
                                 LV_PART_MAIN);
         lv_obj_set_style_bg_color(shell.tabs[i], theme::accent(), LV_PART_MAIN);
     }
@@ -428,7 +425,7 @@ void render_shell(Context& context) {
                             : "Pobieram aktualny stan TV i Z906");
     lv_obj_set_style_bg_color(shell.wake_mark, error ? theme::danger() : theme::accent(),
                               LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(shell.wake_mark, error ? theme::kDangerSoftOpa : LV_OPA_COVER,
+    lv_obj_set_style_bg_opa(shell.wake_mark, error ? theme::kDangerSoftOpa : theme::kOpaCover,
                             LV_PART_MAIN);
     lv_obj_t* wake_icon = lv_obj_get_child(shell.wake_mark, 0);
     lv_label_set_text(wake_icon, error ? LV_SYMBOL_WARNING : LV_SYMBOL_HOME);
@@ -452,11 +449,7 @@ void render_shell(Context& context) {
     // Ponowienie ma sens dopiero po błędzie, ale wyjście do ustawień musi być
     // zawsze: inaczej nakładka zamyka użytkownika w pułapce przy każdej
     // niezgodności konfiguracji.
-    if (error) {
-        lv_obj_remove_flag(shell.wake_retry, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_add_flag(shell.wake_retry, LV_OBJ_FLAG_HIDDEN);
-    }
+    widgets::set_visible(shell.wake_retry, error);
     lv_obj_remove_flag(shell.wake_settings, LV_OBJ_FLAG_HIDDEN);
 }
 
@@ -473,11 +466,7 @@ void show_header_slot(const Context& context, lv_obj_t* slot, ScreenId owner, bo
     if (slot == nullptr) {
         return;
     }
-    if (context.screen == owner) {
-        lv_obj_remove_flag(slot, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_add_flag(slot, LV_OBJ_FLAG_HIDDEN);
-    }
+    widgets::set_visible(slot, context.screen == owner);
     lv_obj_set_style_opa(slot, fresh ? LV_OPA_COVER : 77, LV_PART_MAIN);
 }
 
@@ -485,11 +474,7 @@ void show_screen(Context& context, ScreenId screen) {
     context.screen = screen;
     close_room(context);  // pomieszczenie należy do ekranu Dom, zakładka je zamyka
     for (std::size_t i = 0; i < kScreenCount; ++i) {
-        if (i == static_cast<std::size_t>(screen)) {
-            lv_obj_remove_flag(context.shell.pages[i], LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_add_flag(context.shell.pages[i], LV_OBJ_FLAG_HIDDEN);
-        }
+        widgets::set_visible(context.shell.pages[i], i == static_cast<std::size_t>(screen));
     }
     sync_settings_detail(context);
     render(context);
