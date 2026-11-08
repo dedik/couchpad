@@ -6,9 +6,15 @@ enum class LinkPhase { Idle, Connecting, Connected, Error }
 data class LinkState(
     val phase: LinkPhase = LinkPhase.Idle,
     val error: String? = null,
-    /** Czas (ms) ostatniego potwierdzonego stanu po wybudzeniu — 0, gdy brak świeżego. */
+    /** Czas (ms) pierwszego potwierdzonego stanu po wybudzeniu — 0, gdy brak świeżego. */
     val freshSince: Long = 0,
-)
+) {
+    val fresh get() = freshSince != 0L
+    val connected get() = phase == LinkPhase.Connected
+
+    /** Pierwszy stan po wybudzeniu ustawia [freshSince]; kolejne go nie przesuwają. */
+    fun markFresh(now: Long) = if (fresh) this else copy(freshSince = now)
+}
 
 data class Z906State(
     val available: Boolean = false,
@@ -39,9 +45,11 @@ data class TvState(
     val updatedAt: Long = 0,
 ) {
     val known get() = updatedAt > 0
-    val sourceLabel get() = sources.firstOrNull { it.id == source }?.label ?: ""
-    val pictureLabel get() = pictureModes.firstOrNull { it.id == pictureMode }?.label ?: ""
+    val sourceLabel get() = sources.labelOf(source)
+    val pictureLabel get() = pictureModes.labelOf(pictureMode)
 }
+
+private fun List<Option>.labelOf(id: String) = firstOrNull { it.id == id }?.label ?: ""
 
 data class Channel(val number: String, val name: String, val id: String)
 
@@ -53,7 +61,9 @@ data class AppleTvState(
     val appId: String = "",
     val apps: List<AppleTvApp> = emptyList(),
     val keyboardActive: Boolean = false,
-)
+) {
+    val appLabel get() = apps.firstOrNull { it.id == appId }?.label
+}
 
 data class ClimateState(
     val available: Boolean = false,
@@ -70,7 +80,9 @@ data class ClimateState(
     val swingModes: List<String> = emptyList(),
     val swingHorizontalMode: String = "",
     val swingHorizontalModes: List<String> = emptyList(),
-)
+) {
+    val on get() = hvacMode != "off"
+}
 
 data class LightMember(
     val id: String,
@@ -95,7 +107,10 @@ data class Light(
     val effect: String,
     val effects: List<String>,
     val members: List<LightMember>,
-)
+) {
+    /** Świeci: dostępna i włączona. */
+    val lit get() = available && on
+}
 
 data class HomeSnapshot(
     val revision: Long = -1,
@@ -105,6 +120,8 @@ data class HomeSnapshot(
     val receivedAt: Long = 0,
 ) {
     val known get() = receivedAt > 0
+    fun lightsIn(room: String) = lights.filter { it.room == room }
+    fun light(id: String) = lights.firstOrNull { it.id == id }
 }
 
 data class Weather(
@@ -114,7 +131,10 @@ data class Weather(
     val indoorTemperature: Double? = null,
     val indoorHumidity: Int? = null,
     val receivedAt: Long = 0,
-)
+) {
+    /** Pogoda starsza niż 6 h nie jest pokazywana. */
+    fun current(now: Long) = receivedAt != 0L && now - receivedAt <= 6 * 3600_000L
+}
 
 /** Wszystko, co pokazuje interfejs. */
 data class PilotState(
@@ -126,4 +146,6 @@ data class PilotState(
     val channels: List<Channel> = emptyList(),
     /** Polecenia czekające na potwierdzenie stanem (klucz kontrolki → czas wysłania). */
     val pending: Map<String, Long> = emptyMap(),
-)
+) {
+    fun isPending(key: String) = key in pending
+}

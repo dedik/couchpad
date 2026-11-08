@@ -1,4 +1,4 @@
-package app.couchpad.pilot.data
+package app.couchpad.pilot.data.mqtt
 
 import android.util.Log
 import java.io.BufferedInputStream
@@ -8,6 +8,7 @@ import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
@@ -16,7 +17,7 @@ import kotlin.concurrent.thread
  * keepalive i samodzielne ponawianie. Wszystkie wywołania zwrotne przychodzą z wątku klienta.
  *
  * Bez bibliotek: pilot potrzebuje tylko tego podzbioru, a własny klient daje pełną kontrolę
- * nad tym, kiedy łączymy się po wybudzeniu (ADR 0005).
+ * nad tym, kiedy łączymy się po wybudzeniu (ADR 0005). Pakiety koduje [MqttCodec].
  */
 class MqttClient(
     private val config: Config,
@@ -53,16 +54,19 @@ class MqttClient(
     @Volatile private var output: OutputStream? = null
     @Volatile var connected = false
         private set
+    @Volatile private var lastSent = 0L
     private val writeLock = Any()
     private val packetIds = AtomicInteger(1)
     private val sleeper = Object()
-    private var worker: Thread? = null
-    @Volatile private var lastSent = 0L
+
+    // Zapis do gniazda nie może iść z wątku UI (Android tego zabrania), więc publikacja
+    // trafia do osobnego wątku wysyłki. Dotknięcie nigdy nie czeka na sieć.
+    private val sender = Executors.newSingleThreadExecutor { r -> Thread(r, "mqtt-tx").apply { isDaemon = true } }
 
     fun start() {
         if (running) return
         running = true
-        worker = thread(name = "mqtt", isDaemon = true) { run() }
+        thread(name = "mqtt", isDaemon = true) { run() }
     }
 
     fun stop() {
@@ -72,9 +76,10 @@ class MqttClient(
         synchronized(sleeper) { sleeper.notifyAll() }
         val s = socket
         sender.execute {
-            if (wasConnected) runCatching { send(byteArrayOf(0xE0.toByte(), 0)) }
+            if (wasConnected) runCatching { send(MqttCodec.disconnect) }
             runCatching { s?.close() }
         }
+        sender.shutdown()
     }
 
     /** Przerywa oczekiwanie na kolejną próbę — np. po powrocie aplikacji na pierwszy plan. */
@@ -82,32 +87,16 @@ class MqttClient(
         synchronized(sleeper) { sleeper.notifyAll() }
     }
 
-    // Zapis do gniazda nie może iść z wątku UI (Android tego zabrania), więc publikacja
-    // trafia do osobnego wątku wysyłki. Dotknięcie nigdy nie czeka na sieć.
-    private val sender = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
-        Thread(r, "mqtt-tx").apply { isDaemon = true }
-    }
-
     fun publish(topic: String, payload: String, qos: Int = 1, retain: Boolean = false): Boolean {
-        if (!connected) return false
-        val body = Buf()
-        body.string(topic)
-        val q = qos.coerceIn(0, 1)
-        if (q > 0) body.u16(nextId())
-        body.bytes(payload.toByteArray(Charsets.UTF_8))
-        val header = (3 shl 4) or (q shl 1) or (if (retain) 1 else 0)
-        val packet = frame(header, body.toByteArray())
-        sender.execute { runCatching { send(packet) } }
-        return true
+        if (!connected || !running) return false
+        val packet = MqttCodec.publish(topic, payload, qos, retain, nextId())
+        // Po stop() wątek wysyłki jest zamknięty — odrzucona wysyłka to brak połączenia.
+        return runCatching { sender.execute { runCatching { send(packet) } } }.isSuccess
     }
 
     fun subscribe(topic: String, qos: Int = 1): Boolean {
         if (!connected) return false
-        val body = Buf()
-        body.u16(nextId())
-        body.string(topic)
-        body.byte(qos.coerceIn(0, 1))
-        return runCatching { send(frame((8 shl 4) or 0x02, body.toByteArray())) }.isSuccess
+        return runCatching { send(MqttCodec.subscribe(topic, qos, nextId())) }.isSuccess
     }
 
     private fun nextId(): Int {
@@ -137,7 +126,7 @@ class MqttClient(
         try {
             s.tcpNoDelay = true
             s.connect(InetSocketAddress(config.host, config.port), config.timeoutMillis)
-            s.soTimeout = 500
+            s.soTimeout = POLL_MILLIS
         } catch (e: Exception) {
             Log.w(TAG, "brak polaczenia z brokerem: ${e.message}")
             runCatching { s.close() }
@@ -147,20 +136,7 @@ class MqttClient(
         output = s.getOutputStream()
         val input = BufferedInputStream(s.getInputStream())
 
-        try {
-            send(connectPacket())
-            val deadline = System.currentTimeMillis() + config.timeoutMillis
-            val (type, body) = readPacket(input, deadline) ?: return Failure.Unreachable
-            if (type shr 4 != 2 || body.size < 2) return Failure.Unreachable
-            when (val code = body[1].toInt() and 0xFF) {
-                0 -> Unit
-                4, 5 -> return Failure.NotAuthorized
-                else -> return Failure.Rejected(code)
-            }
-        } catch (e: Exception) {
-            return Failure.Unreachable
-        }
-
+        handshake(input)?.let { return it }
         connected = true
         Log.i(TAG, "polaczono z brokerem")
         listener.onConnected()
@@ -172,21 +148,19 @@ class MqttClient(
             while (running) {
                 val now = System.currentTimeMillis()
                 if (now - lastSent >= keepAlive / 2 && !pingPending) {
-                    send(byteArrayOf(0xC0.toByte(), 0))
+                    send(MqttCodec.pingRequest)
                     pingPending = true
                 }
                 if (now - lastReceived > keepAlive + keepAlive / 2) {
                     Log.w(TAG, "broker milczy, zrywam polaczenie")
                     return Failure.Dropped
                 }
-                val packet = readPacket(input, Long.MAX_VALUE, poll = true) ?: continue
+                val (header, body) = readPacket(input, Long.MAX_VALUE, poll = true) ?: continue
                 lastReceived = System.currentTimeMillis()
-                val (header, body) = packet
                 when (header shr 4) {
-                    3 -> handlePublish(header, body)
-                    13 -> pingPending = false
-                    6 -> if (body.size >= 2) send(frame(7 shl 4, body.copyOfRange(0, 2)))
-                    else -> Unit
+                    MqttCodec.PUBLISH -> handlePublish(header, body)
+                    MqttCodec.PINGRESP -> pingPending = false
+                    MqttCodec.PUBREL -> if (body.size >= 2) send(MqttCodec.frame(MqttCodec.PUBCOMP shl 4, body.copyOfRange(0, 2)))
                 }
             }
         } catch (e: Exception) {
@@ -195,25 +169,35 @@ class MqttClient(
         return Failure.Dropped
     }
 
-    private fun handlePublish(header: Int, body: ByteArray) {
-        val qos = (header shr 1) and 3
-        if (body.size < 2) return
-        val topicLength = ((body[0].toInt() and 0xFF) shl 8) or (body[1].toInt() and 0xFF)
-        var offset = 2 + topicLength
-        if (offset > body.size) return
-        val topic = String(body, 2, topicLength, Charsets.UTF_8)
-        var packetId = 0
-        if (qos > 0) {
-            packetId = ((body[offset].toInt() and 0xFF) shl 8) or (body[offset + 1].toInt() and 0xFF)
-            offset += 2
+    /** CONNECT i CONNACK; null, gdy broker przyjął połączenie. */
+    private fun handshake(input: InputStream): Failure? = try {
+        send(
+            MqttCodec.connect(
+                MqttCodec.Connect(
+                    config.clientId, config.keepAliveSeconds, config.username, config.password,
+                    config.willTopic, config.willMessage,
+                )
+            )
+        )
+        val deadline = System.currentTimeMillis() + config.timeoutMillis
+        val packet = readPacket(input, deadline)
+        when (val code = packet?.let { MqttCodec.connackCode(it.first, it.second) }) {
+            null -> Failure.Unreachable
+            0 -> null
+            4, 5 -> Failure.NotAuthorized
+            else -> Failure.Rejected(code)
         }
-        val payload = body.copyOfRange(offset, body.size)
-        runCatching { listener.onMessage(topic, payload, header and 1 != 0) }
-            .onFailure { Log.w(TAG, "blad obslugi $topic", it) }
-        if (qos == 1) {
-            send(frame(4 shl 4, byteArrayOf((packetId shr 8).toByte(), packetId.toByte())))
-        } else if (qos == 2) {
-            send(frame(5 shl 4, byteArrayOf((packetId shr 8).toByte(), packetId.toByte())))
+    } catch (e: Exception) {
+        Failure.Unreachable
+    }
+
+    private fun handlePublish(header: Int, body: ByteArray) {
+        val message = MqttCodec.parsePublish(header, body) ?: return
+        runCatching { listener.onMessage(message.topic, message.payload, message.retained) }
+            .onFailure { Log.w(TAG, "blad obslugi ${message.topic}", it) }
+        when (message.qos) {
+            1 -> send(MqttCodec.ack(MqttCodec.PUBACK, message.packetId))
+            2 -> send(MqttCodec.ack(MqttCodec.PUBREC, message.packetId))
         }
     }
 
@@ -268,30 +252,6 @@ class MqttClient(
         }
     }
 
-    private fun connectPacket(): ByteArray {
-        val body = Buf()
-        body.string("MQTT")
-        body.byte(4)
-        var flags = 0x02
-        if (config.willTopic != null) flags = flags or 0x04 or (1 shl 3) or 0x20
-        if (config.username.isNotEmpty()) {
-            flags = flags or 0x80
-            if (config.password.isNotEmpty()) flags = flags or 0x40
-        }
-        body.byte(flags)
-        body.u16(config.keepAliveSeconds)
-        body.string(config.clientId)
-        if (config.willTopic != null) {
-            body.string(config.willTopic)
-            body.string(config.willMessage)
-        }
-        if (config.username.isNotEmpty()) {
-            body.string(config.username)
-            if (config.password.isNotEmpty()) body.string(config.password)
-        }
-        return frame(1 shl 4, body.toByteArray())
-    }
-
     private fun send(data: ByteArray) {
         synchronized(writeLock) {
             val out = output ?: throw IllegalStateException("brak polaczenia")
@@ -301,31 +261,9 @@ class MqttClient(
         }
     }
 
-    private fun frame(header: Int, body: ByteArray): ByteArray {
-        val out = Buf()
-        out.byte(header)
-        var length = body.size
-        do {
-            var b = length % 128
-            length /= 128
-            if (length > 0) b = b or 0x80
-            out.byte(b)
-        } while (length > 0)
-        out.bytes(body)
-        return out.toByteArray()
-    }
-
-    private class Buf {
-        private val data = java.io.ByteArrayOutputStream()
-        fun byte(v: Int) = data.write(v and 0xFF)
-        fun u16(v: Int) { byte(v shr 8); byte(v) }
-        fun bytes(b: ByteArray) = data.write(b)
-        fun string(s: String) { val b = s.toByteArray(Charsets.UTF_8); u16(b.size); bytes(b) }
-        fun toByteArray(): ByteArray = data.toByteArray()
-    }
-
     companion object {
         private const val TAG = "mqtt"
         private const val MAX_PACKET = 1024 * 1024
+        private const val POLL_MILLIS = 500
     }
 }

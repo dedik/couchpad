@@ -11,15 +11,34 @@ Port SDL zostaje jako referencja (i symulator na Macu), rozwijamy `native/`.
 
 ### `native/` — co jest
 
-- `data/MqttClient.kt` — własny klient MQTT 3.1.1 (testament, QoS 0/1, keepalive,
-  ponawianie, wysyłka w osobnym wątku).
-- `data/PilotRepository.kt` — jedno połączenie: Z906 wprost (ADR 0006), Glasshouse
-  wprost (ADR 0008), kontrakt v1 dla Apple TV, klimy, świateł, pogody i kanałów.
-  Puste identyfikatory Z906 i pilota wykrywa sam z wiadomości retained u brokera.
-- `ui/` — Start, TV, Apple TV, Z906 (Soundstage), Dom (pokoje, światła, klima),
-  Ustawienia. Jednostka `u` = 1 px makiety 480 px, skalowana do szerokości ekranu.
+Pakiet `app.couchpad.pilot` (refaktor 2026-11-08: logika bez UI wydzielona i pokryta testami
+JVM, ekrany w pakietach według zakładek, wspólne kontrolki w `ui/components`).
+
+- `MainActivity.kt` — okno (nad blokadą, wycięcie kamery, bez paska stanu), wibracja,
+  start/stop połączenia. `AppGraph.kt` — repozytorium na proces i sygnał „wróć na Start”.
+  `WindowDisplay.kt` — jasność, wygaszanie i orientacja okna (odpowiednik `board`).
+- `data/` — bez Compose:
+  - `mqtt/MqttClient.kt` — własny klient MQTT 3.1.1 (testament, QoS 0/1, keepalive,
+    ponawianie, wysyłka w osobnym wątku); `mqtt/MqttCodec.kt` — kodowanie pakietów.
+  - `PilotRepository.kt` — jedno połączenie: Z906 wprost (ADR 0006), Glasshouse wprost
+    (ADR 0008), kontrakt v1 dla Apple TV, klimy, świateł, pogody i kanałów. Puste
+    identyfikatory Z906 i pilota wykrywa sam z wiadomości retained u brokera.
+  - `Contract.kt` (snapshot, kanały, pogoda), `TvAggregator.kt` (telemetria + tematy
+    natychmiastowe TV), `Z906.kt` (tematy, wejścia, efekty, krok głośności),
+    `Pending.kt` (klucze poleceń czekających na potwierdzenie), `Model.kt`.
+  - `Settings.kt`, `Options.kt` (tabele opcji jak `storage::Pref`), `SettingsStore.kt`.
+- `ui/` — Compose. Jednostka `u` = 1 px makiety (480 × 800 / 800 × 480), skalowana do ekranu.
   Ikony pixel-art z `firmware/docs/ux/mockup-pulpit/assets/pixel` (bez wygładzania),
   logotypy z SVG przez Inkscape, font Ubuntu.
+  - `theme/` — palety, `C`, jednostki, tekst, ikony, wibracja.
+  - `components/` — przyciski i zasilanie, nagłówki, listy wyboru i segmenty, tarcze
+    (`Arc.kt`: wspólny łuk 270° dla jasności, temperatury i głośności), krzyżak i
+    kołyski, suwak, szuflada przy krawędzi, próbki barwy, okna dialogowe.
+  - `shell/` — `PilotApp` (ekrany, zakładki, wygaszacz), `ScreenPolicy` (styl wg godzin,
+    tryb nocny, przyciemnianie), `TabBars` (dolny pasek, boczny pasek z wycięciem
+    kamery), `WakeGate` („Łączenie z domem”).
+  - `start/`, `tv/`, `appletv/`, `audio/`, `home/` (pokoje, pokój, lampa, żarówka),
+    `climate/`, `settings/` — ekrany.
 - Po każdym powrocie na wierzch: połączenie i świeży stan; ekrany urządzeń zasłania
   „Łączenie z domem”, dopóki stan nie przyjdzie (ADR 0005). W tle rozłącza się.
 
@@ -31,6 +50,7 @@ export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
 echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 ./gradlew assembleDebug && adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n app.couchpad.pilot/.MainActivity
+./gradlew testDebugUnitTest   # testy JVM: kodek MQTT, kontrakt, TV, Z906, reguły ekranu
 ```
 
 ### Stan (2026-11-07)
@@ -59,7 +79,7 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    karty z ikoną i „aktywny”, wybór zamyka listę (efekty, źródła TV i Z906, opcje klimy).
    Pas przy przedniej kamerze (poziom): okno rysuje w wycięciu (SHORT_EDGES), boczny
    pasek zakładek stoi przy krawędzi wyświetlacza, a ikona na wysokości kamery jest
-   odsunięta o szerokość wycięcia (`Shell.kt`, `SideRail`); ekrany bez paska omijają pas.
+   odsunięta o szerokość wycięcia (`ui/shell/TabBars.kt`, `SideRail`); ekrany bez paska omijają pas.
 3. ~~Tryb „tylko pilot”~~ — aplikacja jest launcherem (filtr HOME): startuje z telefonem,
    Home i każde zapalenie ekranu wracają na Start, okno pokazuje się nad ekranem blokady
    (`setShowWhenLocked`), Wstecz na Starcie niczego nie zamyka. Ustawienia → Telefon: wybór
