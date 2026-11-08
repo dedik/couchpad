@@ -46,8 +46,8 @@ if [ "$MODE" = landscape ]; then
     tap 90 746;      shot 05-home
     tap 482 482;     shot 06-room
     tap 700 700;     shot 07-light
-    tap 1589 482 1.5; shot 08-effects; back
-    tap 1095 722;    shot 09-bulb; back; back
+    tap 2156 556 1.5; shot 08-effects; back
+    tap 1095 875;    shot 09-bulb; back; back
     tap 1700 700;    shot 10-climate; back; back
     tap 90 950; shot 11-settings
 else
@@ -58,8 +58,8 @@ else
     tap 742 2324;    shot 05-home
     tap 265 760;     shot 06-room
     tap 480 614;     shot 07-light
-    tap 540 1618 1.5; shot 08-effects; back
-    tap 207 1854;    shot 09-bulb; back; back
+    tap 881 1801 1.5; shot 08-effects; back
+    tap 207 2066;    shot 09-bulb; back; back
     tap 482 922;     shot 10-climate; back; back
     tap 950 2324;    shot 11-settings
     tap 540 645;     shot 12-display; back
@@ -68,4 +68,8 @@ fi
 set_pref orientation "${OLD_ORIENTATION:-0}"
 set_pref theme "${OLD_THEME:-0}"
 adb shell am start -n "$APP/.MainActivity" >/dev/null
+
+# Zbiorczy obraz do README (docs/screenshots/overview-*.png) z właśnie zrobionych zrzutów.
+HERE="$(cd "$(dirname "$0")" && pwd)"
+"$HERE/../../tools/.venv/bin/python" "$HERE/overview.py" "$MODE" "$STYLE"
 echo "gotowe"
