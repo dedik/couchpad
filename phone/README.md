@@ -42,6 +42,7 @@ export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
 echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
+./gradlew testDebugUnitTest   # testy logiki bez telefonu
 ```
 
 Dane brokera wpisuje się na telefonie (Ustawienia → MQTT). Nie trafiają do repozytorium.

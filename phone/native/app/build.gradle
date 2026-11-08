@@ -37,6 +37,10 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.1'
     }
+    testOptions {
+        // android.util.Log i inne wywołania frameworka w testach JVM zwracają wartości domyślne.
+        unitTests.returnDefaultValues = true
+    }
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
@@ -56,4 +60,8 @@ dependencies {
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material-icons-extended'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    testImplementation 'junit:junit:4.13.2'
+    // org.json z Androida to w testach JVM tylko zaślepki — prawdziwa implementacja do parserów.
+    testImplementation 'org.json:json:20231013'
 }
