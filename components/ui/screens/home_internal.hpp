@@ -85,6 +85,7 @@ void render_room(Context& context);
 void build_light_view(Context& context, bool wide);
 void build_effect_picker(Context& context);
 void render_light_view(Context& context, const domain::RoomLight& room, bool group);
+void render_effect_tiles(Context& context, const domain::RoomLight& room);
 void render_effect_picker(Context& context, const domain::RoomLight& room);
 void open_effect_picker(Context& context);
 

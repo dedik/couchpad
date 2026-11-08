@@ -83,6 +83,12 @@ using RoomName = core::Text<25>;
 void load_room(RoomName& out);
 void save_room(const RoomName& room);
 
+// Liczniki wyborów efektów lampy: kafle efektów pokazują najczęściej wybierane efekty danej
+// lampy. Lampa i efekt to identyfikatory z kontraktu (`light.lampa`, `Cozy`). Woła je tylko
+// zadanie UI; odczyt idzie z pamięci, zapis do NVS przy każdym wyborze.
+uint16_t effect_uses(const char* light, const char* effect);
+void count_effect(const char* light, const char* effect);
+
 // Kasuje wszystkie ustawienia pilota, łącznie z Wi-Fi i brokerem.
 bool factory_reset();
 

@@ -20,6 +20,7 @@ LV_FONT_DECLARE(ubuntu_b_64_num)
 LV_FONT_DECLARE(ubuntu_b_96_num)
 LV_FONT_DECLARE(lucide_modes_24)
 LV_FONT_DECLARE(lucide_effects_22)
+LV_FONT_DECLARE(lucide_effects_36)
 LV_FONT_DECLARE(lucide_modes_36)
 }
 
@@ -154,6 +155,7 @@ const lv_font_t* font_key_b26() { return &g_key_b26; }
 const lv_font_t* font_icon() { return &lv_font_montserrat_24; }
 const lv_font_t* font_mode_icon() { return &lucide_modes_24; }
 const lv_font_t* font_effect_icon() { return &lucide_effects_22; }
+const lv_font_t* font_effect_icon_lg() { return &lucide_effects_36; }
 const lv_font_t* font_mode_icon_lg() { return &lucide_modes_36; }
 const lv_font_t* font_icon_sm() { return &lv_font_montserrat_20; }
 const lv_font_t* font_icon_xs() { return &lv_font_montserrat_14; }

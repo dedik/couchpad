@@ -148,6 +148,7 @@ inline constexpr const char* kIconFan = "\xEE\x8D\xBD";        // fan
 inline constexpr const char* kIconDry = "\xEE\x82\xB9";        // droplets
 // Siedemnaście ikon efektów lampy z Lucide 0.460.0 (ADR 0014), 22 px — tools/gen-fonts.sh.
 const lv_font_t* font_effect_icon();
+const lv_font_t* font_effect_icon_lg();  // 36 px: duży kafel bieżącego efektu
 const lv_font_t* font_icon_sm();  // 20 px — wiersze listy, przyciski akcji
 const lv_font_t* font_icon_xs();  // 14 px — pasek statusu
 
