@@ -1,0 +1,56 @@
+apply plugin: 'com.android.application'
+
+// Kod natywny: ../../CMakeLists.txt (warstwa zgodności + komponenty firmware'u + SDL2).
+// Klasy Java SDL bierzemy wprost ze źródeł SDL2 w third_party (tools/fetch-sdl.sh).
+def sdlDir = file("../../third_party/SDL2")
+
+android {
+    namespace 'app.couchpad.pilot'
+    compileSdk 34
+    ndkVersion '27.2.12479018'
+
+    defaultConfig {
+        applicationId 'app.couchpad.pilot'
+        // Galaxy S5 ma Androida 6 (API 23).
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '0.1'
+        externalNativeBuild {
+            cmake {
+                arguments "-DSDL2_SOURCE_DIR=${sdlDir.absolutePath}",
+                          "-DANDROID_STL=c++_shared",
+                          "-DSDL_STATIC=OFF", "-DSDL_SHARED=ON", "-DSDL_TEST=OFF"
+                // M23: arm64-v8a. Galaxy S5 (Snapdragon 801): armeabi-v7a.
+                abiFilters 'arm64-v8a', 'armeabi-v7a'
+            }
+        }
+    }
+
+    sourceSets.main {
+        java.srcDirs += ["${sdlDir}/android-project/app/src/main/java"]
+    }
+
+    externalNativeBuild {
+        cmake {
+            path '../../CMakeLists.txt'
+            version '3.22.1'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+    }
+}
