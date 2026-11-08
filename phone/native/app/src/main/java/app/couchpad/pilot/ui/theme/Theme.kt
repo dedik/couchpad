@@ -75,6 +75,13 @@ object C {
     /** Przygaszony akcent: tło zaznaczenia (16%) i stan oczekujący (55%). */
     val accentSoft get() = palette.accent.copy(alpha = 0.16f)
     val accentPending get() = palette.accent.copy(alpha = 0.55f)
+
+    /**
+     * Płytka pod logotypami kanałów i aplikacji (firmware: theme::logo_plate). Celowo poza
+     * paletą i taka sama w obu stylach: część logotypów (TVP, WP Pilot) jest biała i znika
+     * na jasnym kafelku.
+     */
+    val logoPlate = Color(0xFF16181D)
 }
 
 val Ubuntu = FontFamily(

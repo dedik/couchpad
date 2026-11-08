@@ -114,9 +114,12 @@ fun AppleTvScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) 
 private fun AppRow(atv: AppleTvState, modifier: Modifier, arrangement: Arrangement.Horizontal, onLaunch: (String) -> Unit) {
     Row(modifier.height(68.u), horizontalArrangement = arrangement) {
         for (app in atv.apps.take(6)) {
-            Card(Modifier.size(68.u), radius = 18, selected = app.id == atv.appId, onClick = { onLaunch(app.id) }) {
+            val logo = AppLogos[app.id]
+            Card(
+                Modifier.size(68.u), radius = 18, selected = app.id == atv.appId,
+                background = if (logo != null) C.logoPlate else null, onClick = { onLaunch(app.id) },
+            ) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    val logo = AppLogos[app.id]
                     if (logo != null) Logo(logo, 40.u) else T(app.label, 11, FontWeight.Medium, maxLines = 2)
                 }
             }
