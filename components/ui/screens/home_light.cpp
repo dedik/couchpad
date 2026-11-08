@@ -10,7 +10,6 @@
 namespace ui::home {
 
 using widgets::make_box;
-using widgets::make_chevron;
 using widgets::make_text;
 using widgets::set_visible;
 
@@ -37,6 +36,16 @@ void on_kelvin(lv_event_t* event) {
     }
 }
 
+// Wybór efektu z kafla albo z listy: liczy się do najczęściej wybieranych tej lampy.
+void choose_effect(Context& context, const domain::RoomLight& room, const char* name) {
+    storage::count_effect(room.main.id.c_str(), name);
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetOption, domain::ControlId::LightEffect);
+    intent.target.assign(room.main.id.c_str());
+    intent.text.assign(name);
+    intent.payload.assign(name);
+    dispatch(context, intent);
+}
+
 void on_effect(void* raw) {
     auto& tile = *static_cast<RoomScreen::EffectTile*>(raw);
     Context& context = *tile.context;
@@ -48,11 +57,26 @@ void on_effect(void* raw) {
     // Lista znika od razu; oczekiwanie widać na kaflu efektu.
     context.room_page.effect_picker_open = false;
     widgets::show_page(context.room_page.effect_picker, false);
-    domain::UiIntent intent = make_intent(domain::IntentKind::SetOption, domain::ControlId::LightEffect);
-    intent.target.assign(room->main.id.c_str());
-    intent.text.assign(tile.name.c_str());
-    intent.payload.assign(tile.name.c_str());
-    dispatch(context, intent);
+    choose_effect(context, *room, tile.name.c_str());
+}
+
+void on_effect_cell(lv_event_t* event) {
+    auto& cell = *static_cast<RoomScreen::EffectCell*>(lv_event_get_user_data(event));
+    Context& context = *cell.context;
+    if (cell.more) {
+        open_effect_picker(context);
+        return;
+    }
+    const domain::AppState& state = context.controller->state();
+    const domain::RoomLight* room = room_light(state, context.room_page.room);
+    if (!state.lights_fresh() || room == nullptr) {
+        return;
+    }
+    const domain::PendingEntry* pending = state.pending_of(domain::ControlId::LightEffect);
+    const char* current = pending != nullptr ? pending->requested.c_str() : room->effect.c_str();
+    if (!(cell.name == current)) {
+        choose_effect(context, *room, cell.name.c_str());
+    }
 }
 
 void on_bulb_row(lv_event_t* event) {
@@ -95,6 +119,16 @@ void paint_tile(lv_obj_t* obj, bool on) {
                             LV_PART_MAIN);
     lv_obj_set_style_border_width(obj, on ? 1 : 0, LV_PART_MAIN);
 }
+
+// Siatka kafli efektów. Poziom: [duży][0][1][Więcej] / [duży][2][3][Więcej]. Pion ma pod tarczą
+// tylko kilkanaście pikseli zapasu, więc jeden rząd: [bieżący, szerszy][0][1][Więcej].
+constexpr int32_t kEffectColsTall[] = {LV_GRID_FR(7), LV_GRID_FR(5), LV_GRID_FR(5), LV_GRID_FR(5),
+                                       LV_GRID_TEMPLATE_LAST};
+constexpr int32_t kEffectColsWide[] = {LV_GRID_FR(3), LV_GRID_FR(2), LV_GRID_FR(2), LV_GRID_FR(2),
+                                       LV_GRID_TEMPLATE_LAST};
+constexpr int32_t kEffectRowsTall[] = {72, LV_GRID_TEMPLATE_LAST};
+constexpr int32_t kEffectRowsWide[] = {64, 64, LV_GRID_TEMPLATE_LAST};
+constexpr char kMoreIcon[] = "\xEE\x84\x85";  // Lucide layout-grid
 
 const char* kelvin_name(std::size_t step) {
     static const char* const kNames[kKelvinSteps] = {"bardzo ciepła", "ciepła", "ciepła biel",
@@ -180,23 +214,48 @@ void build_light_view(Context& context, bool wide) {
     theme::make_column(screen.group_box, theme::kS2);
     lv_obj_t* effect_cap = widgets::make_cap(screen.group_box, "EFEKT · CAŁA LAMPA");
     lv_obj_set_style_margin_top(effect_cap, theme::kS1, LV_PART_MAIN);
-    screen.effect_row = tile_base(screen.group_box);
-    lv_obj_set_size(screen.effect_row, LV_PCT(100), 64);
-    lv_obj_set_style_pad_hor(screen.effect_row, theme::kS4, LV_PART_MAIN);
-    theme::make_row(screen.effect_row, theme::kS4);
-    screen.effect_icon = make_text(screen.effect_row, theme::font_effect_icon(), theme::dim());
-    lv_obj_t* effect_texts = make_box(screen.effect_row);
-    lv_obj_set_height(effect_texts, LV_SIZE_CONTENT);
-    lv_obj_set_width(effect_texts, 0);
-    lv_obj_set_flex_grow(effect_texts, 1);
-    theme::make_column(effect_texts, 2);
-    widgets::make_cap(effect_texts, "EFEKT");
-    screen.effect_value = make_text(effect_texts, theme::font_m15(), theme::text());
-    make_chevron(screen.effect_row);
-    lv_obj_add_event_cb(
-        screen.effect_row,
-        [](lv_event_t* event) { open_effect_picker(*static_cast<Context*>(lv_event_get_user_data(event))); },
-        LV_EVENT_CLICKED, &context);
+    screen.effect_cap = effect_cap;
+    screen.effect_wide = wide;
+    screen.effect_grid = make_box(screen.group_box);
+    lv_obj_set_size(screen.effect_grid, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_layout(screen.effect_grid, LV_LAYOUT_GRID);
+    lv_obj_set_grid_dsc_array(screen.effect_grid, wide ? kEffectColsWide : kEffectColsTall,
+                              wide ? kEffectRowsWide : kEffectRowsTall);
+    lv_obj_set_style_pad_column(screen.effect_grid, theme::kS2, LV_PART_MAIN);
+    lv_obj_set_style_pad_row(screen.effect_grid, theme::kS2, LV_PART_MAIN);
+    for (std::size_t i = 0; i < RoomScreen::kEffectCells; ++i) {
+        RoomScreen::EffectCell& cell = screen.effect_cells[i];
+        cell.context = &context;
+        cell.more = i == RoomScreen::kEffectCells - 1;
+        cell.root = tile_base(screen.effect_grid);
+        theme::make_column(cell.root, i == 0 && wide ? 10 : i == 0 ? 4 : 6);
+        lv_obj_set_flex_align(cell.root, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_hor(cell.root, 6, LV_PART_MAIN);
+        cell.icon = make_text(cell.root, i == 0 ? theme::font_effect_icon_lg() : theme::font_effect_icon(),
+                              theme::dim());
+        cell.label = make_text(cell.root, i == 0 ? theme::font_m15() : theme::font_r13(), theme::dim());
+        lv_obj_set_width(cell.label, LV_PCT(100));
+        lv_obj_set_style_text_align(cell.label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+        lv_label_set_long_mode(cell.label, LV_LABEL_LONG_DOT);
+        lv_obj_add_event_cb(cell.root, on_effect_cell, LV_EVENT_CLICKED, &cell);
+    }
+    // Stałe miejsca: duży w pierwszej kolumnie, „Więcej” w ostatniej (w poziomie przez oba rzędy).
+    lv_obj_set_grid_cell(screen.effect_cells[0].root, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0,
+                         wide ? 2 : 1);
+    static constexpr uint8_t kTall[][2] = {{1, 0}, {2, 0}, {0, 0}, {0, 0}};
+    static constexpr uint8_t kWide[][2] = {{1, 0}, {2, 0}, {1, 1}, {2, 1}};
+    for (std::size_t i = 0; i < 4; ++i) {
+        const uint8_t* at = wide ? kWide[i] : kTall[i];
+        lv_obj_set_grid_cell(screen.effect_cells[1 + i].root, LV_GRID_ALIGN_STRETCH, at[0], 1,
+                             LV_GRID_ALIGN_STRETCH, at[1], 1);
+    }
+    lv_obj_t* more = screen.effect_cells[RoomScreen::kEffectCells - 1].root;
+    lv_obj_set_grid_cell(more, LV_GRID_ALIGN_STRETCH, 3, 1, LV_GRID_ALIGN_STRETCH, 0, wide ? 2 : 1);
+    if (!wide) {
+        // W pionie mieszczą się dwa małe kafle.
+        lv_obj_add_flag(screen.effect_cells[3].root, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(screen.effect_cells[4].root, LV_OBJ_FLAG_HIDDEN);
+    }
 
     lv_obj_t* bulbs_cap = widgets::make_cap(screen.group_box, "ŻARÓWKI");
     lv_obj_set_style_margin_top(bulbs_cap, theme::kS1, LV_PART_MAIN);
@@ -334,15 +393,7 @@ void render_light_view(Context& context, const domain::RoomLight& room, bool gro
     if (!group) {
         return;
     }
-    const domain::PendingEntry* effect_pending = state.pending_of(domain::ControlId::LightEffect);
-    const char* effect = effect_pending != nullptr ? effect_pending->requested.c_str() : room.effect.c_str();
-    lv_label_set_text(screen.effect_value, effect[0] != '\0' ? effect_label(effect) : "Brak");
-    lv_label_set_text(screen.effect_icon, effect_icon(effect));
-    paint_tile(screen.effect_row, effect_on);
-    lv_obj_set_style_text_color(screen.effect_icon, effect_on ? theme::accent() : theme::dim(), LV_PART_MAIN);
-    lv_obj_set_style_text_color(screen.effect_value, effect_on ? theme::accent() : theme::text(), LV_PART_MAIN);
-    widgets::set_status_outline(screen.effect_row, state.status_of(domain::ControlId::LightEffect));
-    set_visible(screen.effect_row, state.snapshot().lights.effect_count > 0);
+    render_effect_tiles(context, room);
 
     for (std::size_t i = 0; i < domain::kMaxLightMembers; ++i) {
         RoomScreen::BulbRow& tile = screen.bulbs[i];
@@ -369,6 +420,91 @@ void render_light_view(Context& context, const domain::RoomLight& room, bool gro
         lv_obj_set_style_text_color(tile.note, bulb_on ? theme::accent() : theme::text(), LV_PART_MAIN);
         widgets::set_status_outline(tile.root,
                                     status_for(state, domain::ControlId::LightPower, bulb.id.c_str()));
+    }
+}
+
+void render_effect_tiles(Context& context, const domain::RoomLight& room) {
+    RoomScreen& screen = context.room_page;
+    const domain::AppState& state = context.controller->state();
+    const domain::LightsState& lights = state.snapshot().lights;
+    const bool show = lights.effect_count > 0;
+    set_visible(screen.effect_cap, show);
+    set_visible(screen.effect_grid, show);
+    if (!show) {
+        return;
+    }
+    const bool fresh = state.lights_fresh();
+    const domain::PendingEntry* pending = state.pending_of(domain::ControlId::LightEffect);
+    const char* current = pending != nullptr ? pending->requested.c_str() : room.effect.c_str();
+    const bool active = current[0] != '\0';
+
+    // Obok dużego kafla: przy włączonym efekcie najpierw „Brak”, potem najczęściej wybierane
+    // na tej lampie (remis: kolejność z listy Home Assistanta).
+    const std::size_t slots = screen.effect_wide ? 4 : 2;
+    const char* small[4] = {};
+    std::size_t count = 0;
+    if (active) {
+        small[count++] = "";
+    }
+    bool used[domain::kMaxEffects] = {};
+    std::size_t others = 0;
+    for (std::size_t i = 0; i < lights.effect_count; ++i) {
+        others += (lights.effects[i] == current || lights.effects[i].empty()) ? 0 : 1;
+    }
+    std::size_t shown = 0;
+    while (count < slots) {
+        std::size_t best = lights.effect_count;
+        uint16_t best_uses = 0;
+        for (std::size_t i = 0; i < lights.effect_count; ++i) {
+            if (used[i] || lights.effects[i] == current || lights.effects[i].empty()) {
+                continue;
+            }
+            const uint16_t uses = storage::effect_uses(room.main.id.c_str(), lights.effects[i].c_str());
+            if (best == lights.effect_count || uses > best_uses) {
+                best = i;
+                best_uses = uses;
+            }
+        }
+        if (best == lights.effect_count) {
+            break;
+        }
+        used[best] = true;
+        small[count++] = lights.effects[best].c_str();
+        ++shown;
+    }
+
+    auto paint = [&](RoomScreen::EffectCell& cell, const char* name, bool selected) {
+        cell.name.assign(name);
+        lv_label_set_text(cell.icon, effect_icon(name));
+        lv_label_set_text(cell.label, name[0] != '\0' ? effect_label(name) : "Brak");
+        paint_tile(cell.root, selected);
+        const lv_color_t ink = selected ? theme::accent() : theme::dim();
+        lv_obj_set_style_text_color(cell.icon, ink, LV_PART_MAIN);
+        lv_obj_set_style_text_color(cell.label, ink, LV_PART_MAIN);
+        lv_obj_set_style_opa(cell.root, fresh ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
+        set_visible(cell.root, true);
+    };
+    RoomScreen::EffectCell& big = screen.effect_cells[0];
+    paint(big, current, fresh && active);
+    widgets::set_status_outline(big.root, state.status_of(domain::ControlId::LightEffect));
+    for (std::size_t i = 0; i < slots; ++i) {
+        RoomScreen::EffectCell& cell = screen.effect_cells[1 + i];
+        if (i < count) {
+            paint(cell, small[i], false);
+        } else {
+            set_visible(cell.root, false);
+        }
+    }
+    RoomScreen::EffectCell& more = screen.effect_cells[RoomScreen::kEffectCells - 1];
+    const std::size_t hidden = others > shown ? others - shown : 0;
+    set_visible(more.root, hidden > 0);
+    if (hidden > 0) {
+        lv_label_set_text(more.icon, kMoreIcon);
+        lv_label_set_text_fmt(more.label, "Więcej · %u", static_cast<unsigned>(hidden));
+        paint_tile(more.root, false);
+        lv_obj_set_style_text_color(more.icon, theme::dim(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(more.label, theme::text(), LV_PART_MAIN);
+        lv_obj_set_style_opa(more.root, fresh ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
     }
 }
 

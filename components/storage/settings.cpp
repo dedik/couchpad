@@ -25,6 +25,7 @@ constexpr char kKeyTvPrefix[] = "tv_prefix";
 // adres domowej infrastruktury.
 constexpr char kDefaultTvPrefix[] = "lgtv";
 constexpr char kKeyRoom[] = "room";
+constexpr char kKeyEffectUses[] = "fx_uses";
 
 // Klucz NVS i wartość domyślna każdej preferencji, w kolejności `Pref`.
 // Nowe ustawienie ekranu WIĘCEJ to nowy wiersz tutaj i w `Pref`.
@@ -113,6 +114,14 @@ public:
     bool set_u16(const char* key, uint16_t value) {
         return ok_ && nvs_set_u16(handle_, key, value) == ESP_OK;
     }
+    // `false`, gdy klucza nie ma albo ma inny rozmiar niż bufor.
+    bool get_blob(const char* key, void* buffer, std::size_t size) const {
+        std::size_t length = size;
+        return ok_ && nvs_get_blob(handle_, key, buffer, &length) == ESP_OK && length == size;
+    }
+    bool set_blob(const char* key, const void* value, std::size_t size) {
+        return ok_ && nvs_set_blob(handle_, key, value, size) == ESP_OK;
+    }
     void erase(const char* key) {
         if (ok_) {
             nvs_erase_key(handle_, key);
@@ -125,6 +134,43 @@ private:
     nvs_handle_t handle_ = 0;
     bool ok_ = false;
 };
+
+// Liczniki efektów: skróty FNV-1a identyfikatorów zamiast tekstów, żeby tablica miała stały
+// rozmiar (3 pokoje ze światłem × 16 efektów mieści się z zapasem). Przy przepełnieniu nowy
+// wpis zastępuje najrzadziej wybierany.
+struct EffectUse {
+    uint32_t light = 0;
+    uint32_t effect = 0;
+    uint16_t count = 0;
+    uint16_t reserved = 0;
+};
+constexpr std::size_t kEffectUses = 64;
+EffectUse g_uses[kEffectUses];
+bool g_uses_loaded = false;
+
+uint32_t fnv1a(const char* text) {
+    uint32_t hash = 2166136261u;
+    for (const char* c = text; c != nullptr && *c != '\0'; ++c) {
+        hash = (hash ^ static_cast<uint8_t>(*c)) * 16777619u;
+    }
+    return hash;
+}
+
+void forget_uses() {
+    for (EffectUse& use : g_uses) {
+        use = EffectUse{};
+    }
+}
+
+void load_uses() {
+    if (g_uses_loaded) {
+        return;
+    }
+    g_uses_loaded = true;
+    if (!Nvs(NVS_READONLY).get_blob(kKeyEffectUses, g_uses, sizeof(g_uses))) {
+        forget_uses();
+    }
+}
 
 }  // namespace
 
@@ -241,10 +287,55 @@ void set(Pref pref, uint8_t value) {
     }
 }
 
+uint16_t effect_uses(const char* light, const char* effect) {
+    load_uses();
+    const uint32_t l = fnv1a(light);
+    const uint32_t e = fnv1a(effect);
+    for (const EffectUse& use : g_uses) {
+        if (use.count != 0 && use.light == l && use.effect == e) {
+            return use.count;
+        }
+    }
+    return 0;
+}
+
+void count_effect(const char* light, const char* effect) {
+    if (light == nullptr || effect == nullptr || light[0] == '\0' || effect[0] == '\0') {
+        return;
+    }
+    load_uses();
+    const uint32_t l = fnv1a(light);
+    const uint32_t e = fnv1a(effect);
+    EffectUse* slot = nullptr;
+    EffectUse* rarest = &g_uses[0];
+    for (EffectUse& use : g_uses) {
+        if (use.count != 0 && use.light == l && use.effect == e) {
+            slot = &use;
+            break;
+        }
+        if (use.count < rarest->count) {
+            rarest = &use;
+        }
+    }
+    if (slot == nullptr) {
+        slot = rarest;
+        *slot = EffectUse{l, e, 0, 0};
+    }
+    if (slot->count < UINT16_MAX) {
+        ++slot->count;
+    }
+    Nvs nvs(NVS_READWRITE);
+    if (!(nvs.set_blob(kKeyEffectUses, g_uses, sizeof(g_uses)) && nvs.commit())) {
+        ESP_LOGW(kTag, "nie zapisano licznikow efektow");
+    }
+}
+
 bool factory_reset() {
     Nvs nvs(NVS_READWRITE);
     const bool ok = nvs.erase_all() && nvs.commit();
     forget_cache();
+    forget_uses();
+    g_uses_loaded = true;
     ESP_LOGI(kTag, "ustawienia fabryczne %s", ok ? "przywrocone" : "nieprzywrocone");
     return ok;
 }

@@ -156,6 +156,22 @@ przyciemnionym ekranem, w pionie pełny ekran. Wiersz `make_list_row`: ikona opc
 „aktywny” przy bieżącej, obwódka w akcencie. **Wybór zamyka listę.** Wstecz albo dotknięcie
 tła — zamyka bez zmian.
 
+### 4.7 Kafle efektów
+
+Efekt całej lampy to siatka kafli jak tryby klimy (4.4: ikona Lucide nad nazwą, wybrany na
+miękkim akcencie z obwódką), nie wiersz z listą. Pierwszy, większy kafel to bieżący efekt
+(albo „Brak”); obok najczęściej wybierane efekty tej lampy, przy włączonym efekcie pierwszy
+z nich to zawsze „Brak”; ostatni kafel „Więcej · N” otwiera listę wyboru (4.6) ze wszystkimi.
+Remis liczników rozstrzyga kolejność `effect_list` z Home Assistanta.
+
+- Poziom: duży kafel przez dwa rzędy po 64 px, 4 efekty i „Więcej” na całą wysokość.
+- Pion: pod tarczą 300 px zostaje kilkanaście pikseli, więc jeden rząd 72 px — bieżący
+  (szerszy), 2 efekty i „Więcej”. Aplikacja na Androida ma w pionie więcej miejsca i pokazuje
+  dwa rzędy (duży, 3 efekty, „Więcej”).
+- Liczniki wyborów (kafel i lista) leżą tylko w urządzeniu: panel w NVS (`fx_uses`, skróty
+  FNV-1a lampy i efektu), aplikacja w `SettingsStore` (`effect_usage`). Bez tematów MQTT;
+  ustawienia fabryczne je kasują.
+
 ## 5. Dodawanie
 
 ### Nowe światło w pomieszczeniu (bez firmware'u)

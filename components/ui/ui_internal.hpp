@@ -262,7 +262,6 @@ struct RoomScreen {
     // tarcza jasności i obok kafle barwy, efektu i żarówek.
     lv_obj_t* view_light = nullptr;
     widgets::Thermostat* dial = nullptr;
-    lv_obj_t* effect_icon = nullptr;
     lv_obj_t* kelvin_row = nullptr;
     lv_obj_t* light_power = nullptr;
     lv_obj_t* kelvin_box = nullptr;
@@ -270,8 +269,23 @@ struct RoomScreen {
     lv_obj_t* kelvin[kKelvinSteps]{};
     uint16_t kelvin_steps[kKelvinSteps]{};
     lv_obj_t* group_box = nullptr;      // efekt i żarówki: tylko dla grupy
-    lv_obj_t* effect_row = nullptr;
-    lv_obj_t* effect_value = nullptr;
+    // Efekty jako kafle (jak tryby klimy): bieżący na dużym kaflu, obok najczęściej wybierane
+    // na tej lampie (przy włączonym efekcie pierwszy to „Brak”), ostatni „Więcej” otwiera listę.
+    // Poziom: duży przez dwa rzędy, 4 + Więcej na całą wysokość; pion (mniej miejsca pod
+    // tarczą): jeden rząd — bieżący, 2 + Więcej.
+    lv_obj_t* effect_cap = nullptr;
+    lv_obj_t* effect_grid = nullptr;
+    bool effect_wide = false;
+    struct EffectCell {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* icon = nullptr;
+        lv_obj_t* label = nullptr;
+        Context* context = nullptr;
+        domain::EffectName name;
+        bool more = false;
+    };
+    static constexpr std::size_t kEffectCells = 6;  // duży, cztery małe, „Więcej”
+    EffectCell effect_cells[kEffectCells];
     struct BulbRow {
         lv_obj_t* root = nullptr;
         lv_obj_t* icon = nullptr;
