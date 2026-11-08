@@ -13,9 +13,13 @@ kontraktem MQTT. Firmware nie jest przez to repozytorium zmieniany.
 
 ![Ekrany w poziomie](docs/screenshots/overview-landscape.png)
 
+![Ekrany w pionie — styl jasny](docs/screenshots/overview-portrait-light.png)
+
+![Ekrany w poziomie — styl jasny](docs/screenshots/overview-landscape-light.png)
+
 Wszystkie ekrany: [`docs/screenshots/portrait/`](docs/screenshots/portrait/) i
 [`docs/screenshots/landscape/`](docs/screenshots/landscape/) — Start, TV, Apple TV, Z906, Dom,
-pokój, lampa, efekty, żarówka, klimatyzacja i ustawienia.
+pokój, lampa, efekty, żarówka, klimatyzacja i ustawienia; w stylu jasnym w podkatalogach `light/`.
 
 ## Co robi
 
@@ -49,7 +53,8 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 Dane brokera wpisuje się na telefonie (Ustawienia → MQTT). Nie trafiają do repozytorium.
 
-Zrzuty ekranu z podłączonego telefonu: `tools/screenshots.sh portrait|landscape`.
+Zrzuty ekranu z podłączonego telefonu: `tools/screenshots.sh portrait|landscape [light]`
+(z `light` w stylu jasnym, do `docs/screenshots/<orientacja>/light/`).
 
 ## Port LVGL (referencja)
 

@@ -1,28 +1,39 @@
 #!/bin/sh
 # Zrzuty wszystkich ekranów natywnej aplikacji z podłączonego telefonu (adb).
 #
-#   tools/screenshots.sh portrait|landscape
+#   tools/screenshots.sh portrait|landscape [light]
 #
 # Współrzędne są dla Galaxy M23 (1080 × 2408). Skrypt na chwilę wymusza orientację
-# w ustawieniach aplikacji i przywraca „auto” na końcu. Nie wysyła żadnych poleceń do
+# (i z `light` styl jasny) w ustawieniach aplikacji, a na końcu przywraca poprzednie.
+# Zrzuty w stylu jasnym trafiają do docs/screenshots/<orientacja>/light/. Nie wysyła żadnych poleceń do
 # urządzeń: tylko przechodzi między ekranami i otwiera listy wyboru.
 set -eu
 
 MODE="${1:-portrait}"
+STYLE="${2:-dark}"
 APP=app.couchpad.pilot
 OUT="$(cd "$(dirname "$0")/.." && pwd)/docs/screenshots/$MODE"
+[ "$STYLE" = light ] && OUT="$OUT/light"
 mkdir -p "$OUT"
 
 tap() { adb shell input tap "$1" "$2"; sleep "${3:-2}"; }
 back() { adb shell input keyevent KEYCODE_BACK; sleep 1.5; }
 shot() { adb exec-out screencap -p > "$OUT/$1.png"; echo "  $1"; }
-set_orientation() {
+# Ustawienie typu int w shared_prefs aplikacji: get <nazwa>, set <nazwa> <wartość>.
+get_pref() {
+    adb shell "run-as $APP cat shared_prefs/pilot.xml" | sed -n "s/.*name=\"$1\" value=\"\([0-9]*\)\".*/\1/p"
+}
+set_pref() {
     adb shell am force-stop "$APP"
-    adb shell "run-as $APP sed -i 's/name=\"orientation\" value=\"[0-9]\"/name=\"orientation\" value=\"$1\"/' shared_prefs/pilot.xml"
+    adb shell "run-as $APP sed -i 's/name=\"$1\" value=\"[0-9]*\"/name=\"$1\" value=\"$2\"/' shared_prefs/pilot.xml"
 }
 
 adb shell input keyevent KEYCODE_WAKEUP
-if [ "$MODE" = landscape ]; then set_orientation 2; else set_orientation 1; fi
+OLD_ORIENTATION="$(get_pref orientation)"
+OLD_THEME="$(get_pref theme)"
+if [ "$MODE" = landscape ]; then set_pref orientation 2; else set_pref orientation 1; fi
+# Styl: 0 ciemny, 1 jasny, 2 według godzin.
+if [ "$STYLE" = light ]; then set_pref theme 1; else set_pref theme 0; fi
 adb shell am start -n "$APP/.MainActivity" >/dev/null
 sleep 5
 
@@ -54,6 +65,7 @@ else
     tap 540 645;     shot 12-display; back
 fi
 
-set_orientation 0
+set_pref orientation "${OLD_ORIENTATION:-0}"
+set_pref theme "${OLD_THEME:-0}"
 adb shell am start -n "$APP/.MainActivity" >/dev/null
 echo "gotowe"
