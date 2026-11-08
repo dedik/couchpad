@@ -57,6 +57,18 @@ pomieszczeń wysuwana gestem od krawędzi. Zasady, według których dochodzą ko
 
 ![Zakładka Dom — poziom, styl jasny](docs/screenshots/overview-home-landscape-light.png)
 
+### Na telefonie z Androidem
+
+Ten sam pilot działa też jako natywna aplikacja na Androida (Kotlin + Jetpack Compose) — na
+przykład na starym telefonie ustawionym jako ekran główny i odłożonym na kanapę. Odwzorowuje
+1:1 ekrany i ustawienia tego firmware'u, w pionie i w poziomie, i mówi tym samym kontraktem
+MQTT, więc w Home Assistancie nie wymaga niczego więcej. Jest w osobnym repozytorium;
+firmware od niej nie zależy.
+
+![Aplikacja na Androida — pion](docs/screenshots/phone/overview-portrait.png)
+
+![Aplikacja na Androida — poziom](docs/screenshots/phone/overview-landscape.png)
+
 ## Co potrafi
 
 - **TV** — stan zasilania, źródło i tryb obrazu, krzyżak, kołyski głośności i kanałów,
