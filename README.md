@@ -1,11 +1,25 @@
-# Couchpad — a touch remote for TV, Apple TV, Logitech Z906 and Home Assistant
+# Couchpad — a touch remote for TV, Apple TV, Logitech Z906 and Home Assistant: ESP32-P4 panel and Android app
 
 [Polski](README.pl.md)
 
-Native firmware for a 4.3" ESP32-P4 touch panel that controls a living room over MQTT:
-an LG TV, an Apple TV, Logitech Z906 speakers, an air conditioner and lights through Home
-Assistant. ESP-IDF, C++17 and LVGL 9 — no web view on the device, so it wakes in about
-two seconds and reacts immediately.
+A living-room remote that controls an LG TV, an Apple TV, Logitech Z906 speakers, an air
+conditioner and lights through Home Assistant over MQTT. **It comes in two versions that look
+and work the same: firmware for a 4.3" ESP32-P4 touch panel and an Android app.**
+
+| | Touch panel | Android phone |
+| --- | --- | --- |
+| Hardware | Guition ESP32-P4 board, 4.3" IPS 480 × 800 ([details](#hardware)) | a phone with Android 6.0 or newer (tested on a Galaxy M23) |
+| Software | native firmware: ESP-IDF, C++17, LVGL 9 | native app: Kotlin, Jetpack Compose |
+| Code | the root of this repository | [`phone/`](phone/README.en.md) |
+| Build | [Building the panel](#building-the-panel) | [Building the app](#building-the-app) |
+
+Both versions speak the same [MQTT contract](docs/architecture/mqtt-contract.en.md) and use the
+same Home Assistant package, so you can run one, the other or both at once. Neither has a web
+view: the panel wakes in about two seconds, the app shows fresh state as soon as it is opened.
+The screens, settings and rules below apply to both; the panel is the reference design and the
+app follows it ([ADR 0016](docs/architecture/adr/0016-android-app.en.md)).
+
+## The panel
 
 ![All screens](docs/screenshots/overview.png)
 
@@ -59,13 +73,12 @@ that slides in with an edge swipe. The rules new devices follow:
 
 The interface is in Polish. All texts live in `components/ui/screens/*.cpp`.
 
-### On an Android phone
+## The Android app
 
-The same remote also runs as a native Android app (Kotlin + Jetpack Compose) — for example
-on an old phone set as the home screen and left on the couch. It copies this firmware's
-screens and settings one to one, in portrait and landscape, and speaks the same MQTT contract,
-so it needs nothing extra in Home Assistant. It lives in [`phone/`](phone/README.en.md); the
-firmware does not depend on it.
+The same screens on a phone — for example an old one set as the home screen and left on the
+couch. The app can replace the phone's launcher: it starts with the phone, Home returns to the
+start screen and it shows up as soon as the screen turns on. Details, build and status:
+[`phone/README.en.md`](phone/README.en.md).
 
 ![Android app — portrait](phone/docs/screenshots/overview-portrait.png)
 
@@ -76,6 +89,8 @@ firmware does not depend on it.
 ![Android app — landscape, light theme](phone/docs/screenshots/overview-landscape-light.png)
 
 ## What it does
+
+Both versions have the same screens and settings:
 
 - **TV** — power state, input and picture mode, D-pad, volume and channel rockers, four
   channel shortcuts with logos and a list of all tuner channels.
@@ -102,10 +117,11 @@ firmware does not depend on it.
   ([ADR 0012](docs/architecture/adr/0012-light-and-dark-theme.en.md)).
 - **Portrait or landscape** — a setting, not a sensor (the board has none): in landscape the
   image is rotated on the CPU and every screen has its own two-column layout
-  ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.en.md)).
+  ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.en.md)). The app can also
+  follow the phone's rotation.
 - **Settings on the device** — Wi-Fi, MQTT broker, screen and theme, sound limit, room and time zone,
-  keyboard and trackpad, diagnostics. Credentials are entered on the panel and kept in its
-  NVS, never in the repository.
+  keyboard and trackpad, diagnostics. Credentials are entered on the device (the panel's NVS,
+  the app's private storage), never in the repository. On the phone Wi-Fi is the system's.
 
 The remote never shows stale state as current: after waking up it asks for a fresh snapshot
 and greys out controls until it arrives
@@ -118,13 +134,14 @@ and greys out controls until it arrives
 | [Guition JC4880P443C_I_W (ESP32-P4 + ESP32-C6, 4.3" IPS 480×800, touch, case)](https://pl.aliexpress.com/item/1005009675498892.html) | ESP32-P4 runs the app, ESP32-C6 provides Wi-Fi over SDIO. Pins and timings verified on a real unit: [docs/hardware/verified-board-map.md](docs/hardware/verified-board-map.en.md) |
 | USB-C cable | power, flashing, logs, screenshots |
 
-The camera on the board is not used.
+The camera on the board is not used. The Android app needs only a phone on the same network
+as the MQTT broker.
 
 ## How the pieces talk
 
 ```text
                        ┌── Glasshouse on the LG TV      (TV state and keys)
-pilot ── MQTT broker ──┼── Z906 controller (ESP32)       (speakers, direct topics)
+panel or app ── MQTT ──┼── Z906 controller (ESP32)       (speakers, direct topics)
                        └── Home Assistant ── Apple TV, AC, weather, TV channel switching
 ```
 
@@ -139,7 +156,9 @@ pilot ── MQTT broker ──┼── Z906 controller (ESP32)       (speakers
 The full message format is in [docs/architecture/mqtt-contract.md](docs/architecture/mqtt-contract.en.md).
 Every integration is optional: a screen without a source shows a "no fresh state" banner.
 
-## Build and flash
+## Build
+
+### Building the panel
 
 Requirements: [ESP-IDF v5.5](https://docs.espressif.com/projects/esp-idf/en/v5.5/esp32p4/get-started/)
 (tested with v5.5.6). Component versions are pinned in `main/idf_component.yml`.
@@ -153,13 +172,25 @@ idf.py -p /dev/cu.usbmodem101 flash monitor
 Use your own serial port. Before the first flash you may want a backup of the factory
 firmware: `esptool.py --port <port> read_flash 0 0x1000000 backup.bin`.
 
+### Building the app
+
+Requirements: JDK 17 and the Android SDK (`platforms;android-34`, `build-tools;34.0.0`).
+
+```bash
+cd phone/native
+./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Full steps, tests and the older SDL/LVGL port: [`phone/README.en.md`](phone/README.en.md).
+
 ## Make it yours
 
 ### 1. On the device (no code changes)
 
-Open **Settings** (gear tab):
+Open **Settings** (gear tab) on the panel or in the app — they are the same:
 
-1. **Wi-Fi** — pick the network and type the password.
+1. **Wi-Fi** — pick the network and type the password (panel only; the phone uses its own Wi-Fi).
 2. **MQTT** — broker address, port, user and password, the remote's identifier (used in
    `multimedia_remote/v1/<identifier>`), the Z906 controller id (`z906_<mac>`) and the
    Glasshouse topic prefix.
@@ -182,6 +213,8 @@ to `z906/<id>/command/<name>` — the full table is in
 a different layout, adapt `components/transport/z906_client.cpp`.
 
 ### 4. In the code
+
+For the panel (the app keeps its equivalents in `phone/native/app/src/main/java/app/couchpad/pilot/`):
 
 | What | Where |
 | --- | --- |
@@ -206,6 +239,8 @@ a different layout, adapt `components/transport/z906_client.cpp`.
   publishing a screenshot.
 - **Log over MQTT** (`CONFIG_PILOT_REMOTE_LOG`, off by default): `tools/pilot_log.py`.
 - **Interactive mockup** of the whole UI: `docs/ux/mockup-pulpit/index.html`.
+- **Android app screenshots** from a phone connected over adb:
+  `phone/tools/screenshots.sh portrait|landscape [light]`.
 
 ## TODO
 
@@ -225,6 +260,7 @@ Design documents are written in Polish, each with an English version next to it
 [UI architecture](docs/architecture/ui-architecture.en.md) ·
 [board bring-up](docs/hardware/bring-up.en.md) ·
 [integrations](docs/integrations/) ·
+[Android app](phone/README.en.md) ([status, in Polish](phone/docs/PROGRESS.md)) ·
 [notes for contributors and AI agents](AGENTS.en.md).
 
 ## License
@@ -235,7 +271,9 @@ licenses:
 - `components/board_bsp` — Espressif BSP, Apache-2.0 (`components/board_bsp/LICENSE`)
 - `components/esp_lcd_st7701_patched` — Espressif ST7701 driver with a patched init
   sequence, Apache-2.0 (`license.txt`)
-- Ubuntu font in `components/ui/assets/fonts` — Ubuntu Font Licence 1.0
+- Ubuntu font in `components/ui/assets/fonts` and `phone/native/app/src/main/res/font` —
+  Ubuntu Font Licence 1.0
+- cJSON in `phone/third_party/cJSON` (SDL port) — MIT
 - Infuse and YouTube marks from [Simple Icons](https://simpleicons.org) (CC0)
 
 Channel and app logos (Polsat, TVN, TVP, WP Pilot, Infuse, YouTube) are trademarks of

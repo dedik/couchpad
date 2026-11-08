@@ -1,11 +1,25 @@
-# Couchpad — dotykowy pilot do TV, Apple TV, Logitech Z906 i Home Assistanta
+# Couchpad — dotykowy pilot do TV, Apple TV, Logitech Z906 i Home Assistanta: panel ESP32-P4 i aplikacja na Androida
 
 [English](README.md)
 
-Natywny firmware dla 4,3-calowego panelu dotykowego z ESP32-P4, który steruje salonem po
-MQTT: telewizorem LG, Apple TV, głośnikami Logitech Z906, klimatyzacją i światłem przez Home
-Assistanta. ESP-IDF, C++17 i LVGL 9 — bez przeglądarki na urządzeniu, więc pilot budzi się
-w około dwie sekundy i reaguje od razu.
+Pilot do salonu, który po MQTT steruje telewizorem LG, Apple TV, głośnikami Logitech Z906,
+klimatyzacją i światłem przez Home Assistanta. **Jest w dwóch wersjach, które wyglądają i działają
+tak samo: firmware na 4,3-calowy panel dotykowy z ESP32-P4 i aplikacja na Androida.**
+
+| | Panel dotykowy | Telefon z Androidem |
+| --- | --- | --- |
+| Sprzęt | płytka Guition z ESP32-P4, 4,3" IPS 480 × 800 ([szczegóły](#sprzęt)) | telefon z Androidem 6.0 lub nowszym (sprawdzane na Galaxy M23) |
+| Oprogramowanie | natywny firmware: ESP-IDF, C++17, LVGL 9 | natywna aplikacja: Kotlin, Jetpack Compose |
+| Kod | katalog główny tego repozytorium | [`phone/`](phone/README.md) |
+| Budowanie | [Budowanie panelu](#budowanie-panelu) | [Budowanie aplikacji](#budowanie-aplikacji) |
+
+Obie wersje mówią tym samym [kontraktem MQTT](docs/architecture/mqtt-contract.md) i korzystają
+z tego samego pakietu Home Assistanta, więc można używać jednej, drugiej albo obu naraz. Żadna nie
+ma przeglądarki: panel budzi się w około dwie sekundy, aplikacja pokazuje świeży stan zaraz po
+otwarciu. Ekrany, ustawienia i zasady opisane niżej dotyczą obu; wzorcem jest panel, a aplikacja
+za nim idzie ([ADR 0016](docs/architecture/adr/0016-android-app.md)).
+
+## Panel
 
 ![Wszystkie ekrany](docs/screenshots/overview.png)
 
@@ -57,13 +71,12 @@ pomieszczeń wysuwana gestem od krawędzi. Zasady, według których dochodzą ko
 
 ![Zakładka Dom — poziom, styl jasny](docs/screenshots/overview-home-landscape-light.png)
 
-### Na telefonie z Androidem
+## Aplikacja na Androida
 
-Ten sam pilot działa też jako natywna aplikacja na Androida (Kotlin + Jetpack Compose) — na
-przykład na starym telefonie ustawionym jako ekran główny i odłożonym na kanapę. Odwzorowuje
-1:1 ekrany i ustawienia tego firmware'u, w pionie i w poziomie, i mówi tym samym kontraktem
-MQTT, więc w Home Assistancie nie wymaga niczego więcej. Jest w katalogu [`phone/`](phone/README.md);
-firmware od niej nie zależy.
+Te same ekrany na telefonie — na przykład na starym, ustawionym jako ekran główny i odłożonym na
+kanapę. Aplikacja może zastąpić launcher telefonu: startuje razem z nim, Home wraca na ekran
+startowy, a po zapaleniu ekranu pilot pokazuje się od razu. Szczegóły, budowanie i stan prac:
+[`phone/README.md`](phone/README.md).
 
 ![Aplikacja na Androida — pion](phone/docs/screenshots/overview-portrait.png)
 
@@ -74,6 +87,8 @@ firmware od niej nie zależy.
 ![Aplikacja na Androida — poziom, styl jasny](phone/docs/screenshots/overview-landscape-light.png)
 
 ## Co potrafi
+
+Obie wersje mają te same ekrany i ustawienia:
 
 - **TV** — stan zasilania, źródło i tryb obrazu, krzyżak, kołyski głośności i kanałów,
   cztery skróty kanałów z logo i lista wszystkich kanałów tunera.
@@ -101,10 +116,11 @@ firmware od niej nie zależy.
   ([ADR 0012](docs/architecture/adr/0012-light-and-dark-theme.md)).
 - **Pion albo poziom** — ustawienie, nie czujnik (płytka go nie ma): w poziomie obraz obraca
   procesor, a każdy ekran ma własny układ w dwóch kolumnach
-  ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.md)).
+  ([ADR 0013](docs/architecture/adr/0013-landscape-orientation.md)). Aplikacja może też
+  obracać się razem z telefonem.
 - **Ustawienia na urządzeniu** — Wi-Fi, broker MQTT, ekran i styl, limit głośności, pokój i strefa
-  czasowa, klawiatura i gładzik, diagnostyka. Dane dostępowe wpisuje się na panelu i leżą
-  w jego NVS, nigdy w repozytorium.
+  czasowa, klawiatura i gładzik, diagnostyka. Dane dostępowe wpisuje się na urządzeniu (NVS
+  panelu, prywatne dane aplikacji), nigdy w repozytorium. Na telefonie Wi-Fi to sprawa systemu.
 
 Pilot nigdy nie pokazuje starego stanu jako aktualnego: po wybudzeniu prosi o świeży snapshot
 i do tego czasu wygasza kontrolki
@@ -117,13 +133,14 @@ i do tego czasu wygasza kontrolki
 | [Guition JC4880P443C_I_W (ESP32-P4 + ESP32-C6, 4,3" IPS 480×800, dotyk, obudowa)](https://pl.aliexpress.com/item/1005009675498892.html) | ESP32-P4 uruchamia aplikację, ESP32-C6 daje Wi-Fi po SDIO. Piny i timingi sprawdzone na egzemplarzu: [docs/hardware/verified-board-map.md](docs/hardware/verified-board-map.md) |
 | Kabel USB-C | zasilanie, wgrywanie, log, zrzuty ekranu |
 
-Kamera z zestawu nie jest używana.
+Kamera z zestawu nie jest używana. Aplikacja na Androida potrzebuje tylko telefonu w tej samej
+sieci co broker MQTT.
 
 ## Kto z kim rozmawia
 
 ```text
                        ┌── Glasshouse na telewizorze LG  (stan TV i przyciski)
-pilot ── broker MQTT ──┼── kontroler Z906 (ESP32)        (głośniki, tematy wprost)
+panel lub aplikacja ── MQTT ──┼── kontroler Z906 (ESP32)        (głośniki, tematy wprost)
                        └── Home Assistant ── Apple TV, klima, pogoda, przełączanie kanałów
 ```
 
@@ -138,7 +155,9 @@ pilot ── broker MQTT ──┼── kontroler Z906 (ESP32)        (głośni
 Pełny format wiadomości: [docs/architecture/mqtt-contract.md](docs/architecture/mqtt-contract.md).
 Każda integracja jest opcjonalna: ekran bez źródła pokazuje pasek „brak świeżego stanu”.
 
-## Budowanie i wgrywanie
+## Budowanie
+
+### Budowanie panelu
 
 Potrzebny [ESP-IDF v5.5](https://docs.espressif.com/projects/esp-idf/en/v5.5/esp32p4/get-started/)
 (testowane na v5.5.6). Wersje komponentów są przypięte w `main/idf_component.yml`.
@@ -152,13 +171,25 @@ idf.py -p /dev/cu.usbmodem101 flash monitor
 Port podaj swój. Przed pierwszym wgraniem warto zrobić kopię firmware'u fabrycznego:
 `esptool.py --port <port> read_flash 0 0x1000000 backup.bin`.
 
+### Budowanie aplikacji
+
+Potrzebny JDK 17 i Android SDK (`platforms;android-34`, `build-tools;34.0.0`).
+
+```bash
+cd phone/native
+./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Pełne kroki, testy i wcześniejszy port SDL/LVGL: [`phone/README.md`](phone/README.md).
+
 ## Pod siebie
 
 ### 1. Na urządzeniu (bez zmian w kodzie)
 
-Otwórz **Ustawienia** (zakładka z kołami zębatymi):
+Otwórz **Ustawienia** (zakładka z kołami zębatymi) na panelu albo w aplikacji — są takie same:
 
-1. **Wi-Fi** — wybierz sieć i wpisz hasło.
+1. **Wi-Fi** — wybierz sieć i wpisz hasło (tylko panel; telefon korzysta ze swojego Wi-Fi).
 2. **MQTT** — adres brokera, port, użytkownik i hasło, identyfikator pilota (tworzy temat
    `multimedia_remote/v1/<identyfikator>`), identyfikator kontrolera Z906 (`z906_<mac>`)
    i prefiks tematów Glasshouse.
@@ -181,6 +212,8 @@ Pilot oczekuje jednej wartości na temat w `z906/<id>/state/<nazwa>` i wysyła p
 inaczej, dostosuj `components/transport/z906_client.cpp`.
 
 ### 4. W kodzie
+
+Dla panelu (aplikacja ma odpowiedniki w `phone/native/app/src/main/java/app/couchpad/pilot/`):
 
 | Co | Gdzie |
 | --- | --- |
@@ -205,6 +238,8 @@ inaczej, dostosuj `components/transport/z906_client.cpp`.
   zamaskuj ją przed publikacją zrzutu.
 - **Log przez MQTT** (`CONFIG_PILOT_REMOTE_LOG`, domyślnie wyłączony): `tools/pilot_log.py`.
 - **Interaktywna makieta** całego interfejsu: `docs/ux/mockup-pulpit/index.html`.
+- **Zrzuty aplikacji na Androida** z telefonu podłączonego przez adb:
+  `phone/tools/screenshots.sh portrait|landscape [light]`.
 
 ## TODO
 
@@ -222,6 +257,7 @@ inaczej, dostosuj `components/transport/z906_client.cpp`.
 [architektura UI](docs/architecture/ui-architecture.md) ·
 [uruchomienie płytki](docs/hardware/bring-up.md) ·
 [integracje](docs/integrations/) ·
+[aplikacja na Androida](phone/README.md) ([stan prac](phone/docs/PROGRESS.md)) ·
 [zasady dla osób i agentów AI](AGENTS.md).
 
 ## Licencja
@@ -232,7 +268,9 @@ licencje:
 - `components/board_bsp` — BSP Espressifa, Apache-2.0 (`components/board_bsp/LICENSE`)
 - `components/esp_lcd_st7701_patched` — sterownik ST7701 Espressifa z łataną sekwencją
   startową, Apache-2.0 (`license.txt`)
-- krój Ubuntu w `components/ui/assets/fonts` — Ubuntu Font Licence 1.0
+- krój Ubuntu w `components/ui/assets/fonts` i `phone/native/app/src/main/res/font` —
+  Ubuntu Font Licence 1.0
+- cJSON w `phone/third_party/cJSON` (port SDL) — MIT
 - znaki Infuse i YouTube z [Simple Icons](https://simpleicons.org) (CC0)
 
 Logo kanałów i aplikacji (Polsat, TVN, TVP, WP Pilot, Infuse, YouTube) są znakami

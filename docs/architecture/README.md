@@ -15,6 +15,7 @@ Projekt bazuje na Guition `JC4880P443C_I_W_Y`: ESP32-P4, ESP32-C6, ekran IPS 4,3
 - **Granica integracji:** panel publikuje wyłącznie opisane polecenia pilota; Home Assistant wykonuje usługi TV i Z906 oraz publikuje stan agregowany.
 - **Ekran:** portret 480 × 800, RGB565, prosty natywny interfejs bez warstwy webowej.
 - **Mechanika:** nie należy do tego repozytorium; jest w osobnym repozytorium `../enclosure`.
+- **Aplikacja na Androida:** druga wersja pilota w `phone/` (Kotlin + Jetpack Compose), klient tego samego kontraktu MQTT; wzorcem jest panel ([ADR 0016](adr/0016-android-app.md)).
 - **Wybudzanie:** pierwszy dotyk uruchamia połączenie z MQTT i wymuszoną synchronizację z Home Assistantem. Interaktywny ekran TV/Z906 pojawia się z nowym, potwierdzonym snapshotem, docelowo w ciągu około 2–3 s.
 
 Wersję ESP-IDF przypinamy po udanym teście ekranu, dotyku i ESP32-C6 na tej płytce. Nie aktualizujemy jej podczas implementacji funkcji UI bez osobnego testu sprzętowego.
@@ -61,6 +62,7 @@ components/
   ui/                       motyw, komponenty, ekrany, wiązanie danych LVGL
   diagnostics/              metryki, kontrolowany log i ekran diagnostyczny
 docs/                       kontrakty, ADR-y, procedury i historia decyzji
+phone/                      aplikacja na Androida (native/) i port SDL/LVGL jako referencja (ADR 0016)
 test/                       testy jednostkowe logiki niezależnej od sprzętu
 ```
 
