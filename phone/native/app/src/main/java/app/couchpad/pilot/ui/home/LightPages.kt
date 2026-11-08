@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.couchpad.pilot.R
 import app.couchpad.pilot.data.Light
 import app.couchpad.pilot.data.LightMember
@@ -40,7 +40,6 @@ import app.couchpad.pilot.ui.components.Dial
 import app.couchpad.pilot.ui.components.Divider
 import app.couchpad.pilot.ui.components.KelvinSwatches
 import app.couchpad.pilot.ui.components.OptionDialog
-import app.couchpad.pilot.ui.components.OptionTile
 import app.couchpad.pilot.ui.components.PageHeader
 import app.couchpad.pilot.ui.components.PowerButton
 import app.couchpad.pilot.ui.components.pendingBorder
@@ -68,6 +67,7 @@ internal fun LightPage(
     openBulb: (String) -> Unit,
 ) {
     var effects by remember { mutableStateOf(false) }
+    val usage by repo.effectUsage.collectAsStateWithLifecycle()
     val pending = state.isPending(Pending.Light.of(light.id))
     val caption = upperPl(room(roomId).label) + if (light.members.isNotEmpty()) " · ${bulbs(light.members.size)}" else ""
 
@@ -99,11 +99,11 @@ internal fun LightPage(
             Column {
                 Caption(if (light.members.isNotEmpty()) "EFEKT · CAŁA LAMPA" else "EFEKT")
                 Spacer(Modifier.height(8.u))
-                val active = light.effect.isNotEmpty()
-                OptionTile(
-                    "EFEKT", Effects.name(light.effect), Modifier.fillMaxWidth().height(64.u), active = active, pending = pending,
-                    icon = { Icon(Effects.icon(light.effect), null, tint = if (active) C.accent else C.dim, modifier = Modifier.size(24.u)) },
-                ) { effects = true }
+                EffectTiles(
+                    light.effects, light.effect, usage[light.id].orEmpty(), pending,
+                    onSelect = { repo.lightEffect(light.id, it) },
+                    onMore = { effects = true },
+                )
             }
         }
         if (light.members.isNotEmpty()) {

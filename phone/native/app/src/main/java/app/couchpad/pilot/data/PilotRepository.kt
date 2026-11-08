@@ -30,6 +30,10 @@ class PilotRepository(private val store: SettingsStore) {
     private val _prefs = MutableStateFlow(store.loadPreferences())
     val prefs: StateFlow<Preferences> = _prefs.asStateFlow()
 
+    private val _effectUsage = MutableStateFlow(store.loadEffectUsage())
+    /** Lampa → efekt → liczba wyborów w tym telefonie (kafle efektów, [EffectUsage]). */
+    val effectUsage: StateFlow<Map<String, Map<String, Int>>> = _effectUsage.asStateFlow()
+
     // Pisane z wątku UI, czytane z wątku klienta MQTT.
     @Volatile private var client: MqttClient? = null
     @Volatile private var settings = _broker.value
@@ -77,6 +81,7 @@ class PilotRepository(private val store: SettingsStore) {
     fun factoryReset() {
         store.clearAll()
         _prefs.value = store.loadPreferences()
+        _effectUsage.value = store.loadEffectUsage()
         val broker = store.loadBroker()
         _broker.value = broker
         connect(broker)
@@ -293,7 +298,18 @@ class PilotRepository(private val store: SettingsStore) {
     fun lightBrightness(id: String, percent: Int) =
         light("light.brightness.set", id) { put("percent", percent.coerceIn(1, 100)) }
     fun lightKelvin(id: String, kelvin: Int) = light("light.color_temp.set", id) { put("kelvin", kelvin) }
-    fun lightEffect(id: String, effect: String) = light("light.effect.set", id) { put("effect", effect) }
+    fun lightEffect(id: String, effect: String) {
+        if (effect.isNotEmpty()) countEffect(id, effect)
+        light("light.effect.set", id) { put("effect", effect) }
+    }
+
+    private fun countEffect(id: String, effect: String) {
+        val all = _effectUsage.value
+        val counts = all[id].orEmpty()
+        val next = all + (id to counts + (effect to (counts[effect] ?: 0) + 1))
+        store.saveEffectUsage(next)
+        _effectUsage.value = next
+    }
 
     private fun light(action: String, id: String, args: JSONObject.() -> Unit) =
         command(action, JSONObject().put("id", id).apply(args), Pending.Light.of(id))
