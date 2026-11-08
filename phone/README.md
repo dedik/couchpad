@@ -2,6 +2,9 @@
 
 [English](README.en.md)
 
+> Część repozytorium [Couchpad](../README.pl.md): druga wersja pilota obok firmware'u panelu
+> z ESP32-P4 ([ADR 0016](../docs/architecture/adr/0016-android-app.md)).
+
 Pilot Couchpad (TV, Apple TV, Logitech Z906, światła i klimatyzacja przez Home Assistanta)
 jako aplikacja na Androida. Prototyp: Galaxy M23 5G, docelowo Galaxy S5 (Android 6).
 

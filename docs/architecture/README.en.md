@@ -15,6 +15,7 @@ The project is based on the Guition `JC4880P443C_I_W_Y`: ESP32-P4, ESP32-C6, a 4
 - **Integration boundary:** the panel publishes only the documented remote commands; Home Assistant executes the TV and Z906 services and publishes aggregated state.
 - **Display:** portrait 480 × 800, RGB565, a simple native interface with no web layer.
 - **Mechanics:** not part of this repository; they live in the separate `../enclosure` repository.
+- **Android app:** a second version of the remote in `phone/` (Kotlin + Jetpack Compose), a client of the same MQTT contract; the panel is the reference ([ADR 0016](adr/0016-android-app.en.md)).
 - **Wake-up:** the first touch starts the MQTT connection and a forced synchronisation with Home Assistant. The interactive TV/Z906 screen appears with a new, confirmed snapshot, targeting roughly 2–3 s.
 
 We pin the ESP-IDF version after a successful test of the display, touch and ESP32-C6 on this board. We do not update it while implementing UI features without a separate hardware test.
@@ -61,6 +62,7 @@ components/
   ui/                       theme, components, screens, LVGL data binding
   diagnostics/              metrics, controlled logging and diagnostics screen
 docs/                       contracts, ADRs, procedures and decision history
+phone/                      Android app (native/) and the SDL/LVGL port as a reference (ADR 0016)
 test/                       unit tests for hardware-independent logic
 ```
 

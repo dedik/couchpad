@@ -2,6 +2,9 @@
 
 [Polski](README.md)
 
+> Part of the [Couchpad](../README.md) repository: the second version of the remote next to the
+> ESP32-P4 panel firmware ([ADR 0016](../docs/architecture/adr/0016-android-app.en.md)).
+
 The Couchpad remote (TV, Apple TV, Logitech Z906, lights and air conditioning through Home
 Assistant) as an Android app. Prototype: Galaxy M23 5G; target: Galaxy S5 (Android 6).
 
