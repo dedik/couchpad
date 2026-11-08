@@ -1,0 +1,13 @@
+build/
+third_party/SDL2/
+android/.gradle/
+android/app/build/
+android/app/.cxx/
+android/build/
+android/local.properties
+*.apk
+.DS_Store
+native/.gradle/
+native/app/build/
+native/build/
+native/local.properties
