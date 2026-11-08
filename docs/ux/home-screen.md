@@ -12,7 +12,7 @@ wzorce stąd, zamiast wymyślać własne. Decyzje architektoniczne stoją w
 Makiety: [`mockup-pulpit`](mockup-pulpit/index.html) (pion),
 [`mockup-landscape`](mockup-landscape/index.html) (poziom), wspólna logika
 [`mockup-dom/rooms.js`](mockup-dom/rooms.js) i [`rooms.css`](mockup-dom/rooms.css).
-Kod: `components/ui/screens/screen_home.cpp`.
+Kod: `components/ui/screens/screen_home.cpp` i `home_*.cpp` (opis plików w [`home_internal.hpp`](../../components/ui/screens/home_internal.hpp)).
 
 | Dom | Pokój | Lampa |
 | --- | --- | --- |
@@ -182,7 +182,7 @@ Limity firmware'u: 3 pomieszczenia ze światłem, 4 żarówki w grupie, 16 efekt
 
 ### Nowe pomieszczenie
 
-Pomieszczenia są stałą listą w `screen_home.cpp` (`kRooms`: identyfikator, nazwa, nazwa
+Pomieszczenia są stałą listą w `home_common.cpp` (`kRooms`: identyfikator, nazwa, nazwa
 wersalikami, ikony) i w `rooms.js`. Siódme pomieszczenie zmienia siatkę (dziś 6 = 2 × 3 / 3 × 2)
 — to decyzja projektowa, nie tylko wpis.
 

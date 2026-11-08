@@ -459,6 +459,15 @@ struct Context {
 // Wysyła zamiar i od razu odświeża widok — dotknięcie nie czeka na sieć.
 void dispatch(Context& context, const domain::UiIntent& intent);
 
+// Zamiar z rodzajem i kontrolką; resztę pól (wartość, cel, tekst) ustawia wołający.
+inline domain::UiIntent make_intent(domain::IntentKind kind,
+                                    domain::ControlId control = domain::ControlId::None) {
+    domain::UiIntent intent;
+    intent.kind = kind;
+    intent.control = control;
+    return intent;
+}
+
 // Przerysowuje wszystko ze stanu. Jedyna droga, którą dane trafiają na ekran.
 void render(Context& context);
 void show_screen(Context& context, ScreenId screen);

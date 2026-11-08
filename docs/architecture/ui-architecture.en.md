@@ -83,15 +83,17 @@ and transport clients queue only the state of their own device (`Z906Event` carr
 | --- | --- |
 | `include/ui/theme.hpp`, `theme.cpp` | tokens from `pulpit.css`: colours, radii, spacing, shell dimensions, fonts, shared styles. Two palettes (dark, light) with the same roles; `theme::apply()` switches them at runtime by swapping role colours in the shared styles and in every object's local styles. Screens do not define their own colours — a colour outside the palette will not follow the theme. |
 | `include/ui/widgets.hpp` | the whole component catalogue — start with this file |
-| `widgets.cpp` | section, `make_fill`, `make_cap`, `Segmented`, `Tiles`, actions, `ListRow`, `Readout`, `Banner` + `set_unavailable`, power button, `Page`, `ask_confirm`; landscape: `make_split`, `make_pane`, `make_spacer`, `make_header_segment`, `dock_sheet` |
+| `widgets.cpp` | primitives (`make_box`, `make_text`, `make_bare_button`, `make_dot`, `make_chevron`, `set_visible`, `upper_pl`), section, `make_fill`, `make_cap`, `Segmented`, `Tiles`, actions, `ListRow`, `Readout`, `Banner` + `set_unavailable`, power button, `Page`, `ask_confirm`; landscape: `make_split`, `make_pane`, `make_spacer`, `make_header_segment`, `dock_sheet` |
 | `widgets_controls.cpp` | continuous values: `Dial` (volume), `Thermostat` (temperature), `Level` (Z906 channels) |
 | `widgets_nav.cpp` | D-pad, VOL/P rocker, Apple TV touchpad |
 | `widgets_editor.cpp` | text editor with its own keyboard |
 | `widgets_internal.hpp` | private widget helpers (`plain`, `attach`, `icon_label`) — not visible to screens |
-| `ui_internal.hpp` | `Context` and screen structures (`TvScreen`, `ClimateScreen`…), `build_*`/`render_*` declarations |
+| `ui_internal.hpp` | `Context` and screen structures (`TvScreen`, `ClimateScreen`…), `build_*`/`render_*` declarations, `make_intent` (an intent with kind and control) |
 | `shell.cpp` | shell: header, five tabs (`kScreens`; a side rail in landscape), wake-up overlay, a header slot for the screen (`make_header_slot`, `show_header_slot`) |
 | `ui.cpp` | `dispatch`, `render`, screen dimming and wake-up |
 | `screens/screen_*.cpp` | one file per screen or subpage; `screen_start.cpp` is the start screen after boot and wake-up (ADR 0010) |
+| `screens/home_*.cpp`, `home_internal.hpp` | the Home tab in parts: `screen_home.cpp` (room grid), `home_room.cpp` (room subpage and level stack), `home_light.cpp` (light, bulb, effect list), `home_drawers.cpp` (landscape drawers), `home_common.cpp` (room and effect catalogue, shared data) |
+| `screens/climate_tile.cpp`, `climate_internal.hpp` | the A/C tile on the Home screen; the subpage stays in `screen_climate.cpp`, mode and fan names in `climate_internal.hpp` |
 
 ### Patterns a screen is built from
 
@@ -114,6 +116,10 @@ and transport clients queue only the state of their own device (`Z906Event` carr
   precedence while `busy()`.
 - **Continuous values:** relative change, never a jump to the finger; one command after the finger is
   lifted (or 0.7 s after the last tap on −/+ on the `Thermostat`).
+- **Building blocks:** shapes are made from `widgets` primitives (`make_box`, `make_text`…),
+  not local copies in the screen file; visibility uses `widgets::set_visible`, intents
+  `make_intent(kind, control)`. A screen longer than about 600 lines is split into files with
+  a private `*_internal.hpp` header (like Home and the A/C).
 - **Callbacks:** captureless lambda + `Context*` as user data; list rows carry their own
   `{row, context, index}` structure.
 

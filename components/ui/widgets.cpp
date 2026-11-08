@@ -16,6 +16,48 @@ constexpr int32_t kSegItemHeight = 60;
 
 }  // namespace
 
+// ============================= prymitywy =============================
+
+lv_obj_t* make_box(lv_obj_t* parent) {
+    lv_obj_t* obj = plain(parent);
+    lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE);
+    return obj;
+}
+
+lv_obj_t* make_text(lv_obj_t* parent, const lv_font_t* font, lv_color_t color) {
+    lv_obj_t* label = lv_label_create(parent);
+    lv_obj_remove_style_all(label);
+    lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
+    lv_obj_set_style_text_color(label, color, LV_PART_MAIN);
+    lv_label_set_text(label, "");
+    return label;
+}
+
+lv_obj_t* make_bare_button(lv_obj_t* parent) {
+    lv_obj_t* obj = lv_button_create(parent);
+    lv_obj_remove_style_all(obj);
+    return obj;
+}
+
+lv_obj_t* make_dot(lv_obj_t* parent, lv_color_t color) {
+    lv_obj_t* obj = make_box(parent);
+    lv_obj_set_size(obj, 8, 8);
+    lv_obj_set_style_radius(obj, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(obj, color, LV_PART_MAIN);
+    return obj;
+}
+
+lv_obj_t* make_chevron(lv_obj_t* parent) {
+    lv_obj_t* label = make_text(parent, theme::font_icon_sm(), theme::faint());
+    lv_label_set_text(label, LV_SYMBOL_RIGHT);
+    return label;
+}
+
+void set_visible(lv_obj_t* obj, bool visible) {
+    lv_obj_update_flag(obj, LV_OBJ_FLAG_HIDDEN, !visible);
+}
+
 // ============================= sekcje =============================
 
 lv_obj_t* make_section(lv_obj_t* parent) {
@@ -116,8 +158,7 @@ Segmented make_segmented(lv_obj_t* parent, const char* leading_symbol, std::size
     theme::make_row(segmented.box, theme::kS1);
 
     for (std::size_t i = 0; i < segmented.count; ++i) {
-        lv_obj_t* item = lv_button_create(segmented.box);
-        lv_obj_remove_style_all(item);
+        lv_obj_t* item = make_bare_button(segmented.box);
         lv_obj_add_style(item, &styles().seg_item, LV_PART_MAIN);
         lv_obj_set_height(item, kSegItemHeight);
         lv_obj_set_flex_grow(item, 1);
@@ -240,8 +281,7 @@ Tiles make_tiles(lv_obj_t* parent, const TileSpec* specs, std::size_t count, int
     lv_obj_set_style_pad_row(tiles.root, theme::kS2, LV_PART_MAIN);
 
     for (std::size_t i = 0; i < tiles.count; ++i) {
-        lv_obj_t* tile = lv_button_create(tiles.root);
-        lv_obj_remove_style_all(tile);
+        lv_obj_t* tile = make_bare_button(tiles.root);
         lv_obj_add_style(tile, &styles().tile, LV_PART_MAIN);
         lv_obj_set_grid_cell(tile, LV_GRID_ALIGN_STRETCH, static_cast<int32_t>(i) % columns, 1,
                              LV_GRID_ALIGN_STRETCH, static_cast<int32_t>(i) / columns, 1);
@@ -282,8 +322,7 @@ Tiles make_tiles(lv_obj_t* parent, const TileSpec* specs, std::size_t count, int
 
 lv_obj_t* make_action(lv_obj_t* parent, const char* symbol, const char* text, bool primary,
                       ActionLayout layout, PlainHandler on_press, void* context) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
+    lv_obj_t* button = make_bare_button(parent);
     lv_obj_add_style(button, &styles().act, LV_PART_MAIN);
     if (primary) {
         lv_obj_add_style(button, &styles().act_primary, LV_PART_MAIN);
@@ -418,8 +457,7 @@ lv_obj_t* make_duo(lv_obj_t* parent) {
 ListRow make_list_row(lv_obj_t* parent, const char* symbol, const char* title, const char* note,
                       const char* value, PlainHandler on_press, void* context) {
     ListRow row;
-    row.root = lv_button_create(parent);
-    lv_obj_remove_style_all(row.root);
+    row.root = make_bare_button(parent);
     lv_obj_add_style(row.root, &styles().list_row, LV_PART_MAIN);
     lv_obj_set_width(row.root, LV_PCT(100));
     lv_obj_set_height(row.root, 76);
@@ -588,8 +626,7 @@ void set_unavailable(lv_obj_t* section, const Banner& banner, bool unavailable) 
 // ============================= zasilanie =============================
 
 lv_obj_t* make_power_button(lv_obj_t* parent, PlainHandler on_press, void* context) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
+    lv_obj_t* button = make_bare_button(parent);
     // 48 px na ekranie, 64 px pod palcem (2026-11-06): pełne koło 64 px dominowało każdy
     // nagłówek, choć to najrzadziej używany przycisk. Rodzic musi mieć co najmniej 64 px
     // wysokości, inaczej LVGL nie dowiezie dotyku do poszerzonego pola.
@@ -619,7 +656,7 @@ void set_power_state(lv_obj_t* button, bool on, bool enabled) {
     // Włączone: miękkie bursztynowe tło, ikona i cienka obwódka w akcencie, jak wybrany
     // kafel. Wyłączone: neutralne tło i przygaszona ikona.
     lv_obj_set_style_bg_color(button, on ? theme::accent() : theme::surface2(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(button, on ? theme::kAccentSoftOpa : static_cast<lv_opa_t>(LV_OPA_COVER),
+    lv_obj_set_style_bg_opa(button, on ? theme::kAccentSoftOpa : theme::kOpaCover,
                             LV_PART_MAIN);
     lv_obj_set_style_border_width(button, on ? 1 : 0, LV_PART_MAIN);
     lv_obj_t* icon = lv_obj_get_child(button, 0);
@@ -654,8 +691,7 @@ Page make_page(const char* title, PlainHandler on_back, void* context) {
     lv_obj_set_style_pad_top(bar, theme::kTopbarPad, LV_PART_MAIN);
     theme::make_row(bar, theme::kS3);
 
-    lv_obj_t* back = lv_button_create(bar);
-    lv_obj_remove_style_all(back);
+    lv_obj_t* back = make_bare_button(bar);
     lv_obj_set_size(back, 56, 56);
     lv_obj_set_style_radius(back, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(back, LV_OPA_COVER, LV_PART_MAIN);
@@ -873,6 +909,33 @@ void flash(lv_obj_t* obj) {
         },
         150, obj);
     lv_timer_set_repeat_count(timer, 1);
+}
+
+void upper_pl(char* out, std::size_t size, const char* in) {
+    if (size == 0) {
+        return;
+    }
+    std::size_t o = 0;
+    for (std::size_t i = 0; in[i] != '\0' && o + 2 < size; ++i) {
+        const auto c = static_cast<unsigned char>(in[i]);
+        const auto n = static_cast<unsigned char>(in[i + 1]);
+        if (c >= 'a' && c <= 'z') {
+            out[o++] = static_cast<char>(c - 32);
+        } else if ((c == 0xC4 && (n == 0x85 || n == 0x87 || n == 0x99)) ||
+                   (c == 0xC5 && (n == 0x82 || n == 0x84 || n == 0x9B || n == 0xBA || n == 0xBC))) {
+            // ą ć ę ł ń ś ź ż: wielka litera to ten sam pierwszy bajt i drugi o jeden mniejszy.
+            out[o++] = static_cast<char>(c);
+            out[o++] = static_cast<char>(n - 1);
+            ++i;
+        } else if (c == 0xC3 && n == 0xB3) {   // ó → Ó
+            out[o++] = static_cast<char>(c);
+            out[o++] = static_cast<char>(0x93);
+            ++i;
+        } else {
+            out[o++] = static_cast<char>(c);
+        }
+    }
+    out[o] = '\0';
 }
 
 }  // namespace ui::widgets

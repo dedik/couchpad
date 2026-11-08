@@ -267,8 +267,7 @@ void thermo_event(lv_event_t* event) {
 }
 
 lv_obj_t* thermo_step_button(lv_obj_t* parent, const char* symbol, int32_t side) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
+    lv_obj_t* button = make_bare_button(parent);
     lv_obj_set_size(button, kThermoStepSize, kThermoStepSize);
     lv_obj_align(button, LV_ALIGN_BOTTOM_MID, side * (kThermoStepSize + kThermoStepGap) / 2, 0);
     lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, LV_PART_MAIN);

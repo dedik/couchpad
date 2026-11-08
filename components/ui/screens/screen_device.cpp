@@ -510,11 +510,7 @@ void render_device(Context& context) {
     screen.theme_hours.set_selected(hours < 4 ? hours : 1);
     const bool show_hours = style == kThemeAuto;
     for (lv_obj_t* obj : {screen.theme_hours_cap, screen.theme_hours.root}) {
-        if (show_hours) {
-            lv_obj_remove_flag(obj, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
-        }
+        widgets::set_visible(obj, show_hours);
     }
 
     screen.brightness.set_selected(

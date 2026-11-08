@@ -20,6 +20,22 @@ using PlainHandler = void (*)(void* context);
 using KeyHandler = void (*)(void* context, domain::NavKey key);
 using PressHandler = void (*)(void* context, domain::Press press);
 
+// ---------- Prymitywy ----------
+// Najmniejsze klocki, z których ekrany składają własne kształty.
+
+// Kontener bez tła i marginesów, który nie łyka dotknięć — dotknięcie trafia do
+// klikalnego rodzica (kafelek reaguje na całej powierzchni).
+lv_obj_t* make_box(lv_obj_t* parent);
+// Etykieta bez stylu motywu: tylko font i kolor, tekst pusty.
+lv_obj_t* make_text(lv_obj_t* parent, const lv_font_t* font, lv_color_t color);
+// Przycisk bez żadnego stylu — kształt nadaje ekran.
+lv_obj_t* make_bare_button(lv_obj_t* parent);
+// Kropka stanu 8 px.
+lv_obj_t* make_dot(lv_obj_t* parent, lv_color_t color);
+// Strzałka „dalej” przy prawej krawędzi wiersza.
+lv_obj_t* make_chevron(lv_obj_t* parent);
+void set_visible(lv_obj_t* obj, bool visible);
+
 // ---------- Sekcja ekranu ----------
 // Treść ekranu wypełnia wyłącznie strefę środkową powłoki.
 lv_obj_t* make_section(lv_obj_t* parent);
@@ -54,6 +70,9 @@ Segmented make_segmented(lv_obj_t* parent, const char* leading_symbol, std::size
 // Jeden segment z bieżącą wartością w połowie rzędu (`make_duo`). Dotknięcie otwiera
 // listę wyboru — dla opcji, których jest za dużo albo mają za długie nazwy na rząd
 // segmentów (źródło i tryb obrazu TV, wejście i efekt Z906). Długą nazwę kończy wielokropek.
+Segmented make_value_segment(lv_obj_t* row, const char* leading_symbol,
+                             IndexHandler on_press, void* context);
+
 // ---------- Układ poziomy (ADR 0013) ----------
 // Sekcja ekranu jako wiersz kolumn zamiast kolumny wierszy.
 void make_split(lv_obj_t* section, int32_t gap);
@@ -64,9 +83,6 @@ lv_obj_t* make_spacer(lv_obj_t* column);
 
 // Niższy segment z wartością, do 64-pikselowego wiersza nagłówka (poziom: TV, Z906).
 void make_header_segment(Segmented& segmented);
-
-Segmented make_value_segment(lv_obj_t* row, const char* leading_symbol,
-                             IndexHandler on_press, void* context);
 
 // ---------- Kafelki (.tiles + .tile) ----------
 struct Tiles {
@@ -344,5 +360,8 @@ void close_text_editor(TextEditor& editor);
 // ---------- Narzędzia ----------
 void set_status_outline(lv_obj_t* obj, domain::ControlStatus status);
 void flash(lv_obj_t* obj);
+// Wielkie litery z polskimi znakami (UTF-8) — etykiety z HA („Środkowa”) do podpisów
+// wersalikami. Inne znaki spoza ASCII przepisuje bez zmian.
+void upper_pl(char* out, std::size_t size, const char* in);
 
 }  // namespace ui::widgets

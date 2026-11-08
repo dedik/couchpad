@@ -83,15 +83,17 @@ a klienci transportu wysyłają w kolejce tylko stan swojego urządzenia (`Z906E
 | --- | --- |
 | `include/ui/theme.hpp`, `theme.cpp` | tokeny z `pulpit.css`: kolory, promienie, odstępy, wymiary powłoki, fonty, wspólne style. Dwie palety (ciemna, jasna) o tych samych rolach; `theme::apply()` przełącza je w locie, zamieniając kolory ról w stylach wspólnych i lokalnych wszystkich obiektów. Ekrany nie definiują własnych kolorów — kolor spoza palety nie zmieni się ze stylem. |
 | `include/ui/widgets.hpp` | cały katalog komponentów — zacznij od tego pliku |
-| `widgets.cpp` | sekcja, `make_fill`, `make_cap`, `Segmented`, `Tiles`, akcje, `ListRow`, `Readout`, `Banner` + `set_unavailable`, przycisk zasilania, `Page`, `ask_confirm`; poziom: `make_split`, `make_pane`, `make_spacer`, `make_header_segment`, `dock_sheet` |
+| `widgets.cpp` | prymitywy (`make_box`, `make_text`, `make_bare_button`, `make_dot`, `make_chevron`, `set_visible`, `upper_pl`), sekcja, `make_fill`, `make_cap`, `Segmented`, `Tiles`, akcje, `ListRow`, `Readout`, `Banner` + `set_unavailable`, przycisk zasilania, `Page`, `ask_confirm`; poziom: `make_split`, `make_pane`, `make_spacer`, `make_header_segment`, `dock_sheet` |
 | `widgets_controls.cpp` | wartości ciągłe: `Dial` (głośność), `Thermostat` (temperatura), `Level` (kanały Z906) |
 | `widgets_nav.cpp` | krzyżak, kołyska VOL/P, gładzik Apple TV |
 | `widgets_editor.cpp` | edytor tekstu z własną klawiaturą |
 | `widgets_internal.hpp` | prywatne pomocniki widżetów (`plain`, `attach`, `icon_label`) — ekrany ich nie widzą |
-| `ui_internal.hpp` | `Context` i struktury ekranów (`TvScreen`, `ClimateScreen`…), deklaracje `build_*`/`render_*` |
+| `ui_internal.hpp` | `Context` i struktury ekranów (`TvScreen`, `ClimateScreen`…), deklaracje `build_*`/`render_*`, `make_intent` (zamiar z rodzajem i kontrolką) |
 | `shell.cpp` | powłoka: nagłówek, pięć zakładek (`kScreens`; w poziomie boczny pasek), nakładka wybudzania, miejsce w nagłówku dla ekranu (`make_header_slot`, `show_header_slot`) |
 | `ui.cpp` | `dispatch`, `render`, wygaszanie i wybudzanie ekranu |
 | `screens/screen_*.cpp` | po jednym pliku na ekran lub podstronę; `screen_start.cpp` to ekran startowy po starcie i wybudzeniu (ADR 0010) |
+| `screens/home_*.cpp`, `home_internal.hpp` | zakładka Dom w częściach: `screen_home.cpp` (siatka pomieszczeń), `home_room.cpp` (podstrona pokoju i stos poziomów), `home_light.cpp` (światło, żarówka, lista efektów), `home_drawers.cpp` (szuflady w poziomie), `home_common.cpp` (katalog pokoi i efektów, dane wspólne) |
+| `screens/climate_tile.cpp`, `climate_internal.hpp` | kafelek klimatyzacji na ekranie Dom; podstrona zostaje w `screen_climate.cpp`, nazwy trybów i biegów w `climate_internal.hpp` |
 
 ### Wzorce, z których składa się ekran
 
@@ -116,6 +118,10 @@ a klienci transportu wysyłają w kolejce tylko stan swojego urządzenia (`Z906E
   palca (lub po 0,7 s od ostatniego stuknięcia w −/+ na `Thermostat`).
 - **Callbacki:** captureless lambda + `Context*` jako user data; wiersze list niosą własną
   strukturę `{row, context, index}`.
+- **Klocki:** kształty składa się z prymitywów `widgets` (`make_box`, `make_text`…), a nie
+  z lokalnych kopii w pliku ekranu; widoczność — `widgets::set_visible`, zamiar —
+  `make_intent(kind, control)`. Ekran dłuższy niż ok. 600 linii dzieli się na pliki
+  z prywatnym nagłówkiem `*_internal.hpp` (jak Dom i klimatyzacja).
 
 ### Pamięć
 

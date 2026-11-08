@@ -1,77 +1,16 @@
+#include <cstdio>
 #include <cstring>
 #include <initializer_list>
 
-#include "ui_internal.hpp"
+#include "climate_internal.hpp"
 
-// Klimatyzacja: kafelek na ekranie Dom i pełnoekranowa podstrona. Układ według
-// makiety docs/ux/mockup-pulpit (sekcja „Ekran Dom i klimatyzacja” w README).
+// Klimatyzacja: pełnoekranowa podstrona (tarcza, tryby, nawiew, listy wyboru). Kafelek na
+// ekranie Dom jest w climate_tile.cpp. Układ według makiety docs/ux/mockup-pulpit
+// (sekcja „Ekran Dom i klimatyzacja” w README).
 
-namespace ui {
+namespace ui::climate {
+
 namespace {
-
-constexpr int32_t kTileHeight = 168;
-constexpr int32_t kOptionHeight = 88;
-// Poziom: kafel trybu i pole nawiewu na podstronie (wariant P1).
-constexpr int32_t kWideModeHeight = 72;
-// Siatka trybów: wybrany tryb to duży kafel w pierwszej kolumnie na wszystkie rzędy,
-// pozostałe po dwa w rzędzie obok. Rzędów 2–4: encja ma najwyżej osiem trybów bez `off`.
-const int32_t kModeCols[] = {LV_GRID_FR(6), LV_GRID_FR(5), LV_GRID_FR(5), LV_GRID_TEMPLATE_LAST};
-const int32_t kModeRows2[] = {kWideModeHeight, kWideModeHeight, LV_GRID_TEMPLATE_LAST};
-const int32_t kModeRows3[] = {kWideModeHeight, kWideModeHeight, kWideModeHeight,
-                              LV_GRID_TEMPLATE_LAST};
-const int32_t kModeRows4[] = {kWideModeHeight, kWideModeHeight, kWideModeHeight, kWideModeHeight,
-                              LV_GRID_TEMPLATE_LAST};
-constexpr int32_t kWideOptionHeight = 68;
-
-// Encja podaje identyfikatory HA. Nazwy do pokazania dobiera ekran; nieznany
-// identyfikator pokazujemy tak, jak przyszedł, zamiast go ukrywać.
-struct Name {
-    const char* id;
-    const char* label;
-};
-
-const Name kModeNames[] = {
-    {"off", "Wyłączona"},  {"heat_cool", "Auto"},     {"auto", "Auto"},
-    {"cool", "Chłodzenie"}, {"heat", "Grzanie"},     {"dry", "Osuszanie"},
-    {"fan_only", "Wentylator"},
-};
-
-// Podpis nad temperaturą na tarczy, wersalikami jak każda etykieta.
-// Ikona kafla trybu (poziom), jak w makiecie.
-const Name kModeIcons[] = {
-    {"heat_cool", theme::kIconAuto}, {"auto", theme::kIconAuto}, {"cool", theme::kIconCool},
-    {"heat", theme::kIconHeat},      {"dry", theme::kIconDry},   {"fan_only", theme::kIconFan},
-};
-
-const Name kModeActions[] = {
-    {"off", "WYŁĄCZONA"},  {"heat_cool", "AUTO DO"},      {"auto", "AUTO DO"},
-    {"cool", "CHŁODZENIE DO"}, {"heat", "GRZANIE DO"},    {"dry", "OSUSZANIE DO"},
-    {"fan_only", "SAM NAWIEW"},
-};
-
-// Biegi `fan_modes`: standardowe z HA i te, które podaje integracja Midea.
-const Name kFanNames[] = {
-    {"auto", "Auto"},        {"quiet", "Cicha"},           {"low", "Niska"},
-    {"medlow", "Średnio niska"}, {"medium", "Średnia"},   {"middle", "Średnia"},
-    {"medhigh", "Średnio wysoka"}, {"high", "Wysoka"},    {"strong", "Maksymalna"},
-    {"top", "Maksymalna"},   {"on", "Włączona"},          {"off", "Wyłączona"},
-};
-
-const Name kSwingNames[] = {
-    {"off", "Stałe"},  {"on", "Ruch"},      {"Full", "Ruch"},     {"both", "Oba kierunki"},
-    {"vertical", "Pion"}, {"horizontal", "Poziom"}, {"Upper", "Góra"}, {"Lower", "Dół"},
-    {"Left", "Lewo"},  {"Center", "Środek"}, {"Right", "Prawo"},
-};
-
-template <std::size_t N>
-const char* name_of(const Name (&names)[N], const char* id) {
-    for (const Name& name : names) {
-        if (std::strcmp(name.id, id) == 0) {
-            return name.label;
-        }
-    }
-    return id;
-}
 
 // Lista, bieżąca wartość i nazwy dla sterowania, które obsługuje lista wyboru.
 struct OptionData {
@@ -109,22 +48,7 @@ const char* option_name(const OptionData& data, const char* id) {
     }
 }
 
-lv_obj_t* box(lv_obj_t* parent) {
-    lv_obj_t* obj = lv_obj_create(parent);
-    theme::make_flat(obj);
-    // Dzieci kafelka nie łykają dotknięcia — ma reagować na całej powierzchni.
-    lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE);
-    return obj;
-}
-
-lv_obj_t* text_label(lv_obj_t* parent, const lv_font_t* font, lv_color_t color) {
-    lv_obj_t* label = lv_label_create(parent);
-    lv_obj_remove_style_all(label);
-    lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
-    lv_obj_set_style_text_color(label, color, LV_PART_MAIN);
-    lv_label_set_text(label, "");
-    return label;
-}
+}  // namespace
 
 // ---------- zamiary ----------
 
@@ -134,9 +58,7 @@ void on_power(void* raw) {
     if (!state.climate_fresh()) {
         return;
     }
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetPower;
-    intent.control = domain::ControlId::ClimatePower;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetPower, domain::ControlId::ClimatePower);
     // Włączenie wraca do ostatniego trybu, jak `climate.turn_on` w HA.
     intent.flag = !state.snapshot().climate.is_on();
     dispatch(context, intent);
@@ -147,18 +69,14 @@ void on_mode(void* raw, std::size_t index) {
     if (index >= context.climate.mode_count) {
         return;
     }
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetOption;
-    intent.control = domain::ControlId::ClimateMode;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetOption, domain::ControlId::ClimateMode);
     intent.text = context.climate.mode_ids[index];
     dispatch(context, intent);
 }
 
 void on_target(void* raw, int32_t tenths, bool) {
     auto& context = *static_cast<Context*>(raw);
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetValue;
-    intent.control = domain::ControlId::ClimateTarget;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetValue, domain::ControlId::ClimateTarget);
     intent.number = static_cast<int16_t>(tenths);
     dispatch(context, intent);
 }
@@ -188,9 +106,7 @@ void on_picker_row(void* raw) {
     if (row.index >= data.list->size()) {
         return;
     }
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetOption;
-    intent.control = control;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetOption, control);
     intent.text = (*data.list)[row.index];
     // Lista znika od razu; oczekiwanie widać na kafelku opcji.
     on_picker_back(&context);
@@ -208,8 +124,7 @@ void on_back(void* raw) {
 ClimateScreen::Option make_option(lv_obj_t* row, const char* caption, lv_event_cb_t on_press,
                                   Context& context) {
     ClimateScreen::Option option;
-    option.root = lv_button_create(row);
-    lv_obj_remove_style_all(option.root);
+    option.root = widgets::make_bare_button(row);
     lv_obj_add_style(option.root, &theme::styles().tile, LV_PART_MAIN);
     lv_obj_set_height(option.root, kOptionHeight);
     lv_obj_set_width(option.root, 0);
@@ -220,7 +135,7 @@ ClimateScreen::Option make_option(lv_obj_t* row, const char* caption, lv_event_c
                           LV_FLEX_ALIGN_START);
 
     widgets::make_cap(option.root, caption);
-    option.value = text_label(option.root, theme::font_m15(), theme::text());
+    option.value = widgets::make_text(option.root, theme::font_m15(), theme::text());
     lv_obj_set_width(option.value, LV_PCT(100));
     lv_label_set_long_mode(option.value, LV_LABEL_LONG_DOT);
 
@@ -292,7 +207,7 @@ void build_page(Context& context) {
             lv_obj_set_style_pad_row(item, 6, LV_PART_MAIN);
             lv_obj_t* label = lv_obj_get_child(item, 0);
             lv_obj_set_style_text_font(label, theme::font_r13(), LV_PART_MAIN);
-            screen.mode_icons[i] = text_label(item, theme::font_mode_icon(), theme::dim());
+            screen.mode_icons[i] = widgets::make_text(item, theme::font_mode_icon(), theme::dim());
         }
         lv_obj_t* cap = widgets::make_cap(side, "NAWIEW");
         lv_obj_set_style_margin_top(cap, theme::kS2, LV_PART_MAIN);
@@ -366,126 +281,12 @@ void on_tile(lv_event_t* event) {
     render(context);
 }
 
-// ---------- rysowanie ----------
-
 // Temperatura docelowa w toku, potem potwierdzona.
 int32_t shown_target(const domain::AppState& state) {
     if (const domain::PendingEntry* pending = state.pending_of(domain::ControlId::ClimateTarget)) {
         return pending->requested_number;
     }
     return state.snapshot().climate.target_tenths;
-}
-
-// ---------- kafelek w poziomie: −/+ i tryb ----------
-
-constexpr uint32_t kTileCommitMs = 700;  // jak core::config dla tarczy temperatury
-
-void tile_commit(lv_timer_t* timer) {
-    auto& context = *static_cast<Context*>(lv_timer_get_user_data(timer));
-    // Licznik powtórzeń 1: LVGL usuwa zegar sam po tym wywołaniu.
-    context.climate.tile_timer = nullptr;
-    on_target(&context, context.climate.tile_pending, false);
-}
-
-void tile_step(Context& context, int32_t direction) {
-    const domain::AppState& state = context.controller->state();
-    const domain::ClimateState& climate = state.snapshot().climate;
-    if (!state.climate_fresh() || !climate.is_on() || !climate.uses_target()) {
-        return;
-    }
-    ClimateScreen& screen = context.climate;
-    const int32_t step = climate.step_tenths > 0 ? climate.step_tenths : 5;
-    const int32_t from = screen.tile_timer != nullptr ? screen.tile_pending : shown_target(state);
-    int32_t next = from + direction * step;
-    next = next < climate.min_tenths ? climate.min_tenths : next;
-    next = next > climate.max_tenths ? climate.max_tenths : next;
-    screen.tile_pending = next;
-    if (screen.tile_timer == nullptr) {
-        screen.tile_timer = lv_timer_create(tile_commit, kTileCommitMs, &context);
-        lv_timer_set_repeat_count(screen.tile_timer, 1);
-    } else {
-        lv_timer_reset(screen.tile_timer);
-    }
-    render(context);
-}
-
-void on_tile_mode(lv_event_t* event) {
-    auto& context = *static_cast<Context*>(lv_event_get_user_data(event));
-    if (!context.controller->state().climate_fresh()) {
-        return;
-    }
-    // Lista wyboru należy do podstrony, która powstaje dopiero przy pierwszym otwarciu.
-    if (!context.climate.built) {
-        build_page(context);
-    }
-    open_picker(context, domain::ControlId::ClimateMode);
-}
-
-void render_tile(Context& context) {
-    ClimateScreen& screen = context.climate;
-    const domain::AppState& state = context.controller->state();
-    const domain::ClimateState& climate = state.snapshot().climate;
-    const bool fresh = state.climate_fresh();
-    const bool on = fresh && climate.is_on();
-
-    if (screen.tile_power != nullptr) {
-        widgets::set_power_state(screen.tile_power, on, fresh);
-        widgets::set_status_outline(screen.tile_power,
-                                    state.status_of(domain::ControlId::ClimatePower));
-        lv_obj_set_style_bg_opa(screen.tile_pill, on ? theme::kAccentSoftOpa : static_cast<lv_opa_t>(LV_OPA_COVER),
-                                LV_PART_MAIN);
-        lv_obj_set_style_bg_color(screen.tile_pill, on ? theme::accent() : theme::surface2(),
-                                  LV_PART_MAIN);
-        widgets::set_status_outline(screen.tile_pill,
-                                    state.status_of(domain::ControlId::ClimateMode));
-        const bool steps = on && climate.uses_target();
-        lv_obj_set_style_opa(screen.tile_steps, steps ? LV_OPA_COVER : 77, LV_PART_MAIN);
-    }
-
-    char text[32];
-    // Sam nawiew: temperatura docelowa nic nie znaczy, a moc nawiewu — tak.
-    const bool fan_only = fresh && climate.hvac_mode == "fan_only";
-    if (fan_only) {
-        const domain::PendingEntry* pending = state.pending_of(domain::ControlId::ClimateFan);
-        const char* id = pending != nullptr ? pending->requested.c_str() : climate.fan_mode.c_str();
-        lv_label_set_text(screen.tile_fan, *id != '\0' ? name_of(kFanNames, id) : "—");
-        lv_obj_add_flag(screen.tile_temp_box, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_remove_flag(screen.tile_fan_box, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_add_flag(screen.tile_fan_box, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_remove_flag(screen.tile_temp_box, LV_OBJ_FLAG_HIDDEN);
-    }
-    if (fresh && climate.uses_target()) {
-        // Seria stuknięć w −/+ na kafelku: liczba idzie za palcem, zanim wyjdzie polecenie.
-        widgets::format_tenths(text, sizeof(text), screen.tile_timer != nullptr
-                                                       ? screen.tile_pending
-                                                       : shown_target(state));
-        lv_label_set_text(screen.tile_temp, text);
-        lv_obj_remove_flag(screen.tile_unit, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_label_set_text(screen.tile_temp, "—");
-        lv_obj_add_flag(screen.tile_unit, LV_OBJ_FLAG_HIDDEN);
-    }
-    lv_obj_set_style_text_color(screen.tile_temp, on ? theme::text() : theme::dim(), LV_PART_MAIN);
-
-    lv_label_set_text(screen.tile_mode, fresh ? name_of(kModeNames, climate.hvac_mode.c_str())
-                                              : "Brak świeżego stanu");
-    lv_obj_set_style_text_color(screen.tile_mode, on ? theme::accent() : theme::dim(), LV_PART_MAIN);
-
-    if (!fresh) {
-        lv_label_set_text(screen.tile_now, "czekam na snapshot");
-    } else if (climate.has_current) {
-        widgets::format_tenths(text, sizeof(text), climate.current_tenths);
-        lv_label_set_text_fmt(screen.tile_now, "W pokoju %s°", text);
-    } else {
-        lv_label_set_text(screen.tile_now, "");
-    }
-
-    lv_obj_set_style_bg_color(screen.tile_dot,
-                              !fresh ? theme::danger() : on ? theme::accent() : theme::faint(),
-                              LV_PART_MAIN);
-    lv_obj_set_style_border_color(screen.tile, fresh ? theme::line() : theme::danger(),
-                                  LV_PART_MAIN);
 }
 
 void render_page(Context& context) {
@@ -571,7 +372,7 @@ void render_page(Context& context) {
                                        LV_PART_MAIN);
             lv_obj_set_style_pad_row(item, large ? 10 : 6, LV_PART_MAIN);
             const bool on = i == chosen;
-            lv_obj_set_style_bg_opa(item, on ? theme::kAccentSoftOpa : static_cast<lv_opa_t>(LV_OPA_COVER),
+            lv_obj_set_style_bg_opa(item, on ? theme::kAccentSoftOpa : theme::kOpaCover,
                                     LV_PART_MAIN);
             lv_obj_set_style_bg_color(item, on ? theme::accent() : theme::surface2(), LV_PART_MAIN);
             lv_obj_set_style_border_width(item, on ? 1 : 0, LV_PART_MAIN);
@@ -600,11 +401,7 @@ void render_page(Context& context) {
         lv_label_set_text(item.option->value, fresh && *id != '\0' ? option_name(data, id) : "—");
         widgets::set_status_outline(item.option->root, state.status_of(item.control));
         // Encja bez tej opcji (np. bez żaluzji poziomych) — kafelek znika.
-        if (fresh && data.list->empty()) {
-            lv_obj_add_flag(item.option->root, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_remove_flag(item.option->root, LV_OBJ_FLAG_HIDDEN);
-        }
+        widgets::set_visible(item.option->root, !(fresh && data.list->empty()));
     }
 
     if (screen.picker_control != domain::ControlId::None) {
@@ -627,195 +424,14 @@ void render_page(Context& context) {
     widgets::set_unavailable(screen.page.body, screen.banner, !fresh);
 }
 
-}  // namespace
+}  // namespace ui::climate
+
+namespace ui {
+
+using namespace climate;
 
 const char* climate_mode_name(const char* id) {
     return name_of(kModeNames, id);
-}
-
-namespace {
-
-lv_obj_t* tile_button(lv_obj_t* parent, const char* symbol, lv_event_cb_t on_press,
-                      Context& context) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_remove_style_all(button);
-    lv_obj_add_style(button, &theme::styles().act, LV_PART_MAIN);
-    lv_obj_set_height(button, LV_PCT(100));
-    lv_obj_set_flex_grow(button, 1);
-    lv_obj_set_flex_flow(button, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(button, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_t* icon = text_label(button, theme::font_icon(), theme::text());
-    lv_label_set_text(icon, symbol);
-    lv_obj_add_event_cb(button, on_press, LV_EVENT_CLICKED, &context);
-    return button;
-}
-
-// Poziom (makieta docs/ux/mockup-landscape, wariant C): wysoka karta obok scen.
-// Nagłówek z zasilaniem, na środku tryb (dotknięcie: lista trybów) i duża temperatura,
-// na dole −/+. Dotknięcie wolnego miejsca karty nadal otwiera podstronę.
-void build_tile_wide(Context& context, lv_obj_t* parent) {
-    ClimateScreen& screen = context.climate;
-
-    screen.tile = lv_button_create(parent);
-    lv_obj_remove_style_all(screen.tile);
-    lv_obj_add_style(screen.tile, &theme::styles().tile, LV_PART_MAIN);
-    lv_obj_set_width(screen.tile, LV_PCT(100));
-    lv_obj_set_style_radius(screen.tile, theme::kR4, LV_PART_MAIN);
-    lv_obj_set_style_pad_hor(screen.tile, theme::kS4, LV_PART_MAIN);
-    lv_obj_set_style_pad_ver(screen.tile, theme::kS4, LV_PART_MAIN);
-    theme::make_column(screen.tile, theme::kS3);
-
-    lv_obj_t* head = box(screen.tile);
-    // 64 px: tyle zajmuje poszerzone pole dotyku przycisku zasilania.
-    lv_obj_set_size(head, LV_PCT(100), theme::kIdentityRow);
-    theme::make_row(head, theme::kS3);
-    screen.tile_dot = box(head);
-    lv_obj_set_size(screen.tile_dot, 10, 10);
-    lv_obj_set_style_radius(screen.tile_dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(screen.tile_dot, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_t* names = box(head);
-    lv_obj_set_height(names, LV_SIZE_CONTENT);
-    lv_obj_set_flex_grow(names, 1);
-    theme::make_column(names, 3);
-    lv_obj_t* title = text_label(names, theme::font_m15(), theme::text());
-    lv_label_set_text(title, "Klimatyzacja");
-    widgets::make_cap(names, context.room.c_str());
-    screen.tile_power = widgets::make_power_button(head, &on_power, &context);
-
-    lv_obj_t* middle = box(screen.tile);
-    lv_obj_set_width(middle, LV_PCT(100));
-    lv_obj_set_flex_grow(middle, 1);
-    theme::make_column(middle, theme::kS2);
-    lv_obj_set_flex_align(middle, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_CENTER);
-
-    screen.tile_pill = lv_button_create(middle);
-    lv_obj_remove_style_all(screen.tile_pill);
-    lv_obj_set_size(screen.tile_pill, LV_SIZE_CONTENT, 44);
-    lv_obj_set_style_pad_hor(screen.tile_pill, theme::kS4, LV_PART_MAIN);
-    lv_obj_set_style_radius(screen.tile_pill, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(screen.tile_pill, LV_OPA_COVER, LV_PART_MAIN);
-    theme::make_row(screen.tile_pill, theme::kS2);
-    screen.tile_mode = text_label(screen.tile_pill, theme::font_m15(), theme::dim());
-    lv_obj_t* chevron = text_label(screen.tile_pill, theme::font_icon_xs(), theme::faint());
-    lv_label_set_text(chevron, LV_SYMBOL_DOWN);
-    lv_obj_add_event_cb(screen.tile_pill, on_tile_mode, LV_EVENT_CLICKED, &context);
-
-    lv_obj_t* temp = box(middle);
-    screen.tile_temp_box = temp;
-    lv_obj_set_size(temp, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_flex_flow(temp, LV_FLEX_FLOW_ROW);
-    lv_obj_set_style_pad_column(temp, 2, LV_PART_MAIN);
-    screen.tile_temp = text_label(temp, theme::font_b64num(), theme::dim());
-    screen.tile_unit = text_label(temp, theme::font_b26(), theme::faint());
-    lv_label_set_text(screen.tile_unit, "°C");
-
-    screen.tile_fan_box = box(middle);
-    lv_obj_set_size(screen.tile_fan_box, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    theme::make_column(screen.tile_fan_box, 4);
-    lv_obj_set_flex_align(screen.tile_fan_box, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_CENTER);
-    widgets::make_cap(screen.tile_fan_box, "MOC NAWIEWU");
-    screen.tile_fan = text_label(screen.tile_fan_box, theme::font_b26(), theme::text());
-    lv_obj_add_flag(screen.tile_fan_box, LV_OBJ_FLAG_HIDDEN);
-
-    screen.tile_now = text_label(middle, theme::font_r13(), theme::dim());
-
-    screen.tile_steps = box(screen.tile);
-    lv_obj_set_size(screen.tile_steps, LV_PCT(100), theme::kTouch);
-    theme::make_row(screen.tile_steps, theme::kS2);
-    tile_button(screen.tile_steps, LV_SYMBOL_MINUS,
-                [](lv_event_t* event) {
-                    tile_step(*static_cast<Context*>(lv_event_get_user_data(event)), -1);
-                },
-                context);
-    tile_button(screen.tile_steps, LV_SYMBOL_PLUS,
-                [](lv_event_t* event) {
-                    tile_step(*static_cast<Context*>(lv_event_get_user_data(event)), 1);
-                },
-                context);
-
-    lv_obj_add_event_cb(screen.tile, on_tile, LV_EVENT_CLICKED, &context);
-}
-
-}  // namespace
-
-void build_climate_tile(Context& context, lv_obj_t* parent) {
-    ClimateScreen& screen = context.climate;
-    if (theme::landscape()) {
-        build_tile_wide(context, parent);
-        return;
-    }
-
-    screen.tile = lv_button_create(parent);
-    lv_obj_remove_style_all(screen.tile);
-    lv_obj_add_style(screen.tile, &theme::styles().tile, LV_PART_MAIN);
-    lv_obj_set_size(screen.tile, LV_PCT(100), kTileHeight);
-    lv_obj_set_style_radius(screen.tile, theme::kR4, LV_PART_MAIN);
-    lv_obj_set_style_pad_hor(screen.tile, theme::kS5, LV_PART_MAIN);
-    lv_obj_set_style_pad_ver(screen.tile, theme::kS4, LV_PART_MAIN);
-    theme::make_column(screen.tile, 0);
-    lv_obj_set_flex_align(screen.tile, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_START,
-                          LV_FLEX_ALIGN_START);
-
-    // Nagłówek: kropka stanu, nazwa i pokój, strzałka przejścia.
-    lv_obj_t* head = box(screen.tile);
-    lv_obj_set_size(head, LV_PCT(100), LV_SIZE_CONTENT);
-    theme::make_row(head, theme::kS3);
-
-    screen.tile_dot = box(head);
-    lv_obj_set_size(screen.tile_dot, 10, 10);
-    lv_obj_set_style_radius(screen.tile_dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(screen.tile_dot, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(screen.tile_dot, theme::faint(), LV_PART_MAIN);
-
-    lv_obj_t* names = box(head);
-    lv_obj_set_height(names, LV_SIZE_CONTENT);
-    lv_obj_set_flex_grow(names, 1);
-    theme::make_column(names, 3);
-    lv_obj_t* title = text_label(names, theme::font_m15(), theme::text());
-    lv_label_set_text(title, "Klimatyzacja");
-    widgets::make_cap(names, context.room.c_str());
-
-    lv_obj_t* go = text_label(head, theme::font_icon_sm(), theme::faint());
-    lv_label_set_text(go, LV_SYMBOL_RIGHT);
-
-    // Treść: temperatura docelowa po lewej, tryb i temperatura w pokoju po prawej.
-    lv_obj_t* body = box(screen.tile);
-    lv_obj_set_size(body, LV_PCT(100), LV_SIZE_CONTENT);
-    lv_obj_set_flex_flow(body, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(body, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_END,
-                          LV_FLEX_ALIGN_END);
-
-    lv_obj_t* temp = box(body);
-    screen.tile_temp_box = temp;
-    lv_obj_set_size(temp, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_flex_flow(temp, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(temp, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-    lv_obj_set_style_pad_column(temp, 2, LV_PART_MAIN);
-    screen.tile_temp = text_label(temp, theme::font_b46num(), theme::dim());
-    screen.tile_unit = text_label(temp, theme::font_b19(), theme::faint());
-    lv_label_set_text(screen.tile_unit, "°C");
-
-    // Zamiast temperatury, w trybie wentylatora: podpis i bieg nawiewu.
-    screen.tile_fan_box = box(body);
-    lv_obj_set_size(screen.tile_fan_box, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    theme::make_column(screen.tile_fan_box, 4);
-    widgets::make_cap(screen.tile_fan_box, "MOC NAWIEWU");
-    screen.tile_fan = text_label(screen.tile_fan_box, theme::font_b26(), theme::text());
-    lv_label_set_long_mode(screen.tile_fan, LV_LABEL_LONG_DOT);
-    // Stała szerokość: z szerokością „wg treści” i wielokropkiem LVGL pokazywał samo „…”.
-    lv_obj_set_width(screen.tile_fan, 230);
-    lv_obj_add_flag(screen.tile_fan_box, LV_OBJ_FLAG_HIDDEN);
-
-    lv_obj_t* meta = box(body);
-    lv_obj_set_size(meta, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    theme::make_column(meta, 4);
-    lv_obj_set_flex_align(meta, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_END);
-    screen.tile_mode = text_label(meta, theme::font_m15(), theme::dim());
-    screen.tile_now = text_label(meta, theme::font_r13(), theme::faint());
-
-    lv_obj_add_event_cb(screen.tile, on_tile, LV_EVENT_CLICKED, &context);
 }
 
 void render_climate(Context& context) {

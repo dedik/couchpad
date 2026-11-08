@@ -600,6 +600,17 @@ NVS `orient`, restart po zmianie. Każdy ekran i podstrona mają układ poziomy;
 kolumny, kafle „na zewnątrz” / „w domu”; pion: pigułka pod pogodą. Ikony kafli startu wyśrodkowane.
 Sprawdzone na płytce w poziomie; pion — tylko w makiecie.
 
+## Refaktor UI — 2026-11-08
+
+Bez zmian wyglądu i zachowania (zrzuty 9 ekranów w poziomie przed i po: identyczne co do
+piksela). Wspólne prymitywy LVGL w `widgets` (`make_box`, `make_text`, `make_bare_button`,
+`make_dot`, `make_chevron`, `set_visible`, `upper_pl`) zamiast kopii w plikach ekranów;
+`make_intent(kind, control)` w `ui_internal.hpp`. Zakładka Dom podzielona na `screen_home.cpp`
+i `home_*.cpp` z `home_internal.hpp`, klimatyzacja na `screen_climate.cpp` (podstrona)
+i `climate_tile.cpp` (kafelek) z `climate_internal.hpp`. `build_start` rozbity na części.
+Usunięte ostrzeżenia kompilatora w UI (`theme::selector`, `theme::kOpaTransp`/`kOpaCover`).
+Pion po refaktorze nie był sprawdzony na płytce — zmiany nie dotykają układu, tylko kodu.
+
 ## Następny bezpieczny krok
 
 1. Ekran WIĘCEJ według planu powyżej (etap 2).

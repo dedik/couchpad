@@ -597,6 +597,17 @@ backup `…before-indoor.20261107-091007`). Landscape: a 96 px clock (`ubuntu_b_
 centred in the left column, "outside" / "at home" tiles; portrait: a pill under the weather.
 Start tile icons are centred. Checked on the board in landscape; portrait only in the mockup.
 
+## UI refactor — 2026-11-08
+
+No change in look or behaviour (screenshots of 9 landscape screens before and after are
+pixel-identical). Shared LVGL primitives in `widgets` (`make_box`, `make_text`,
+`make_bare_button`, `make_dot`, `make_chevron`, `set_visible`, `upper_pl`) replace copies in
+screen files; `make_intent(kind, control)` in `ui_internal.hpp`. The Home tab is split into
+`screen_home.cpp` and `home_*.cpp` with `home_internal.hpp`, the A/C into `screen_climate.cpp`
+(subpage) and `climate_tile.cpp` (tile) with `climate_internal.hpp`. `build_start` is split into
+parts. UI compiler warnings removed (`theme::selector`, `theme::kOpaTransp`/`kOpaCover`).
+Portrait was not checked on the board after the refactor — the changes touch code, not layout.
+
 ## Next safe step
 
 1. The WIĘCEJ screen according to the plan above (stage 2).

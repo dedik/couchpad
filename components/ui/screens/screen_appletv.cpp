@@ -30,9 +30,7 @@ void on_app(void* raw, std::size_t index) {
         !context.controller->state().snapshot().appletv.has_app(app_id)) {
         return;
     }
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::SetOption;
-    intent.control = domain::ControlId::AtvApp;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetOption, domain::ControlId::AtvApp);
     intent.text.assign(tile.key);       // do podświetlenia oczekującego kafelka
     intent.payload.assign(app_id);      // do kontraktu
     dispatch(context, intent);
@@ -48,8 +46,7 @@ void send_key(Context& context, domain::NavKey key, domain::Press press) {
         }
         context.appletv.last_step_ms = now;
     }
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::Navigate;
+    domain::UiIntent intent = make_intent(domain::IntentKind::Navigate);
     intent.key = key;
     intent.press = press;
     intent.target.assign("appletv");
@@ -76,9 +73,7 @@ void on_home(void* raw, domain::Press press) {
 void send_keyboard_text(Context& context, const char* value) {
     // Pusty tekst czyści pole. HA nie zwraca bieżącej treści, więc zawsze
     // wysyłamy całość, a nie dopisujemy znaków (ADR 0007).
-    domain::UiIntent intent;
-    intent.kind = domain::IntentKind::Momentary;
-    intent.control = domain::ControlId::AtvKeyboard;
+    domain::UiIntent intent = make_intent(domain::IntentKind::Momentary, domain::ControlId::AtvKeyboard);
     intent.payload.assign(value);
     dispatch(context, intent);
 }
