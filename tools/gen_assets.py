@@ -55,6 +55,11 @@ WEATHER_SCALE = 2
 ROOM_ICONS = ["salon", "kuchnia", "przedpokoj", "biuro", "lazienka", "sypialnia"]
 LAMP_STATES = ["on", "dim", "off", "na"]
 BULB_STATES = ["on", "off"]
+# Ikony opcji (tools/draw_option_icons.py, siatka 24 x 24): efekty lampy i tryby klimy.
+# Mały kafel i wiersz listy w 1 x (24 px), duży kafel bieżącej opcji w 2 x (48 px).
+EFFECT_ICONS = ["none", "cozy", "relax", "tv", "candle", "warm", "golden", "daylight", "cool", "focus",
+                "night", "bedtime", "wakeup", "pulse", "steampunk", "diwali", "alarm", "more"]
+MODE_ICONS = ["auto", "cool", "heat", "fan_only", "dry"]
 
 
 def c_identifier(name: str) -> str:
@@ -187,6 +192,9 @@ def main() -> int:
     jobs += [(f"lamp_{state}", 2, f"icon_lamp_{state}") for state in LAMP_STATES]
     jobs += [(f"bulb_{state}", 1, f"icon_bulb_{state}") for state in BULB_STATES]
     jobs += [(f"bulb_{state}", 2, f"icon_bulb_{state}_large") for state in BULB_STATES]
+    for kind, icons in (("fx", EFFECT_ICONS), ("mode", MODE_ICONS)):
+        jobs += [(f"{kind}_{icon}", 1, f"icon_{kind}_{icon}") for icon in icons]
+        jobs += [(f"{kind}_{icon}", 2, f"icon_{kind}_{icon}_large") for icon in icons]
     for icon, scale, name in jobs:
         source = Image.open(MOCKUP / "assets" / "pixel" / f"{icon}.png").convert("RGBA")
         image = source.resize((source.width * scale, source.height * scale), Image.NEAREST)

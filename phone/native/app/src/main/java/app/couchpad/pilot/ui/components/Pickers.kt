@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.LocalLandscape
+import app.couchpad.pilot.ui.theme.Pixel
 import app.couchpad.pilot.ui.theme.T
 import app.couchpad.pilot.ui.theme.u
 
@@ -67,7 +68,7 @@ fun OptionDialog(
     options: List<Choice>,
     selected: String?,
     onDismiss: () -> Unit,
-    icon: ((String) -> ImageVector)? = null,
+    icon: ((String) -> Int)? = null,
     onSelect: (String) -> Unit,
 ) {
     BackHandler(onBack = onDismiss)
@@ -89,7 +90,7 @@ private fun OptionSheet(
     options: List<Choice>,
     selected: String?,
     onDismiss: () -> Unit,
-    icon: ((String) -> ImageVector)?,
+    icon: ((String) -> Int)?,
     onSelect: (String) -> Unit,
 ) {
     val list: @Composable (Modifier) -> Unit = { modifier ->
@@ -152,7 +153,7 @@ class Overlay {
 val LocalOverlay = staticCompositionLocalOf<Overlay?> { null }
 
 @Composable
-private fun ChoiceCard(option: Choice, active: Boolean, icon: ImageVector?, onClick: () -> Unit) {
+private fun ChoiceCard(option: Choice, active: Boolean, icon: Int?, onClick: () -> Unit) {
     val shape = RoundedCornerShape(16.u)
     Row(
         Modifier.fillMaxWidth().height(76.u).clip(shape).background(C.surface)
@@ -162,7 +163,8 @@ private fun ChoiceCard(option: Choice, active: Boolean, icon: ImageVector?, onCl
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(icon, null, tint = if (active) C.accent else C.dim, modifier = Modifier.size(24.u))
+            // Pixel art (efekty lampy) w 1 x, bez wygładzania.
+            Pixel(icon, 24.u)
             Spacer(Modifier.width(16.u))
         }
         T(option.label, 15, FontWeight.Medium, C.text, Modifier.weight(1f))

@@ -70,8 +70,9 @@ Home (room grid)
 8. **Both layouts.** Every new screen has a portrait (480 × 800) and a landscape (800 × 480)
    version, first in the mockups, then in firmware.
 9. **Icons:** rooms and devices — pixel art (`tools/draw_room_icons.py`, 48 or 32 grid,
-   integer scale 1×/2×). Options (modes, effects) — Lucide 0.460.0 as a font
-   (`tools/gen-fonts.sh`).
+   integer scale 1×/2×). Options (climate modes, lamp effects) — pixel art too
+   (`tools/draw_option_icons.py`, 24 grid: small tile and list row 1×, large tile 2×;
+   mockup `docs/ux/mockup-option-icons/`), replacing the Lucide font since 2026-11-08.
 10. **Captions in capitals** (`make_cap`), Polish letters included: labels from HA go
     through `upper_pl` ("Środkowa" → "ŚRODKOWA").
 

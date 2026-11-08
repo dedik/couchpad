@@ -137,18 +137,8 @@ const lv_font_t* font_key_b26();
 // (strzałki, zasilanie, głośność). Tekstu nim nie składamy. Docelowo zastąpi go
 // własny zestaw ikon przerobiony tak samo jak ikony zakładek.
 const lv_font_t* font_icon();     // 24 px — krzyżak, zasilanie, gładzik
-// Pięć ikon trybów klimatyzacji z Lucide 0.460.0 (te same co w makiecie), 24 px.
-// Znaki z obszaru prywatnego Unicode; generuje je tools/gen-fonts.sh.
-const lv_font_t* font_mode_icon();
-const lv_font_t* font_mode_icon_lg();  // 36 px: duży kafel wybranego trybu
-inline constexpr const char* kIconAuto = "\xEE\x90\x97";       // sparkles
-inline constexpr const char* kIconCool = "\xEE\x85\xA9";       // snowflake
-inline constexpr const char* kIconHeat = "\xEE\x85\xBC";       // sun
-inline constexpr const char* kIconFan = "\xEE\x8D\xBD";        // fan
-inline constexpr const char* kIconDry = "\xEE\x82\xB9";        // droplets
-// Siedemnaście ikon efektów lampy z Lucide 0.460.0 (ADR 0014), 22 px — tools/gen-fonts.sh.
-const lv_font_t* font_effect_icon();
-const lv_font_t* font_effect_icon_lg();  // 36 px: duży kafel bieżącego efektu
+// Ikony trybów klimy i efektów lampy to obrazy pixel art (tools/draw_option_icons.py,
+// images.h: icon_mode_*, icon_fx_*), nie czcionka.
 const lv_font_t* font_icon_sm();  // 20 px — wiersze listy, przyciski akcji
 const lv_font_t* font_icon_xs();  // 14 px — pasek statusu
 

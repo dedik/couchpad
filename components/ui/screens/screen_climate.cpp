@@ -207,7 +207,7 @@ void build_page(Context& context) {
             lv_obj_set_style_pad_row(item, 6, LV_PART_MAIN);
             lv_obj_t* label = lv_obj_get_child(item, 0);
             lv_obj_set_style_text_font(label, theme::font_r13(), LV_PART_MAIN);
-            screen.mode_icons[i] = widgets::make_text(item, theme::font_mode_icon(), theme::dim());
+            screen.mode_icons[i] = lv_image_create(item);
         }
         lv_obj_t* cap = widgets::make_cap(side, "NAWIEW");
         lv_obj_set_style_margin_top(cap, theme::kS2, LV_PART_MAIN);
@@ -367,9 +367,7 @@ void render_page(Context& context) {
             }
             lv_obj_set_style_text_font(lv_obj_get_child(item, 0),
                                        large ? theme::font_m15() : theme::font_r13(), LV_PART_MAIN);
-            lv_obj_set_style_text_font(screen.mode_icons[i],
-                                       large ? theme::font_mode_icon_lg() : theme::font_mode_icon(),
-                                       LV_PART_MAIN);
+            lv_image_set_src(screen.mode_icons[i], mode_icon(screen.mode_ids[i].c_str(), large));
             lv_obj_set_style_pad_row(item, large ? 10 : 6, LV_PART_MAIN);
             const bool on = i == chosen;
             lv_obj_set_style_bg_opa(item, on ? theme::kAccentSoftOpa : theme::kOpaCover,
@@ -380,8 +378,6 @@ void render_page(Context& context) {
             lv_obj_set_style_border_color(item, theme::accent(), LV_PART_MAIN);
             const lv_color_t ink = on ? theme::accent() : theme::dim();
             lv_obj_set_style_text_color(lv_obj_get_child(item, 0), ink, LV_PART_MAIN);
-            lv_obj_set_style_text_color(screen.mode_icons[i], ink, LV_PART_MAIN);
-            lv_label_set_text(screen.mode_icons[i], name_of(kModeIcons, screen.mode_ids[i].c_str()));
         }
     }
 

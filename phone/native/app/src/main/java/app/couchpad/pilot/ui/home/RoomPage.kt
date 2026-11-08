@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -26,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import app.couchpad.pilot.R
 import app.couchpad.pilot.data.Light
 import app.couchpad.pilot.data.Pending
 import app.couchpad.pilot.data.PilotRepository
@@ -98,7 +98,7 @@ internal fun RoomPage(
                     status = ClimateLabels.mode(c.hvacMode),
                     detail = c.current?.let { "w pokoju ${oneDecimal(it)}°" },
                     lit = false,
-                    well = { Icon(Icons.Rounded.AcUnit, null, tint = C.accent, modifier = Modifier.size(40.u)) },
+                    well = { Pixel(R.drawable.px_mode_cool, 48.u) },
                     onOpen = openClimate,
                 )
             }

@@ -22,38 +22,38 @@ const RoomDef kRooms[kRoomCount] = {
     {"sypialnia", "Sypialnia", "SYPIALNIA", &icon_room_sypialnia, &icon_room_sypialnia_large},
 };
 
+#define FX(id, label, icon) {id, label, &icon_fx_##icon, &icon_fx_##icon##_large}
 const EffectDef kEffectNames[kEffectCount] = {
-    {"Cozy", "Przytulnie", "\xEE\x8B\x84"},
-    {"Relax", "Relaks", "\xEE\x8B\x9E"},
-    {"TV time", "Seans TV", "\xEE\x86\x95"},
-    {"Candlelight", "Świeca", "\xEE\x83\x97"},
-    {"Warm white", "Ciepła biel", "\xEE\x8A\x99"},
-    {"Golden white", "Złota biel", "\xEE\x8A\xB1"},
-    {"Daylight", "Dzienne", "\xEE\x85\xBC"},
-    {"Cool white", "Zimna biel", "\xEE\x85\xA9"},
-    {"Focus", "Skupienie", "\xEE\x86\x84"},
-    {"Night light", "Nocne", "\xEE\x84\xA2"},
-    {"Bedtime", "Do snu", "\xEE\x8B\x81"},
-    {"Wake-up", "Pobudka", "\xEE\x85\xBD"},
-    {"Pulse", "Puls", "\xEE\x80\xB8"},
-    {"Steampunk", "Steampunk", "\xEE\x8C\x8B"},
-    {"Diwali", "Diwali", "\xEE\x90\x97"},
-    {"Alarm", "Alarm", "\xEE\x8B\xAF"},
+    FX("Cozy", "Przytulnie", cozy),
+    FX("Relax", "Relaks", relax),
+    FX("TV time", "Seans TV", tv),
+    FX("Candlelight", "Świeca", candle),
+    FX("Warm white", "Ciepła biel", warm),
+    FX("Golden white", "Złota biel", golden),
+    FX("Daylight", "Dzienne", daylight),
+    FX("Cool white", "Zimna biel", cool),
+    FX("Focus", "Skupienie", focus),
+    FX("Night light", "Nocne", night),
+    FX("Bedtime", "Do snu", bedtime),
+    FX("Wake-up", "Pobudka", wakeup),
+    FX("Pulse", "Puls", pulse),
+    FX("Steampunk", "Steampunk", steampunk),
+    FX("Diwali", "Diwali", diwali),
+    FX("Alarm", "Alarm", alarm),
 };
-constexpr const char* kNoEffectIcon = "\xEE\x90\x86";   // circle-off
-// Efekt spoza tabeli: iskierki, jak Diwali.
-constexpr const char* kUnknownEffectIcon = "\xEE\x90\x97";
+#undef FX
 
-const char* effect_icon(const char* id) {
+const lv_image_dsc_t* effect_icon(const char* id, bool large) {
     if (id[0] == '\0') {
-        return kNoEffectIcon;
+        return large ? &icon_fx_none_large : &icon_fx_none;
     }
     for (const EffectDef& def : kEffectNames) {
         if (std::strcmp(def.id, id) == 0) {
-            return def.icon;
+            return large ? def.large : def.icon;
         }
     }
-    return kUnknownEffectIcon;
+    // Efekt spoza tabeli: iskry, jak tryb Auto.
+    return large ? &icon_mode_auto_large : &icon_mode_auto;
 }
 
 const char* effect_label(const char* id) {
