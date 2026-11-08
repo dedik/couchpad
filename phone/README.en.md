@@ -1,0 +1,63 @@
+# The remote on a phone
+
+[Polski](README.md)
+
+The Couchpad remote (TV, Apple TV, Logitech Z906, lights and air conditioning through Home
+Assistant) as an Android app. Prototype: Galaxy M23 5G; target: Galaxy S5 (Android 6).
+
+The main app is a **native Kotlin + Jetpack Compose app in [`native/`](native/)**. It mirrors
+the board firmware's interface and settings (`../firmware`) one to one and speaks the same
+MQTT contract. This repository does not change the firmware.
+
+![Portrait screens](docs/screenshots/overview-portrait.png)
+
+![Landscape screens](docs/screenshots/overview-landscape.png)
+
+All screens: [`docs/screenshots/portrait/`](docs/screenshots/portrait/) and
+[`docs/screenshots/landscape/`](docs/screenshots/landscape/) — Start, TV, Apple TV, Z906, Home,
+room, lamp, effects, bulb, air conditioning and settings.
+
+## What it does
+
+- **Connectivity:** a single MQTT connection. Z906 directly on the controller's topics
+  (ADR 0006), the TV directly through Glasshouse (ADR 0008), Apple TV, air conditioning,
+  lights, weather and channels through the `multimedia_remote/v1` contract via the HA bridge.
+  It reconnects every time it is opened and shows the controls only after a fresh state
+  arrives (ADR 0005); in the background it disconnects.
+- **Screens as on the board,** in portrait (tabs at the bottom) and landscape (side bar,
+  drawers in the Home tab). In landscape the bar fits into the strip next to the front camera.
+- **Launcher:** the remote can be the phone's home screen — it starts with the phone, Home
+  returns to the start screen, and when the screen turns on the remote shows up at once,
+  above the lock screen (no swipe needed without a PIN), always on the start screen
+  (ADR 0010). Set it in *Settings → Phone → Set as home screen*; the phone's app list and the
+  way into Android settings are there too.
+- **Settings 1:1:** MQTT (empty identifiers are discovered automatically), display
+  (orientation, theme, brightness, night mode, screen timeout), sound, room and time,
+  keyboard and trackpad, diagnostics.
+
+## Build and install
+
+Requires JDK 17 (`brew install openjdk@17`) and the Android SDK with `platforms;android-34`,
+`build-tools;34.0.0`.
+
+```bash
+cd native
+export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
+./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+./gradlew testDebugUnitTest   # logic tests without a phone
+```
+
+Broker details are entered on the phone (Settings → MQTT). They never reach the repository.
+
+Screenshots from a connected phone: `tools/screenshots.sh portrait|landscape`.
+
+## LVGL port (reference)
+
+The first version ran the firmware's LVGL code through SDL2: `compat/` (ESP-IDF and FreeRTOS
+on system threads, NVS in a file, an MQTT client with the esp-mqtt API), `platform/` and
+`android/`. It also works as a simulator on a Mac (`cmake -S . -B build/sim && cmake --build build/sim`),
+but the 480 × 800 image scaled up on the phone was blurry, so the native app is what we develop.
+
+Work status and next steps (in Polish): [`docs/PROGRESS.md`](docs/PROGRESS.md).

@@ -1,5 +1,7 @@
 # Pilot na telefonie
 
+[English](README.en.md)
+
 Pilot Couchpad (TV, Apple TV, Logitech Z906, światła i klimatyzacja przez Home Assistanta)
 jako aplikacja na Androida. Prototyp: Galaxy M23 5G, docelowo Galaxy S5 (Android 6).
 
@@ -7,9 +9,9 @@ Aplikacja główna to **natywna aplikacja Kotlin + Jetpack Compose w [`native/`]
 Odwzorowuje 1:1 interfejs i ustawienia firmware'u płytki (`../firmware`) i mówi tym samym
 kontraktem MQTT. Firmware nie jest przez to repozytorium zmieniany.
 
-| Pion | Poziom |
-| --- | --- |
-| ![Start](docs/screenshots/portrait/01-start.png) | ![Start](docs/screenshots/landscape/01-start.png) |
+![Ekrany w pionie](docs/screenshots/overview-portrait.png)
+
+![Ekrany w poziomie](docs/screenshots/overview-landscape.png)
 
 Wszystkie ekrany: [`docs/screenshots/portrait/`](docs/screenshots/portrait/) i
 [`docs/screenshots/landscape/`](docs/screenshots/landscape/) — Start, TV, Apple TV, Z906, Dom,
