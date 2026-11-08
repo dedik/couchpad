@@ -1,24 +1,22 @@
 package app.couchpad.pilot.ui.components
 
-import android.os.Build
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.Drawable
-import android.view.Gravity
-import android.view.Window
-import android.view.WindowManager
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
-
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,28 +30,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import kotlin.math.roundToInt
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.compose.ui.window.DialogProperties
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.LocalLandscape
-import app.couchpad.pilot.ui.theme.ProvideUnits
 import app.couchpad.pilot.ui.theme.T
 import app.couchpad.pilot.ui.theme.u
 
@@ -67,6 +56,10 @@ fun List<String>.asChoices(label: (String) -> String = { it }) = map { Choice(it
  * 380 px przy prawej krawędzi nad przyciemnionym ekranem. Każda opcja to karta z ikoną,
  * bieżąca ma obwódkę w akcencie i podpis „aktywny”. **Wybór zamyka listę**; Wstecz albo
  * dotknięcie tła zamyka bez zmian.
+ *
+ * Rysuje się w warstwie nad ekranem pilota ([LocalOverlay]), nie w osobnym oknie dialogu:
+ * okno dialogu w Compose 1.5 nie sięga pod paski systemu, więc lista otwierała się z pasami
+ * przy krawędziach i przeskakiwała w pierwszej klatce.
  */
 @Composable
 fun OptionDialog(
@@ -77,54 +70,86 @@ fun OptionDialog(
     icon: ((String) -> ImageVector)? = null,
     onSelect: (String) -> Unit,
 ) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-    ) {
-        val window = (LocalView.current.parent as? DialogWindowProvider)?.window
-        // Lewy brzeg panelu w oknie (poziom); do niego sięga jasny pas tła okna.
-        var panelLeft by remember { mutableStateOf<Int?>(null) }
-        ProvideUnits {
-            if (window != null) {
-                val landscape = LocalLandscape.current
-                val bg = C.bg.toArgb()
-                SideEffect { fillScreen(window, landscape, panelLeft, bg) }
-            }
-            val list: @Composable (Modifier) -> Unit = { modifier ->
-                Column(modifier.background(C.bg)) {
-                    PageHeader(title, onBack = onDismiss)
-                    LazyColumn(
-                        Modifier.fillMaxWidth().weight(1f),
-                        contentPadding = PaddingValues(start = 24.u, end = 24.u, bottom = 24.u),
-                        verticalArrangement = Arrangement.spacedBy(12.u),
-                    ) {
-                        items(options) { option ->
-                            ChoiceCard(option, option.id == selected, icon?.invoke(option.id)) {
-                                onSelect(option.id)
-                                onDismiss()
-                            }
-                        }
+    BackHandler(onBack = onDismiss)
+    val sheet: @Composable () -> Unit = { OptionSheet(title, options, selected, onDismiss, icon, onSelect) }
+    val overlay = LocalOverlay.current
+    if (overlay == null) {
+        sheet()
+        return
+    }
+    // Warstwa dostaje zawsze najnowszą treść; znika razem z listą.
+    val key = remember { Any() }
+    SideEffect { overlay.show(key, sheet) }
+    DisposableEffect(overlay, key) { onDispose { overlay.hide(key) } }
+}
+
+@Composable
+private fun OptionSheet(
+    title: String,
+    options: List<Choice>,
+    selected: String?,
+    onDismiss: () -> Unit,
+    icon: ((String) -> ImageVector)?,
+    onSelect: (String) -> Unit,
+) {
+    val list: @Composable (Modifier) -> Unit = { modifier ->
+        Column(modifier) {
+            PageHeader(title, onBack = onDismiss)
+            LazyColumn(
+                Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = 24.u, end = 24.u, bottom = 24.u),
+                verticalArrangement = Arrangement.spacedBy(12.u),
+            ) {
+                items(options) { option ->
+                    ChoiceCard(option, option.id == selected, icon?.invoke(option.id)) {
+                        onSelect(option.id)
+                        onDismiss()
                     }
                 }
             }
-            if (LocalLandscape.current) {
-                Row(Modifier.fillMaxSize()) {
-                    // Przyciemnia tło okna (fillScreen) — razem z pasem pod paskiem nawigacji.
-                    Box(Modifier.weight(1f).fillMaxHeight().tap(feedback = false, onClick = onDismiss))
-                    list(
-                        Modifier.width(380.u).fillMaxHeight().background(C.bg)
-                            .onGloballyPositioned { panelLeft = it.positionInWindow().x.roundToInt() }
-                            .systemBarsPadding(),
-                    )
-                }
-            } else {
-                // Tło przed odstępem od pasków systemu, żeby pod paskiem statusu nie prześwitywało
-                // przyciemnienie okna dialogu (szary pas w stylu jasnym).
-                list(Modifier.fillMaxSize().background(C.bg).systemBarsPadding())
-            }
         }
     }
+    if (LocalLandscape.current) {
+        Row(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f).fillMaxHeight().background(Color.Black.copy(alpha = 0.6f)).tap(feedback = false, onClick = onDismiss))
+            // Tło do samej krawędzi, treść z odstępem od pasków systemu.
+            list(
+                Modifier.width(380.u).fillMaxHeight().background(C.bg).windowInsetsPadding(
+                    // Panel stoi przy prawej krawędzi: wcięcie kamery z lewej go nie dotyczy.
+                    WindowInsets.systemBars.union(WindowInsets.displayCutout)
+                        .only(WindowInsetsSides.Vertical + WindowInsetsSides.End),
+                ),
+            )
+        }
+    } else {
+        // Pełny ekran zabiera też dotyk, żeby nie przechodził do ekranu pod spodem.
+        list(Modifier.fillMaxSize().background(C.bg).tap(feedback = false) {}.systemBarsPadding().displayCutoutPadding())
+    }
 }
+
+/**
+ * Warstwa nad całym ekranem pilota (PilotApp): tu rysują się listy wyboru. Ostatnio
+ * pokazana jest na wierzchu.
+ */
+class Overlay {
+    private val entries = mutableStateListOf<Pair<Any, @Composable () -> Unit>>()
+
+    fun show(key: Any, content: @Composable () -> Unit) {
+        val i = entries.indexOfFirst { it.first === key }
+        if (i >= 0) entries[i] = key to content else entries.add(key to content)
+    }
+
+    fun hide(key: Any) {
+        entries.removeAll { it.first === key }
+    }
+
+    @Composable
+    fun Content() {
+        for ((key, content) in entries) androidx.compose.runtime.key(key) { content() }
+    }
+}
+
+val LocalOverlay = staticCompositionLocalOf<Overlay?> { null }
 
 @Composable
 private fun ChoiceCard(option: Choice, active: Boolean, icon: ImageVector?, onClick: () -> Unit) {
@@ -230,52 +255,3 @@ fun OptionTile(
 /** Obrys kafla: pełny akcent, gdy aktywny; przygaszony, gdy tylko czeka na potwierdzenie. */
 fun pendingBorder(active: Boolean, pending: Boolean): Color =
     C.accent.copy(alpha = if (pending && !active) 0.5f else 1f)
-
-/**
- * Okno listy wyboru na cały ekran, jak pilot (MainActivity): pasek stanu ukryty, paski
- * przezroczyste, bez systemowego przyciemnienia (w stylu jasnym zostawało szarym pasem pod
- * paskiem stanu). Compose 1.5 i tak mierzy treść dialogu bez paska nawigacji, więc pas pod
- * nim maluje tło okna: w pionie tłem listy, w poziomie przyciemnieniem z jasnym pasem od
- * lewego brzegu panelu ([panelLeft]) do prawej krawędzi.
- */
-private fun fillScreen(window: Window, landscape: Boolean, panelLeft: Int?, bg: Int) {
-    window.setDimAmount(0f)
-    val metrics = android.util.DisplayMetrics()
-    @Suppress("DEPRECATION")
-    window.windowManager.defaultDisplay.getRealMetrics(metrics)
-    window.setLayout(metrics.widthPixels, metrics.heightPixels)
-    window.setGravity(Gravity.TOP or Gravity.START)
-    window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-    window.attributes = window.attributes.apply {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) fitInsetsTypes = 0
-    }
-    window.statusBarColor = android.graphics.Color.TRANSPARENT
-    window.navigationBarColor = android.graphics.Color.TRANSPARENT
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
-    WindowCompat.setDecorFitsSystemWindows(window, false)
-    WindowInsetsControllerCompat(window, window.decorView).apply {
-        hide(WindowInsetsCompat.Type.statusBars())
-        systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-    }
-    window.setBackgroundDrawable(background(window, landscape, panelLeft, bg))
-}
-
-/**
- * Tło okna listy. W poziomie jasny pas od [panelLeft] do prawej krawędzi ekranu, a na lewo
- * przyciemnienie; dopóki panel nie jest rozmieszczony — samo przyciemnienie.
- */
-private fun background(window: Window, landscape: Boolean, panelLeft: Int?, bg: Int): Drawable {
-    if (!landscape) return ColorDrawable(bg)
-    val width = window.decorView.width
-    if (panelLeft == null || width <= 0) return ColorDrawable(SCRIM)
-    return LayerDrawable(arrayOf(ColorDrawable(SCRIM), ColorDrawable(bg))).apply {
-        setLayerGravity(1, Gravity.END or Gravity.FILL_VERTICAL)
-        setLayerWidth(1, (width - panelLeft).coerceAtLeast(0))
-    }
-}
-
-/** Przyciemnienie ekranu pod panelem listy w poziomie (czarny, 60%). */
-private const val SCRIM = 0x99000000.toInt()
