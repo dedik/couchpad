@@ -189,6 +189,9 @@ the background closes it without a change.
 1. In the bridge ([`homeassistant/multimedia_remote.yaml`](../../homeassistant/multimedia_remote.yaml))
    add an entry to `light_rooms`: `room` (one of `salon`, `kuchnia`, `przedpokoj`, `biuro`,
    `lazienka`, `sypialnia`), `id`, `label`, `entity`, optionally `members`.
+   When a wall switch cuts power to the bulbs (kitchen), add `power` (the switch channel) and
+   `min_kelvin` / `max_kelvin`: with power cut the lamp is "off", and every command except off
+   first turns the channel on. Off from the remote turns the bulbs off; the channel stays on.
 2. Add those entities to the triggers of the "Pilot — snapshot po zmianie światła" automation.
 3. Deploy on the HA server: backup `…before-<change>.<date>`, `check_config`, reload scripts
    and automations.

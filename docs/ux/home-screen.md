@@ -208,6 +208,9 @@ Remis liczników rozstrzyga kolejność `effect_list` z Home Assistanta.
 1. W bridge'u ([`homeassistant/multimedia_remote.yaml`](../../homeassistant/multimedia_remote.yaml))
    dopisz pozycję w `light_rooms`: `room` (jeden z: `salon`, `kuchnia`, `przedpokoj`, `biuro`,
    `lazienka`, `sypialnia`), `id`, `label`, `entity`, opcjonalnie `members`.
+   Gdy włącznik na ścianie odcina żarówkom prąd (kuchnia), dopisz `power` (kanał włącznika) oraz
+   `min_kelvin` / `max_kelvin`: przy odciętym prądzie lampa jest „wyłączona”, a każde polecenie poza
+   wyłączeniem najpierw włącza kanał. Wyłączenie z pilota gasi żarówki, kanał zostaje.
 2. Dopisz te encje do wyzwalaczy automatyzacji „Pilot — snapshot po zmianie światła”.
 3. Wdróż na serwerze HA: kopia `…before-<zmiana>.<data>`, `check_config`, przeładowanie
    skryptów i automatyzacji.
