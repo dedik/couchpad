@@ -62,8 +62,16 @@ EFFECT_ICONS = ["none", "cozy", "relax", "tv", "candle", "warm", "golden", "dayl
 MODE_ICONS = ["auto", "cool", "heat", "fan_only", "dry"]
 # Urządzenia i czujniki (tools/draw_device_icons.py): klimatyzator 48 px w studzience karty,
 # termometr i kropla (siatka 24) w 2 x — 48 px na karcie „W pokoju” (ADR 0017).
-DEVICE_ICONS = ["aircon"]
+DEVICE_ICONS = ["aircon", "radiator", "radiator_idle"]
 SENSOR_ICONS = ["temp", "humidity"]
+# Głowica grzejnika (ADR 0018, tools/draw_option_icons.py, siatka 24): tryb Harmonogram i kafle
+# „Teraz” (zawór, okno, bateria, następny punkt, cel – pokój) w 1 x. Tryb Grzanie bierze `mode_heat`.
+TRV_ICONS = ["auto", "valve_on", "valve_off", "window_open", "window_closed", "battery_ok", "battery_low",
+             "next", "delta"]
+# Tarcza grzejnika: pierścień od niebieskiego (zimno, początek łuku 135°) przez bursztyn do
+# czerwieni (gorąco, koniec 45°) — tekstura łuku `lv_arc` (arc_image_src). Rozmiar = kThermoSize.
+RING_SIZE = 300
+RING_STOPS = [(0.0, (0x3D, 0x8B, 0xFF)), (0.5, (0xF2, 0xA9, 0x3B)), (1.0, (0xE5, 0x28, 0x1B))]
 
 
 def c_identifier(name: str) -> str:
@@ -165,6 +173,25 @@ const lv_image_dsc_t {ident} = {{
 """
 
 
+def heat_ring() -> Image.Image:
+    """Pierścień barw tarczy grzejnika: kolor zależy od kąta wzdłuż łuku 270° (od 135° w prawo)."""
+    import math
+    image = Image.new("RGB", (RING_SIZE, RING_SIZE))
+    pixels = image.load()
+    c = (RING_SIZE - 1) / 2
+    for y in range(RING_SIZE):
+        for x in range(RING_SIZE):
+            angle = math.degrees(math.atan2(y - c, x - c)) % 360   # 0° = w prawo, rośnie w dół
+            t = ((angle - 135) % 360) / 270
+            t = min(1.0, t) if t <= 1.0 + 45 / 270 else 0.0          # przerwa u dołu: najbliższy koniec
+            for (a, ca), (b, cb) in zip(RING_STOPS, RING_STOPS[1:]):
+                if a <= t <= b:
+                    k = (t - a) / (b - a)
+                    pixels[x, y] = tuple(round(ca[i] + (cb[i] - ca[i]) * k) for i in range(3))
+                    break
+    return image
+
+
 def render_svg(svg: pathlib.Path, width: int, height: int) -> Image.Image:
     with tempfile.TemporaryDirectory() as tmp:
         png = pathlib.Path(tmp) / "out.png"
@@ -201,12 +228,18 @@ def main() -> int:
         jobs += [(f"{kind}_{icon}", 2, f"icon_{kind}_{icon}_large") for icon in icons]
     jobs += [(f"dev_{icon}", 1, f"icon_dev_{icon}") for icon in DEVICE_ICONS]
     jobs += [(f"sensor_{icon}", 2, f"icon_sensor_{icon}_large") for icon in SENSOR_ICONS]
+    jobs += [(f"trv_{icon}", 1, f"icon_trv_{icon}") for icon in TRV_ICONS]
     for icon, scale, name in jobs:
         source = Image.open(MOCKUP / "assets" / "pixel" / f"{icon}.png").convert("RGBA")
         image = source.resize((source.width * scale, source.height * scale), Image.NEAREST)
         (OUT / f"{name}.c").write_text(emit_i8(name, image))
         names.append(name)
         print(f"  {name}  {image.width}x{image.height}  I8")
+
+    # --- tarcza grzejnika -------------------------------------------------------
+    (OUT / "ring_heat.c").write_text(emit_rgb565("ring_heat", heat_ring()))
+    names.append("ring_heat")
+    print(f"  ring_heat  {RING_SIZE}x{RING_SIZE}  RGB565")
 
     # --- logotypy -------------------------------------------------------------
     for logo, target_height in LOGOS.items():

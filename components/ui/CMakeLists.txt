@@ -13,6 +13,7 @@ idf_component_register(
          "screens/home_common.cpp"
          "screens/home_room.cpp"
          "screens/home_light.cpp"
+         "screens/home_radiator.cpp"
          "screens/home_drawers.cpp"
          "screens/screen_climate.cpp"
          "screens/climate_tile.cpp"

@@ -95,17 +95,37 @@ Dom (siatka pomieszczeń)
   siebie na pełną wysokość.
 - Karta „W pokoju” ([ADR 0017](../architecture/adr/0017-room-climate-card.md)): temperatura
   i wilgotność z czujnika pokoju. Ikona pixel art 48 px (termometr, kropla — siatka 24 w 2 ×),
-  liczba `b46num` z jednostką `m15`, pod nią ocena wersalikami `m11` z kropką w kolorze:
-  zielona „komfortowo” / „lekko sucho”, bursztynowa „ciepło” / „sucho”, niebieska „chłodno” /
-  „wilgotno”. Bez wykresu, nieklikalna. Pion: pod paskiem pokoi, podpis `W POKOJU`, odczyty
+  liczba `b46num` z jednostką `m15`. Bez oceny słowem i kropki (usunięte 2026-11-09 — „komfortowo”
+  nic nie mówiło), bez wykresu, nieklikalna. Pion: pod paskiem pokoi, podpis `W POKOJU`, odczyty
   obok siebie z kreską pośrodku. Poziom: pierwsza kolumna rzędu kart (210 px), temperatura nad
   wilgotnością, podpis rzędu `W POKOJU · URZĄDZENIA`. Pokój bez czujnika nie ma karty; brak
   jednego odczytu chowa tylko jego połowę.
+
+- Karta „Grzejnik” ([ADR 0018](../architecture/adr/0018-radiators.md)) w pokojach z głowicą
+  (salon, sypialnia, łazienka, biuro; kuchnia i przedpokój nie mają grzejnika). Studzienka
+  `dev_radiator` (z falami ciepła), gdy zawór grzeje, inaczej `dev_radiator_idle`, przygaszona po
+  wyłączeniu. Stan: „Wyłączony” / „Grzanie · 20,5°” / „Harmonogram · 19,0°”; szczegół: „w pokoju
+  22,6° · grzeje | nie grzeje | okno otwarte” — temperatura **wyłącznie z czujnika pokoju**, nigdy
+  z głowicy. Bez skrótu zasilania (jak klima). Poziom z trzema urządzeniami (salon): karta „W pokoju”
+  węższa (160 px, liczby `b26`), nazwy kart `b19`; zasilanie lampy zostaje w prawym górnym rogu.
 
 ### Ekran urządzenia
 
 - Nagłówek: Wstecz, nazwa urządzenia, podpis `POKÓJ · SZCZEGÓŁ` wersalikami, zasilanie po prawej.
 - Treść według reguły 3.
+
+### Grzejnik
+
+- Nagłówek: „Grzejnik”, podpis `<POKÓJ> · GŁOWICA`, zasilanie po prawej (wyłączenie / powrót do
+  ostatniego trybu).
+- Tarcza nastawy (4.3) w zakresie encji przyciętym do 5–30 °C. Łuk w barwach od niebieskiego
+  (zimno) przez bursztyn do czerwieni (gorąco) — tekstura `ring_heat` (`tools/gen_assets.py`).
+  Biała kropka na łuku to temperatura z czujnika pokoju; podpis nad liczbą `GRZANIE` /
+  `HARMONOGRAM` / `WYŁĄCZONY`, pod liczbą „w pokoju 22,6°”.
+- Kafle: `TRYB` (Grzanie `mode_heat`, Harmonogram `trv_auto`), `TERAZ` (zawór, okno — tylko z
+  kontaktronem pokoju, bateria, w Harmonogramie „OD 23:00 · 16,0°”, w Grzaniu „CEL – POKÓJ”),
+  `SZYBKO` (17°, 19°, 21°, 23°). Kafle stanu nie są klikalne.
+- Harmonogram głowicy tylko do podglądu — edycja w Home Assistancie / Zigbee2MQTT.
 
 ### Poziom: szuflady
 
@@ -194,6 +214,13 @@ Remis liczników rozstrzyga kolejność `effect_list` z Home Assistanta.
 
 Limity firmware'u: 3 pomieszczenia ze światłem, 4 żarówki w grupie, 16 efektów.
 
+### Nowy grzejnik w pomieszczeniu (bez firmware'u)
+
+1. W bridge'u dopisz pozycję w `radiator_rooms`: `room`, `id`, `entity` (`climate.*`), opcjonalnie
+   `battery`, `window` (kontaktron okna) i `schedule` (przedrostek `text.*_weekly_schedule`).
+2. Dopisz encje do wyzwalaczy automatyzacji „Pilot — snapshot po zmianie grzejnika”.
+3. Wdróż jak światło. Limit firmware'u: 4 grzejniki.
+
 ### Nowy typ urządzenia (np. roleta, termostat pokojowy)
 
 1. ADR: czego potrzebuje ekran, jaka sekcja kontraktu, czy addytywnie w `v1`.
@@ -224,6 +251,7 @@ Zakładka Dom ma własny komplet w każdym z czterech katalogów (`docs/screensh
 | `12-effects.png` | Lista efektów |
 | `13-bulb.png` | Żarówka |
 | `14-drawers.png` | Szuflada pomieszczeń (tylko poziom) |
+| `15-radiator.png` | Grzejnik |
 
 Robi się je `tools/remote.py` (konsola USB). **Zdalny dotyk naprawdę steruje domem:** przed
 każdym stuknięciem sprawdź `hit`, co jest pod palcem, i nie stukaj w zasilanie, tarczę, próbki

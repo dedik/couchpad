@@ -4,7 +4,7 @@
 Ten sam styl co tools/draw_icons.py i tools/draw_room_icons.py: kształty wypełnione rampą
 jednego koloru, światło z lewej góry, ciemny kontur i cień.
 
-* urządzenia — `dev_<id>.png`, siatka 48 (studzienka karty 1x/2x): grzejnik, termostat,
+* urządzenia — `dev_<id>.png`, siatka 48 (studzienka karty 1x/2x): grzejnik (grzeje / `radiator_idle`), termostat,
   klimatyzator, roleta, gniazdko, czujnik, odkurzacz, zamek, wentylator, domownik, scena,
   start (kafelki pulpitu),
 * odczyty czujników — `sensor_<id>.png`, siatka 24 (karta klimatu pokoju w 2x):
@@ -66,6 +66,16 @@ def radiator():
         for k in range(5):
             c.set(x + (1 if k % 2 else 0), 2 + k, ramp("red", 4 - (k % 2)))
     return fin(c)
+
+def radiator_idle():
+    """Grzejnik bez grzania (zawór zamknięty albo wyłączony): bez fal ciepła."""
+    c = radiator()
+    for y in range(0, 8):
+        for x in range(0, 48):
+            c.px[y][x] = None
+    c.outline()
+    return c
+
 
 def thermostat():
     c = Canvas()
@@ -235,7 +245,7 @@ def sensor_humidity():
     return fin(c)
 
 
-DEVICES = dict(radiator=radiator, thermostat=thermostat, aircon=aircon, blinds=blinds, plug=plug,
+DEVICES = dict(radiator=radiator, radiator_idle=radiator_idle, thermostat=thermostat, aircon=aircon, blinds=blinds, plug=plug,
                sensor=sensor, vacuum=vacuum, lock=lock, fan=fan, person=person, scene=scene, start=start)
 SENSORS = dict(temp=sensor_temp, humidity=sensor_humidity)
 

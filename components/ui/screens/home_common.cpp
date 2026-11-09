@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include "images.h"
+#include "core/clock.hpp"
 #include "home_internal.hpp"
 
 // Zakładka Dom: katalog pomieszczeń i efektów oraz dane wspólne dla jej plików.
@@ -155,6 +156,20 @@ void climate_summary(char* out, std::size_t size, const domain::AppState& state)
     } else {
         std::snprintf(out, size, "%s", climate_mode_name(climate.hvac_mode.c_str()));
     }
+}
+
+bool room_temperature(const Context& context, std::size_t room, int16_t& tenths) {
+    const domain::Weather* weather = context.controller->weather();
+    if (weather == nullptr || !weather->known || room >= kRoomCount ||
+        core::now_ms() - weather->received_ms >= domain::kWeatherMaxAgeMs) {
+        return false;
+    }
+    const domain::RoomReading* reading = domain::find_room_reading(*weather, kRooms[room].id);
+    if (reading == nullptr || !reading->temperature_known) {
+        return false;
+    }
+    tenths = reading->temperature_tenths;
+    return true;
 }
 
 }  // namespace ui::home

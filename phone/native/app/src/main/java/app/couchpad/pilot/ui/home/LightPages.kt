@@ -201,12 +201,14 @@ private fun BrightnessDial(
 /**
  * Układ strony z tarczą: w poziomie tarcza 320 px z lewej i treść z prawej, w pionie pasek
  * pokoi, tarcza i treść pod nią. [scrollSide] — treść przewijana; inaczej wyśrodkowana.
+ * [dialInset] — margines tarczy w pionie (mniejsza tarcza zostawia miejsce na kafle).
  */
 @Composable
-private fun DialPage(
+internal fun DialPage(
     roomId: String,
     switchRoom: (String) -> Unit,
     scrollSide: Boolean,
+    dialInset: Int = 36,
     header: @Composable () -> Unit,
     dial: @Composable (Modifier) -> Unit,
     side: @Composable ColumnScope.() -> Unit,
@@ -233,7 +235,7 @@ private fun DialPage(
                     .padding(horizontal = 24.u),
                 verticalArrangement = Arrangement.spacedBy(16.u),
             ) {
-                Box(Modifier.fillMaxWidth().padding(horizontal = 36.u), contentAlignment = Alignment.Center) { dial(Modifier.fillMaxWidth()) }
+                Box(Modifier.fillMaxWidth().padding(horizontal = dialInset.u), contentAlignment = Alignment.Center) { dial(Modifier.fillMaxWidth()) }
                 side()
                 if (scrollSide) Spacer(Modifier.height(12.u))
             }

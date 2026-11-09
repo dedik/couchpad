@@ -103,23 +103,6 @@ void on_dial(void* raw, int32_t value, bool) {
     dispatch(context, intent);
 }
 
-lv_obj_t* tile_base(lv_obj_t* parent) {
-    lv_obj_t* obj = widgets::make_bare_button(parent);
-    lv_obj_set_style_radius(obj, theme::kR2, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(obj, theme::surface2(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(obj, theme::accent(), LV_PART_MAIN);
-    return obj;
-}
-
-// Kafel jak „Tryb” na podstronie klimy: wybrany — miękkie bursztynowe tło i obwódka.
-void paint_tile(lv_obj_t* obj, bool on) {
-    lv_obj_set_style_bg_color(obj, on ? theme::accent() : theme::surface2(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(obj, on ? theme::kAccentSoftOpa : theme::kOpaCover,
-                            LV_PART_MAIN);
-    lv_obj_set_style_border_width(obj, on ? 1 : 0, LV_PART_MAIN);
-}
-
 // Siatka kafli efektów. Poziom: [duży][0][1][Więcej] / [duży][2][3][Więcej]. Pion ma pod tarczą
 // tylko kilkanaście pikseli zapasu, więc jeden rząd: [bieżący, szerszy][0][1][Więcej].
 constexpr int32_t kEffectColsTall[] = {LV_GRID_FR(7), LV_GRID_FR(5), LV_GRID_FR(5), LV_GRID_FR(5),
@@ -137,8 +120,31 @@ const char* kelvin_name(std::size_t step) {
 
 }  // namespace
 
+lv_obj_t* tile_base(lv_obj_t* parent) {
+    lv_obj_t* obj = widgets::make_bare_button(parent);
+    lv_obj_set_style_radius(obj, theme::kR2, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(obj, theme::surface2(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(obj, theme::accent(), LV_PART_MAIN);
+    return obj;
+}
+
+// Kafel jak „Tryb” na podstronie klimy: wybrany — miękkie bursztynowe tło i obwódka.
+void paint_tile(lv_obj_t* obj, bool on) {
+    lv_obj_set_style_bg_color(obj, on ? theme::accent() : theme::surface2(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(obj, on ? theme::kAccentSoftOpa : theme::kOpaCover,
+                            LV_PART_MAIN);
+    lv_obj_set_style_border_width(obj, on ? 1 : 0, LV_PART_MAIN);
+}
+
+// Zasilanie w nagłówku podstrony: światło bieżącego poziomu albo grzejnik.
 void on_light_power(void* raw) {
     auto& context = *static_cast<Context*>(raw);
+    const RoomScreen& screen = context.room_page;
+    if (screen.depth > 0 && screen.stack[screen.depth - 1] == Level::Radiator) {
+        on_radiator_power(raw);
+        return;
+    }
     if (const domain::RoomLight* room = room_light(context.controller->state(), context.room_page.room)) {
         if (const domain::LightState* light = current_light(context, *room)) {
             send_power(context, *light);

@@ -20,6 +20,8 @@ już czujniki temperatury i wilgotności, a w trzech także głowice termostatyc
   „komfortowo”, 35–39 % „lekko sucho”, niżej „sucho”, powyżej 60 % „wilgotno”. Bez wykresu.
   W pionie karta stoi pod paskiem pokoi z podpisem `W POKOJU`; w poziomie jest pierwszą,
   węższą kolumną rzędu kart (temperatura nad wilgotnością).
+  *Zmiana 2026-11-09:* ocenę słowem i kropkę usunięto na prośbę użytkownika — nic nie mówiła;
+  zostały ikona i liczba.
 - **Źródło: czujnik pokoju, nie głowica.** Głowice „Termostat” nie podają wilgotności, a ich
   temperatura jest mierzona przy kaloryferze — to wbrew ADR 0015 zawyżałoby odczyt. Bridge
   bierze czujniki „<Pokój> - Czujnik temperatury”, te same, które automatyzacje przekazują

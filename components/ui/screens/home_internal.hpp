@@ -6,6 +6,7 @@
 //   screen_home.cpp   siatka pomieszczeń i klimatyzacja na ekranie Dom
 //   home_room.cpp     podstrona pomieszczenia i stos poziomów
 //   home_light.cpp    światło: grupa, żarówka, lista efektów
+//   home_radiator.cpp grzejnik: karta w pokoju i ekran głowicy (ADR 0018)
 //   home_drawers.cpp  poziom: szuflady przy krawędziach
 //   home_common.cpp   katalog i dane wspólne
 
@@ -57,6 +58,9 @@ inline constexpr int32_t kRailItem = 64;
 
 // ---------- kształty ----------
 lv_obj_t* card(lv_obj_t* parent);
+// Kafel opcji (home-screen.md 4.4): tło `surface-2`; wybrany — miękki akcent z obwódką.
+lv_obj_t* tile_base(lv_obj_t* parent);
+void paint_tile(lv_obj_t* obj, bool on);
 // Ciepłe tło lampki i studzienki: 0 — wyłączona, 1 — przygaszona, 2 — świeci.
 void paint_glow(lv_obj_t* obj, int glow);
 
@@ -70,6 +74,8 @@ const domain::LightState* current_light(const Context& context, const domain::Ro
 bool pending_for(const domain::AppState& state, domain::ControlId control, const char* id);
 domain::ControlStatus status_for(const domain::AppState& state, domain::ControlId control, const char* id);
 void climate_summary(char* out, std::size_t size, const domain::AppState& state);
+// Temperatura z czujnika pomieszczenia (ADR 0017, wiadomość pogody); `false`, gdy nieznana.
+bool room_temperature(const Context& context, std::size_t room, int16_t& tenths);
 
 // ---------- zamiary ----------
 void send_power(Context& context, const domain::LightState& light);
@@ -92,6 +98,14 @@ void render_light_view(Context& context, const domain::RoomLight& room, bool gro
 void render_effect_tiles(Context& context, const domain::RoomLight& room);
 void render_effect_picker(Context& context, const domain::RoomLight& room);
 void open_effect_picker(Context& context);
+
+// ---------- grzejnik (home_radiator.cpp) ----------
+const domain::RadiatorState* room_radiator(const domain::AppState& state, std::size_t room);
+void build_radiator_card(Context& context, RoomScreen::Card& card);
+void render_radiator_card(Context& context, RoomScreen::Card& card, const domain::RadiatorState& radiator);
+void build_radiator_view(Context& context, bool wide);
+void render_radiator_view(Context& context, const domain::RadiatorState& radiator);
+void on_radiator_power(void* raw);
 
 // ---------- szuflady w poziomie (home_drawers.cpp) ----------
 // `side`: -1 zakładki, 1 pokoje, 0 obie schowane.

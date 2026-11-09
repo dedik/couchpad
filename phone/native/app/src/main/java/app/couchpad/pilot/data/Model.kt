@@ -112,16 +112,50 @@ data class Light(
     val lit get() = available && on
 }
 
+/** Następny punkt harmonogramu głowicy, który zmienia temperaturę (`at` = „HH:MM”). */
+data class RadiatorNext(val at: String, val target: Double)
+
+/**
+ * Głowica termostatyczna (ADR 0018). Bez temperatury głowicy — mierzy przy kaloryferze;
+ * „w pokoju” bierzemy z czujnika pokoju ([Weather.room]).
+ */
+data class Radiator(
+    val room: String,
+    val id: String,
+    val available: Boolean,
+    val mode: String,
+    val modes: List<String>,
+    val target: Double?,
+    val min: Double,
+    val max: Double,
+    val step: Double,
+    /** `hvac_action == heating` — zawór otwarty. */
+    val heating: Boolean,
+    /** Procent baterii; null, gdy nieznany. */
+    val battery: Int?,
+    /** Kontaktron okna pokoju; null, gdy pokój nie ma czujnika. */
+    val windowOpen: Boolean?,
+    val next: RadiatorNext?,
+) {
+    val on get() = mode != "off"
+
+    /** Grzeje naprawdę: włączona, zawór otwarty i okno nie jest otwarte. */
+    val heats get() = on && heating && windowOpen != true
+}
+
 data class HomeSnapshot(
     val revision: Long = -1,
     val appleTv: AppleTvState = AppleTvState(),
     val climate: ClimateState = ClimateState(),
     val lights: List<Light> = emptyList(),
+    val radiators: List<Radiator> = emptyList(),
     val receivedAt: Long = 0,
 ) {
     val known get() = receivedAt > 0
     fun lightsIn(room: String) = lights.filter { it.room == room }
     fun light(id: String) = lights.firstOrNull { it.id == id }
+    fun radiatorIn(room: String) = radiators.firstOrNull { it.room == room }
+    fun radiator(id: String) = radiators.firstOrNull { it.id == id }
 }
 
 /** Odczyt czujnika jednego pomieszczenia (ADR 0017); `room` jak w sekcji `lights`. */
@@ -155,4 +189,7 @@ data class PilotState(
     val pending: Map<String, Long> = emptyMap(),
 ) {
     fun isPending(key: String) = key in pending
+
+    /** Czeka którekolwiek polecenie z prefiksem (np. cała karta grzejnika). */
+    fun isPendingAny(prefix: String) = pending.keys.any { it.startsWith(prefix) }
 }

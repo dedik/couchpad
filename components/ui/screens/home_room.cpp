@@ -102,7 +102,7 @@ RoomScreen::Card make_card(lv_obj_t* parent, bool wide, Context& context) {
     return c;
 }
 
-// Jedna połowa karty „W pokoju”: ikona 48 px, duża liczba z jednostką, pod nią ocena z kropką.
+// Jedna połowa karty „W pokoju”: ikona 48 px i duża liczba z jednostką.
 RoomScreen::Reading make_reading(lv_obj_t* parent, const lv_image_dsc_t* icon, const char* unit, bool wide) {
     RoomScreen::Reading r;
     r.root = make_box(parent);
@@ -128,15 +128,6 @@ RoomScreen::Reading make_reading(lv_obj_t* parent, const lv_image_dsc_t* icon, c
     r.unit = make_text(line, theme::font_m15(), theme::dim());
     lv_obj_set_style_pad_bottom(r.unit, 6, LV_PART_MAIN);
     lv_label_set_text(r.unit, unit);
-    lv_obj_t* verdict = make_box(texts);
-    lv_obj_set_size(verdict, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    theme::make_row(verdict, 6);
-    r.dot = make_box(verdict);
-    lv_obj_set_size(r.dot, 7, 7);
-    lv_obj_set_style_radius(r.dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(r.dot, LV_OPA_COVER, LV_PART_MAIN);
-    r.verdict = make_text(verdict, theme::font_m11(), theme::ok());
-    lv_obj_set_style_text_letter_space(r.verdict, 1, LV_PART_MAIN);
     return r;
 }
 
@@ -216,6 +207,9 @@ void build_room_view(Context& context, bool wide) {
     lv_image_set_src(screen.climate.icon, &icon_dev_aircon);
     lv_label_set_text(screen.climate.name, "Klimatyzacja");
     lv_obj_add_event_cb(screen.climate.root, open_climate, LV_EVENT_CLICKED, &context);
+
+    screen.radiator = make_card(cards, wide, context);
+    build_radiator_card(context, screen.radiator);
 
     screen.empty = make_card(cards, wide, context);
     lv_obj_set_style_bg_opa(screen.empty.root, LV_OPA_TRANSP, LV_PART_MAIN);
@@ -298,6 +292,7 @@ void build_room_page(Context& context) {
 
     build_room_view(context, wide);
     build_light_view(context, wide);
+    build_radiator_view(context, wide);
     build_effect_picker(context);
 
     if (wide) {
@@ -306,16 +301,41 @@ void build_room_page(Context& context) {
     screen.built = true;
 }
 
+// Poziom: trzy urządzenia obok karty „W pokoju” (salon: lampa, klima, grzejnik) nie mieszczą
+// się w pełnych kartach — węższa karta „W pokoju” i mniejsze nazwy. Zasilanie lampy zostaje
+// w prawym górnym rogu karty: obok studzienki jest na nie miejsce.
+void apply_compact(RoomScreen& screen, bool compact) {
+    if (!theme::landscape() || compact == screen.compact) {
+        return;
+    }
+    screen.compact = compact;
+    lv_obj_set_width(screen.clima, compact ? 160 : 210);
+    lv_obj_set_style_pad_hor(screen.clima, compact ? theme::kS3 : theme::kS5, LV_PART_MAIN);
+    for (RoomScreen::Reading* r : {&screen.temperature, &screen.humidity}) {
+        lv_obj_set_style_text_font(r->value, compact ? theme::font_b26() : theme::font_b46num(), LV_PART_MAIN);
+    }
+    for (RoomScreen::Card* c : {&screen.lamp, &screen.climate, &screen.radiator}) {
+        lv_obj_set_style_text_font(c->name, compact ? theme::font_b19() : theme::font_b26(), LV_PART_MAIN);
+        lv_obj_set_style_pad_hor(c->root, compact ? theme::kS3 : theme::kS5, LV_PART_MAIN);
+    }
+}
+
 void render_room_view(Context& context, const domain::RoomLight* room) {
     RoomScreen& screen = context.room_page;
     const domain::AppState& state = context.controller->state();
     const bool fresh = state.lights_fresh();
     const bool climate_here = screen.room == kClimateRoom;
 
+    const domain::RadiatorState* radiator = room_radiator(state, screen.room);
     render_room_climate(context, true);
     set_visible(screen.lamp.root, room != nullptr);
     set_visible(screen.climate.root, climate_here);
-    set_visible(screen.empty.root, room == nullptr);
+    set_visible(screen.radiator.root, radiator != nullptr);
+    set_visible(screen.empty.root, room == nullptr && radiator == nullptr);
+    if (radiator != nullptr) {
+        render_radiator_card(context, screen.radiator, *radiator);
+    }
+    apply_compact(screen, (room != nullptr) + climate_here + (radiator != nullptr) >= 3);
     // Bez sekcji `lights` (stary bridge, brak stanu) nie wiemy, czy pokój ma światło.
     if (!fresh) {
         lv_label_set_text(screen.empty.name, "Oświetlenie");
@@ -387,46 +407,12 @@ void render_room_view(Context& context, const domain::RoomLight* room) {
 
 namespace {
 
-// Ocena odczytu: słowo wersalikami i kolor kropki (ADR 0017).
-struct Verdict {
-    const char* text;
-    lv_color_t color;
-};
-
-lv_color_t cold_color() { return lv_color_hex(0x4aa8e0); }
-
-Verdict temperature_verdict(int16_t tenths) {
-    if (tenths < 190) {
-        return {"CHŁODNO", cold_color()};
-    }
-    if (tenths > 245) {
-        return {"CIEPŁO", theme::accent()};
-    }
-    return {"KOMFORTOWO", theme::ok()};
-}
-
-Verdict humidity_verdict(uint8_t percent) {
-    if (percent < 35) {
-        return {"SUCHO", theme::accent()};
-    }
-    if (percent > 60) {
-        return {"WILGOTNO", cold_color()};
-    }
-    if (percent < 40) {
-        return {"LEKKO SUCHO", theme::ok()};
-    }
-    return {"KOMFORTOWO", theme::ok()};
-}
-
-void paint_reading(RoomScreen::Reading& r, bool known, const char* value, const Verdict& verdict) {
+// Sama liczba, bez oceny słowem i kropki (zrezygnowano 2026-11-09 — nic nie mówiła).
+void paint_reading(RoomScreen::Reading& r, bool known, const char* value) {
     set_visible(r.root, known);
-    if (!known) {
-        return;
+    if (known) {
+        lv_label_set_text(r.value, value);
     }
-    lv_label_set_text(r.value, value);
-    lv_label_set_text(r.verdict, verdict.text);
-    lv_obj_set_style_text_color(r.verdict, verdict.color, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(r.dot, verdict.color, LV_PART_MAIN);
 }
 
 }  // namespace
@@ -463,15 +449,15 @@ void render_room_climate(Context& context, bool force) {
     char text[16];
     if (has_t) {
         widgets::format_tenths(text, sizeof(text), reading->temperature_tenths);
-        paint_reading(screen.temperature, true, text, temperature_verdict(reading->temperature_tenths));
+        paint_reading(screen.temperature, true, text);
     } else {
-        paint_reading(screen.temperature, false, "", {"", theme::ok()});
+        paint_reading(screen.temperature, false, "");
     }
     if (has_h) {
         std::snprintf(text, sizeof(text), "%u", static_cast<unsigned>(reading->humidity));
-        paint_reading(screen.humidity, true, text, humidity_verdict(reading->humidity));
+        paint_reading(screen.humidity, true, text);
     } else {
-        paint_reading(screen.humidity, false, "", {"", theme::ok()});
+        paint_reading(screen.humidity, false, "");
     }
     set_visible(screen.clima_sep, has_t && has_h);
 }
@@ -557,12 +543,12 @@ void render_room(Context& context) {
     }
     const domain::AppState& state = context.controller->state();
     const domain::RoomLight* room = room_light(state, screen.room);
-    // Poziom głębszy niż pokój bez światła (np. bridge przestał je podawać) — wracamy.
-    if (room == nullptr) {
-        screen.depth = 0;
-    }
+    const domain::RadiatorState* radiator = room_radiator(state, screen.room);
+    // Poziom urządzenia, którego pokój już nie ma (np. bridge przestał je podawać) — wracamy.
     const Level level = screen.depth > 0 ? screen.stack[screen.depth - 1] : Level::Room;
-    if (level == Level::Bulb && (room == nullptr || screen.bulb >= room->member_count)) {
+    if ((level == Level::Radiator && radiator == nullptr) ||
+        ((level == Level::Light || level == Level::Bulb) && room == nullptr) ||
+        (level == Level::Bulb && screen.bulb >= room->member_count)) {
         screen.depth = 0;
     }
     const Level shown = screen.depth > 0 ? screen.stack[screen.depth - 1] : Level::Room;
@@ -578,6 +564,7 @@ void render_room(Context& context) {
     set_visible(screen.light_power, shown != Level::Room);
     set_visible(screen.view_room, shown == Level::Room);
     set_visible(screen.view_light, shown == Level::Light || shown == Level::Bulb);
+    set_visible(screen.view_rad, shown == Level::Radiator);
     if (screen.effect_picker_open && room != nullptr) {
         render_effect_picker(context, *room);
     }
@@ -587,6 +574,13 @@ void render_room(Context& context) {
         lv_label_set_text(screen.title, kRooms[screen.room].name);
         lv_label_set_text(screen.sub, "POMIESZCZENIE");
         render_room_view(context, room);
+        return;
+    }
+    if (shown == Level::Radiator) {
+        lv_label_set_text(screen.title, "Grzejnik");
+        std::snprintf(sub, sizeof(sub), "%s · GŁOWICA", kRooms[screen.room].caps);
+        lv_label_set_text(screen.sub, sub);
+        render_radiator_view(context, *radiator);
         return;
     }
     const bool group = shown == Level::Light;

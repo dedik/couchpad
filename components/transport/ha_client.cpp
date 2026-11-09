@@ -155,6 +155,52 @@ void lights_from(const cJSON* node, domain::LightsState& lights) {
     }
 }
 
+// Sekcja `radiators` (ADR 0018). Brak sekcji (bridge sprzed tej decyzji) chowa grzejniki.
+void radiators_from(const cJSON* node, domain::RadiatorsState& radiators) {
+    radiators.count = 0;
+    radiators.available = cJSON_IsArray(node) != 0;
+    const cJSON* item = nullptr;
+    cJSON_ArrayForEach(item, node) {
+        if (radiators.count >= radiators.items.size() || !cJSON_IsObject(item) ||
+            string_from(item, "id")[0] == '\0') {
+            continue;
+        }
+        domain::RadiatorState& r = radiators.items[radiators.count++];
+        r.room.assign(string_from(item, "room"));
+        r.id.assign(string_from(item, "id"));
+        r.available = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(item, "available")) != 0;
+        r.mode.assign(string_from(item, "mode"));
+        r.has_heat = false;
+        r.has_auto = false;
+        const cJSON* mode = nullptr;
+        cJSON_ArrayForEach(mode, cJSON_GetObjectItemCaseSensitive(item, "modes")) {
+            if (cJSON_IsString(mode) && mode->valuestring != nullptr) {
+                r.has_heat = r.has_heat || std::strcmp(mode->valuestring, "heat") == 0;
+                r.has_auto = r.has_auto || std::strcmp(mode->valuestring, "auto") == 0;
+            }
+        }
+        r.target_tenths = tenths_from(item, "target", 0);
+        r.min_tenths = tenths_from(item, "min", 40);
+        r.max_tenths = tenths_from(item, "max", 350);
+        r.step_tenths = tenths_from(item, "step", 5);
+        if (r.step_tenths <= 0) {
+            r.step_tenths = 5;
+        }
+        r.heating = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(item, "heating")) != 0;
+        const cJSON* battery = cJSON_GetObjectItemCaseSensitive(item, "battery");
+        r.battery = cJSON_IsNumber(battery)
+                        ? static_cast<int8_t>(std::clamp(static_cast<int>(std::lround(battery->valuedouble)), 0, 100))
+                        : -1;
+        const cJSON* window = cJSON_GetObjectItemCaseSensitive(item, "window_open");
+        r.window = cJSON_IsBool(window) ? (cJSON_IsTrue(window) ? 1 : 0) : -1;
+        const cJSON* next = cJSON_GetObjectItemCaseSensitive(item, "next");
+        r.has_next = cJSON_IsObject(next) && string_from(next, "at")[0] != '\0' &&
+                     cJSON_IsNumber(cJSON_GetObjectItemCaseSensitive(next, "target"));
+        r.next_at.assign(r.has_next ? string_from(next, "at") : "");
+        r.next_tenths = r.has_next ? tenths_from(next, "target", 0) : 0;
+    }
+}
+
 // Klawisz trackpada w słowniku `remote.send_command` integracji apple_tv.
 const char* key_name(domain::NavKey key) {
     switch (key) {
@@ -449,6 +495,22 @@ void HaClient::publish_intent(const domain::UiIntent& intent) {
             cJSON_AddStringToObject(args, "id", intent.target.c_str());
             cJSON_AddStringToObject(args, "effect", intent.payload.c_str());
             break;
+        // Grzejniki (ADR 0018): identyfikator z sekcji `radiators`.
+        case ControlId::RadiatorPower:
+            action = "radiator.power.set";
+            cJSON_AddStringToObject(args, "id", intent.target.c_str());
+            cJSON_AddBoolToObject(args, "on", intent.flag);
+            break;
+        case ControlId::RadiatorMode:
+            action = "radiator.mode.set";
+            cJSON_AddStringToObject(args, "id", intent.target.c_str());
+            cJSON_AddStringToObject(args, "mode", intent.text.c_str());
+            break;
+        case ControlId::RadiatorTarget:
+            action = "radiator.target.set";
+            cJSON_AddStringToObject(args, "id", intent.target.c_str());
+            cJSON_AddNumberToObject(args, "temperature", static_cast<double>(intent.number) / 10.0);
+            break;
         case ControlId::AtvKeyboard:
             if (intent.payload.empty()) {
                 action = "appletv.keyboard.clear";
@@ -542,16 +604,17 @@ void HaClient::handle_payload(const char* data, int length) {
 
     climate_from(cJSON_GetObjectItemCaseSensitive(root, "climate"), event.climate);
     lights_from(cJSON_GetObjectItemCaseSensitive(root, "lights"), event.lights);
+    radiators_from(cJSON_GetObjectItemCaseSensitive(root, "radiators"), event.radiators);
 
     cJSON_Delete(root);
     // Jedna linia na snapshot: bez niej z logu nie da się odróżnić „HA milczy”
     // od „HA mówi, że Apple TV jest niedostępne”.
-    ESP_LOGI(kTag, "snapshot rewizja %u: apple tv %s, aplikacji %u, klima %s %s %d, swiatel %u",
+    ESP_LOGI(kTag, "snapshot rewizja %u: apple tv %s, aplikacji %u, klima %s %s %d, swiatel %u, grzejnikow %u",
              static_cast<unsigned>(revision), atv.available ? "dostepne" : "niedostepne",
              static_cast<unsigned>(atv.app_count),
              event.climate.available ? "dostepna" : "niedostepna",
              event.climate.hvac_mode.c_str(), static_cast<int>(event.climate.target_tenths),
-             static_cast<unsigned>(event.lights.count));
+             static_cast<unsigned>(event.lights.count), static_cast<unsigned>(event.radiators.count));
     emit(event);
 }
 

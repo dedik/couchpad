@@ -24,6 +24,7 @@ internal sealed class HomeNav {
     data class Light(val room: String, val light: String) : HomeNav()
     data class Bulb(val room: String, val light: String, val bulb: String) : HomeNav()
     data class Climate(val room: String) : HomeNav()
+    data class Radiator(val room: String) : HomeNav()
 
     val parent: HomeNav
         get() = when (this) {
@@ -31,6 +32,7 @@ internal sealed class HomeNav {
             is Light -> Room(room)
             is Bulb -> Light(room, light)
             is Climate -> Room(room)
+            is Radiator -> Room(room)
         }
 
     val roomId: String?
@@ -40,11 +42,12 @@ internal sealed class HomeNav {
             is Light -> room
             is Bulb -> room
             is Climate -> room
+            is Radiator -> room
         }
 }
 
 /**
- * Zakładka Dom: pokoje → pokój → lampa → żarówka, oraz klimatyzacja. W poziomie od pokoju
+ * Zakładka Dom: pokoje → pokój → lampa → żarówka, oraz klimatyzacja i grzejnik pokoju. W poziomie od pokoju
  * w głąb treść zajmuje cały ekran ([onImmersive]): zakładki chowają się do lewej szuflady,
  * pokoje do prawej.
  */
@@ -71,6 +74,7 @@ fun HomeScreen(state: PilotState, prefs: Preferences, repo: PilotRepository, onI
                 n.room, state, repo, back, switchRoom,
                 openLight = { nav = HomeNav.Light(n.room, it) },
                 openClimate = { nav = HomeNav.Climate(n.room) },
+                openRadiator = { nav = HomeNav.Radiator(n.room) },
             )
             is HomeNav.Light -> {
                 val light = state.home.light(n.light)
@@ -85,6 +89,12 @@ fun HomeScreen(state: PilotState, prefs: Preferences, repo: PilotRepository, onI
                 else BulbPage(n.room, light, bulb, state, repo, back, switchRoom)
             }
             is HomeNav.Climate -> ClimateScreen(state, repo, back)
+            is HomeNav.Radiator -> {
+                // Pokój zmieniony w szufladzie albo grzejnik zniknął ze stanu — poziom wyżej.
+                val radiator = state.home.radiatorIn(n.room)
+                if (radiator == null) LaunchedEffect(Unit) { nav = n.parent }
+                else RadiatorPage(n.room, radiator, state, repo, back, switchRoom)
+            }
         }
         val currentRoom = nav.roomId
         if (landscape && currentRoom != null) {

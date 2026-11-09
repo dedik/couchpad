@@ -176,6 +176,51 @@ struct LightsState {
     }
 };
 
+// ---------- Grzejniki (ADR 0018) ----------
+// Głowica termostatyczna w pomieszczeniu. Encję zna wyłącznie bridge — pilot steruje po `id`.
+// Celowo bez temperatury głowicy: mierzy przy kaloryferze. Temperatura pokoju przychodzi
+// z czujnika pokoju w wiadomości pogody (`indoor.rooms`, ADR 0017).
+inline constexpr std::size_t kMaxRadiators = 4;
+using RadiatorMode = core::Text<8>;   // `off`, `heat`, `auto`
+
+struct RadiatorState {
+    LightId room;                 // identyfikator pomieszczenia, jak w `lights`
+    LightId id;
+    bool available = false;
+    RadiatorMode mode;
+    bool has_heat = false;        // `modes` zawiera `heat`
+    bool has_auto = false;        // `modes` zawiera `auto` (harmonogram w głowicy)
+    int16_t target_tenths = 0;
+    int16_t min_tenths = 40;
+    int16_t max_tenths = 350;
+    int16_t step_tenths = 5;
+    bool heating = false;         // `hvac_action == heating`: zawór otwarty
+    int8_t battery = -1;          // % baterii głowicy; -1 = nieznany
+    int8_t window = -1;           // kontaktron okna pokoju: -1 brak czujnika, 0 zamknięte, 1 otwarte
+    bool has_next = false;        // następny punkt harmonogramu, który zmienia temperaturę
+    core::Text<6> next_at;        // `HH:MM`
+    int16_t next_tenths = 0;
+
+    bool is_on() const { return !mode.empty() && mode != "off"; }
+    // Grzeje naprawdę: włączona, zawór otwarty i okno nie stoi otworem.
+    bool heats() const { return available && is_on() && heating && window != 1; }
+};
+
+struct RadiatorsState {
+    bool available = false;       // bridge przysłał sekcję `radiators`
+    std::array<RadiatorState, kMaxRadiators> items{};
+    std::size_t count = 0;
+
+    const RadiatorState* room(const char* id) const {
+        for (std::size_t i = 0; i < count; ++i) {
+            if (items[i].room == id) {
+                return &items[i];
+            }
+        }
+        return nullptr;
+    }
+};
+
 struct DeviceSnapshot {
     // Pilot ignoruje snapshot o rewizji nie większej niż ostatnio przetworzona.
     uint32_t revision = 0;
@@ -184,6 +229,7 @@ struct DeviceSnapshot {
     AppleTvState appletv;
     ClimateState climate;
     LightsState lights;
+    RadiatorsState radiators;
 };
 
 }  // namespace domain

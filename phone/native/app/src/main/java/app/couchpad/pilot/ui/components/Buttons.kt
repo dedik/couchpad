@@ -32,12 +32,16 @@ import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.T
 import app.couchpad.pilot.ui.theme.u
 
-/** Karta z obrysem i reakcją na wciśnięcie; zaznaczona ma obrys w akcencie. */
+/**
+ * Karta z obrysem i reakcją na wciśnięcie; zaznaczona ma obrys w akcencie, oczekująca na
+ * potwierdzenie stanem — w przygaszonym akcencie.
+ */
 @Composable
 fun Card(
     modifier: Modifier = Modifier,
     radius: Int = 20,
     selected: Boolean = false,
+    pending: Boolean = false,
     background: Color? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
@@ -49,7 +53,7 @@ fun Card(
         modifier
             .clip(shape)
             .background(background ?: if (pressed) C.surface2 else C.surface)
-            .border(1.u, if (selected) C.accent else C.line, shape)
+            .border(1.u, if (selected) C.accent else if (pending) C.accentPending else C.line, shape)
             .then(if (onClick != null) Modifier.tap(interaction = interaction, onClick = onClick) else Modifier),
     ) { content() }
 }

@@ -55,6 +55,7 @@ public:
     bool appletv_fresh() const { return phase_ == LinkPhase::Ready && snapshot_.appletv.available; }
     bool climate_fresh() const { return phase_ == LinkPhase::Ready && snapshot_.climate.available; }
     bool lights_fresh() const { return phase_ == LinkPhase::Ready && snapshot_.lights.available; }
+    bool radiators_fresh() const { return phase_ == LinkPhase::Ready && snapshot_.radiators.available; }
 
     // Rejestracja i wygasanie oczekiwania.
     void mark_pending(ControlId control, const Label& requested, uint8_t value, int64_t expires_at_ms,

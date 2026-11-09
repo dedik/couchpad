@@ -42,6 +42,15 @@ object Pending {
         const val prefix = "light."
         fun of(id: String) = "light.$id"
     }
+
+    /** Grzejnik (ADR 0018): osobno zasilanie, tryb i nastawa każdej głowicy. */
+    object Radiator {
+        const val prefix = "radiator."
+        fun power(id: String) = "radiator.$id.power"
+        fun mode(id: String) = "radiator.$id.mode"
+        fun target(id: String) = "radiator.$id.target"
+        fun any(id: String) = "radiator.$id."
+    }
 }
 
 /** Oczekiwania bez kluczy zaczynających się od któregoś z prefiksów. */

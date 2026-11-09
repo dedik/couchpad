@@ -35,6 +35,7 @@ struct HaEvent {
     domain::AppleTvState appletv;
     domain::ClimateState climate;
     domain::LightsState lights;
+    domain::RadiatorsState radiators;
 };
 
 class HaClient {

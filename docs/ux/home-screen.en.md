@@ -94,17 +94,37 @@ Home (room grid)
   side at full height.
 - "In the room" card ([ADR 0017](../architecture/adr/0017-room-climate-card.en.md)): temperature
   and humidity from the room sensor. A 48 px pixel-art icon (thermometer, droplet; 24 grid at
-  2×), a `b46num` number with an `m15` unit, under it a verdict in `m11` capitals with a coloured
-  dot: green "comfortable" / "slightly dry", amber "warm" / "dry", blue "cool" / "humid". No chart,
-  not clickable. Portrait: under the room rail, caption `W POKOJU`, readings side by side with a
+  2×), a `b46num` number with an `m15` unit. No verdict word or dot (removed 2026-11-09 —
+  "komfortowo" told nothing), no chart, not clickable. Portrait: under the room rail, caption `W POKOJU`, readings side by side with a
   divider. Landscape: the first column of the card row (210 px), temperature above humidity, row
   caption `W POKOJU · URZĄDZENIA`. A room without a sensor has no card; a missing reading hides
   only its half.
+
+- "Grzejnik" (radiator) card ([ADR 0018](../architecture/adr/0018-radiators.en.md)) in rooms
+  with a head (living room, bedroom, bathroom, office; the kitchen and hallway have no radiator).
+  Well `dev_radiator` (with heat waves) while the valve heats, otherwise `dev_radiator_idle`, dimmed
+  when off. State: "Wyłączony" / "Grzanie · 20,5°" / "Harmonogram · 19,0°"; detail: "w pokoju
+  22,6° · grzeje | nie grzeje | okno otwarte" — temperature **only from the room sensor**, never
+  from the head. No power shortcut (like the air conditioner). Landscape with three devices (living
+  room): the "In the room" card narrows (160 px, `b26` numbers), card names `b19`; the lamp power
+  stays in the top right corner.
 
 ### Device screen
 
 - Header: Back, device name, caption `ROOM · DETAIL` in capitals, power on the right.
 - Content per rule 3.
+
+### Radiator
+
+- Header: "Grzejnik", caption `<ROOM> · GŁOWICA`, power on the right (off / back to the last mode).
+- Setpoint dial (4.3) with the entity range clamped to 5–30 °C. The arc goes from blue (cold)
+  through amber to red (hot) — texture `ring_heat` (`tools/gen_assets.py`). A white dot on the arc
+  is the room sensor temperature; caption above the number `GRZANIE` / `HARMONOGRAM` /
+  `WYŁĄCZONY`, under it "w pokoju 22,6°".
+- Tiles: `TRYB` (Grzanie `mode_heat`, Harmonogram `trv_auto`), `TERAZ` (valve, window — only with
+  a room contact sensor, battery, in Harmonogram "OD 23:00 · 16,0°", in Grzanie "CEL – POKÓJ"),
+  `SZYBKO` (17°, 19°, 21°, 23°). Status tiles are not clickable.
+- The head's schedule is view-only — editing stays in Home Assistant / Zigbee2MQTT.
 
 ### Landscape: drawers
 
@@ -175,6 +195,13 @@ the background closes it without a change.
 
 Firmware limits: 3 rooms with a light, 4 bulbs per group, 16 effects.
 
+### A new radiator in a room (no firmware change)
+
+1. In the bridge add an entry to `radiator_rooms`: `room`, `id`, `entity` (`climate.*`), optionally
+   `battery`, `window` (window contact sensor) and `schedule` (`text.*_weekly_schedule` prefix).
+2. Add the entities to the triggers of the "Pilot — snapshot po zmianie grzejnika" automation.
+3. Deploy as for a light. Firmware limit: 4 radiators.
+
 ### A new device type (e.g. blinds, a room thermostat)
 
 1. ADR: what the screen needs, which contract section, whether additive in `v1`.
@@ -205,6 +232,7 @@ The Home tab has its own set in each of the four folders (`docs/screenshots/`, `
 | `12-effects.png` | Effect list |
 | `13-bulb.png` | Bulb |
 | `14-drawers.png` | Room drawer (landscape only) |
+| `15-radiator.png` | Radiator |
 
 They are taken with `tools/remote.py` (USB console). **Remote touch really controls the
 house:** before every tap check with `hit` what is under the finger, and never tap power, the

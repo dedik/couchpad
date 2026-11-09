@@ -156,6 +156,11 @@ struct Thermostat {
     // Tryb procentowy (jasność lampy, ADR 0014): wartości to całe procenty, bez
     // przecinka, jednostka „%”, skala „1%–100%”. Wołać raz, zaraz po utworzeniu.
     void set_percent();
+    // Grzejnik (ADR 0018): łuk wypełniony obrazem pierścienia barw (od zimnego do gorącego)
+    // zamiast jednolitego akcentu. Wołać raz, zaraz po utworzeniu.
+    void set_gradient(const void* ring_image);
+    // Znacznik na łuku w miejscu `tenths` — temperatura z czujnika pokoju (ADR 0018).
+    void set_marker(bool visible, int32_t tenths);
     // `true` w trakcie gestu i przed wysłaniem serii stuknięć. Wtedy rysowanie ze
     // stanu nie nadpisuje wartości pod palcem.
     bool busy() const { return moved_ || commit_timer_ != nullptr; }
@@ -170,6 +175,9 @@ struct Thermostat {
     bool enabled_ = true;
     bool percent_ = false;
     lv_timer_t* commit_timer_ = nullptr;
+    lv_obj_t* marker_ = nullptr;
+    bool marker_shown_ = false;
+    int32_t marker_value_ = 0;
     ValueHandler on_change = nullptr;
     void* context = nullptr;
 };

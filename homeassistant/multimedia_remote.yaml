@@ -26,6 +26,11 @@
 # OŚWIETLENIE (ADR 0014): główne światło pomieszczeń w `light_rooms` niżej. Pilot dostaje
 # krótkie identyfikatory (`lampa`, `lampa_lewa`), encje zna tylko ten plik. Lampa w salonie
 # to grupa `light.living_room_lamp` z trzech żarówek WiZ, odczytana 2026-11-07.
+#
+# GRZEJNIKI (ADR 0018): głowice termostatyczne SONOFF TRVZB (Zigbee2MQTT) w `radiator_rooms`
+# niżej. Temperatury głowicy nie wysyłamy — pilot bierze temperaturę pokoju z czujnika
+# (`indoor.rooms` w pogodzie). Okno: kontaktron pokoju, nie `switch.*_open_window` głowicy
+# (to tylko włącznik funkcji wykrywania).
 
 # Skróty kanałów TV (ADR 0008). Glasshouse przełącza kanał wyłącznie po HTTP,
 # więc pilot wysyła `tv.channel.open` tym kontraktem, a zapytania robi Home
@@ -196,6 +201,34 @@ script:
       - variables: &climate
           climate_entity: climate.living_room_ac
 
+      # Grzejniki (ADR 0018). `room` jak w `light_rooms`, `id` to klucz w poleceniach
+      # `radiator.*`. `battery` (sensor %), `window` (binary_sensor kontaktronu okna) i
+      # `schedule` (przedrostek encji `text.*_weekly_schedule_<dzień>` głowicy) są opcjonalne.
+      # Encje dopisane tutaj trzeba też dopisać do wyzwalaczy automatyzacji
+      # „Pilot — snapshot po zmianie grzejnika”.
+      - variables: &radiators
+          radiator_rooms:
+            - room: salon
+              id: grzejnik_salon
+              entity: climate.living_room_radiator
+              battery: sensor.living_room_radiator_battery
+              schedule: text.living_room_radiator_weekly_schedule
+            - room: sypialnia
+              id: grzejnik_sypialnia
+              entity: climate.bedroom_radiator
+              battery: sensor.bedroom_radiator_battery
+              schedule: text.bedroom_radiator_weekly_schedule
+            - room: lazienka
+              id: grzejnik_lazienka
+              entity: climate.bathroom_radiator
+              battery: sensor.bathroom_radiator_battery
+              schedule: text.bathroom_radiator_weekly_schedule
+            - room: biuro
+              id: grzejnik_biuro
+              entity: climate.office_radiator
+              battery: sensor.office_radiator_battery
+              schedule: text.office_radiator_weekly_schedule
+
       - variables:
           power: "{{ states('switch.z906_power') }}"
           # Encja niedostępna oznacza brak świeżego stanu. Pilot pokaże wtedy
@@ -295,6 +328,53 @@ script:
                   'members': m.items }] %}
               {% endfor %}
               {{ ns.out }}
+            # Grzejniki (ADR 0018). Bez temperatury głowicy — mierzy przy kaloryferze.
+            # `next`: następny punkt harmonogramu głowicy, który zmienia temperaturę
+            # (dziś, a gdy dziś już żadnego — jutro). Plan to sześć punktów `HH:MM/stopnie`.
+            radiators: >-
+              {% set bad = ['unavailable', 'unknown', 'none', ''] %}
+              {% set days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+              {% set wd = now().weekday() %}
+              {% set hm = now().strftime('%H:%M') %}
+              {% set ns = namespace(out=[]) %}
+              {% for r in radiator_rooms %}
+                {% set e = r.entity %}
+                {% set item = {
+                  'room': r.room, 'id': r.id,
+                  'available': states(e) not in bad,
+                  'mode': states(e),
+                  'modes': state_attr(e, 'hvac_modes') or [],
+                  'target': state_attr(e, 'temperature') | float(0),
+                  'min': state_attr(e, 'min_temp') | float(4),
+                  'max': state_attr(e, 'max_temp') | float(35),
+                  'step': state_attr(e, 'target_temp_step') | float(0.5),
+                  'heating': state_attr(e, 'hvac_action') == 'heating' } %}
+                {% if r.battery is defined and states(r.battery) not in bad %}
+                  {% set item = dict(item, battery=states(r.battery) | float(0) | round(0) | int) %}
+                {% endif %}
+                {% if r.window is defined and states(r.window) in ['on', 'off'] %}
+                  {% set item = dict(item, window_open=is_state(r.window, 'on')) %}
+                {% endif %}
+                {% if r.schedule is defined %}
+                  {% set s = namespace(cur=none, at='', t=none) %}
+                  {% for day in [0, 1] %}
+                    {% set plan = states(r.schedule ~ '_' ~ days[(wd + day) % 7]) %}
+                    {% for p in plan.split(' ') if plan not in bad and p.count('/') == 1 %}
+                      {% set at, temp = p.split('/') %}
+                      {% if day == 0 and at <= hm %}
+                        {% set s.cur = temp | float(0) %}
+                      {% elif s.t is none and s.cur is not none and temp | float(0) != s.cur %}
+                        {% set s.at = at %}{% set s.t = temp | float(0) %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endfor %}
+                  {% if s.t is not none %}
+                    {% set item = dict(item, next={'at': s.at, 'target': s.t}) %}
+                  {% endif %}
+                {% endif %}
+                {% set ns.out = ns.out + [item] %}
+              {% endfor %}
+              {{ ns.out }}
 
       - service: mqtt.publish
         data:
@@ -382,7 +462,8 @@ automation:
     condition: >-
       {{ trigger.payload_json.action not in
          ['appletv.navigate', 'tv.channel.open', 'tv.channels.request'] and
-         not (trigger.payload_json.action | default('')).startswith('light.') }}
+         not (trigger.payload_json.action | default('')).startswith('light.') and
+         not (trigger.payload_json.action | default('')).startswith('radiator.') }}
     variables:
       <<: [*appletv, *climate]
       command: "{{ trigger.payload_json.action }}"
@@ -640,6 +721,90 @@ automation:
       # Snapshot także wtedy, gdy nic się nie zmieniło (np. ta sama jasność) — inaczej
       # pilot czekałby na potwierdzenie do limitu czasu.
       - delay: "00:00:00.6"
+      - service: script.multimedia_remote_publish
+
+  # ---------------------------------------------------------------------------
+  # Grzejniki (ADR 0018). Pilot podaje identyfikator z `radiator_rooms`, bridge zamienia
+  # go na encję. Nieznany identyfikator, tryb spoza `hvac_modes` albo nie-liczba — nic.
+  # ---------------------------------------------------------------------------
+  - alias: Pilot — grzejnik
+    id: multimedia_remote_radiator
+    mode: queued
+    max: 10
+    max_exceeded: silent
+    trigger:
+      - platform: mqtt
+        topic: multimedia_remote/v1/living-room-remote/command
+    condition: >-
+      {{ (trigger.payload_json.action | default('')).startswith('radiator.') }}
+    variables:
+      <<: *radiators
+      command: "{{ trigger.payload_json.action }}"
+      args: "{{ trigger.payload_json.args | default({}, true) }}"
+      target: >-
+        {% set ns = namespace(e='') %}
+        {% for r in radiator_rooms if r.id == args.id | default('') %}{% set ns.e = r.entity %}{% endfor %}
+        {{ ns.e }}
+    action:
+      - condition: "{{ target | length > 0 }}"
+      - choose:
+          # Włączenie wraca do ostatniego trybu, jak przy klimie.
+          - conditions: "{{ command == 'radiator.power.set' }}"
+            sequence:
+              - service: "climate.turn_{{ 'on' if args.on else 'off' }}"
+                target:
+                  entity_id: "{{ target }}"
+          - conditions: >-
+              {{ command == 'radiator.mode.set' and
+                 args.mode | default('') in (state_attr(target, 'hvac_modes') or []) }}
+            sequence:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ target }}"
+                data:
+                  hvac_mode: "{{ args.mode }}"
+          - conditions: "{{ command == 'radiator.target.set' and args.temperature is number }}"
+            sequence:
+              - service: climate.set_temperature
+                target:
+                  entity_id: "{{ target }}"
+                data:
+                  temperature: >-
+                    {{ [[args.temperature | float, state_attr(target, 'min_temp') | float(4)] | max,
+                        state_attr(target, 'max_temp') | float(35)] | min }}
+      # Snapshot także bez zmiany (ta sama nastawa) — inaczej pilot czekałby do limitu czasu.
+      - delay: "00:00:00.6"
+      - service: script.multimedia_remote_publish
+
+  # Głowica raportuje stan i kilka atrybutów osobno, więc czekamy chwilę i publikujemy
+  # jeden snapshot (`mode: restart`). Harmonogram głowicy przestawia `temperature`, więc
+  # następny punkt (`next`) odświeża się sam; zmiana samego planu poczeka do takiej chwili.
+  - alias: Pilot — snapshot po zmianie grzejnika
+    id: multimedia_remote_publish_on_radiator
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: &radiator_entities
+          - climate.living_room_radiator
+          - climate.bedroom_radiator
+          - climate.bathroom_radiator
+          - climate.office_radiator
+        to: ~
+      - platform: state
+        entity_id: *radiator_entities
+        attribute: temperature
+      - platform: state
+        entity_id: *radiator_entities
+        attribute: hvac_action
+      - platform: state
+        entity_id:
+          - sensor.living_room_radiator_battery
+          - sensor.bedroom_radiator_battery
+          - sensor.bathroom_radiator_battery
+          - sensor.office_radiator_battery
+        to: ~
+    action:
+      - delay: "00:00:01"
       - service: script.multimedia_remote_publish
 
   # Grupa i żarówki zmieniają się naraz (jedno polecenie to kilka zmian stanu

@@ -13,7 +13,7 @@ import java.util.UUID
  * Jedno połączenie z brokerem dla całego pilota, jak MqttBus w firmware:
  *  - Z906 wprost na tematach kontrolera (ADR 0006),
  *  - telewizor wprost na tematach Glasshouse (ADR 0008),
- *  - Apple TV, klima, światła, pogoda i kanały kontraktem `multimedia_remote/v1` (ADR 0007).
+ *  - Apple TV, klima, światła, grzejniki, pogoda i kanały kontraktem `multimedia_remote/v1` (ADR 0007).
  *
  * Interfejs czyta wyłącznie [state], [broker] i [prefs]. Polecenia nie czekają na sieć:
  * oznaczają kontrolkę jako oczekującą ([Pending]), a zaznaczenie zmienia dopiero stan
@@ -218,7 +218,9 @@ class PilotRepository(private val store: SettingsStore) {
             }
             st.copy(
                 home = home,
-                pending = st.pending.withoutPrefixes(Pending.AppleTv.prefix, Pending.Climate.prefix, Pending.Light.prefix),
+                pending = st.pending.withoutPrefixes(
+                    Pending.AppleTv.prefix, Pending.Climate.prefix, Pending.Light.prefix, Pending.Radiator.prefix,
+                ),
                 link = st.link.markFresh(now),
             )
         }
@@ -308,6 +310,14 @@ class PilotRepository(private val store: SettingsStore) {
         if (effect.isNotEmpty()) countEffect(id, effect)
         light("light.effect.set", id) { put("effect", effect) }
     }
+
+    // Grzejniki (ADR 0018): identyfikator z sekcji `radiators`, encje zna tylko bridge.
+    fun radiatorPower(id: String, on: Boolean) =
+        command("radiator.power.set", JSONObject().put("id", id).put("on", on), Pending.Radiator.power(id))
+    fun radiatorMode(id: String, mode: String) =
+        command("radiator.mode.set", JSONObject().put("id", id).put("mode", mode), Pending.Radiator.mode(id))
+    fun radiatorTarget(id: String, t: Double) =
+        command("radiator.target.set", JSONObject().put("id", id).put("temperature", t), Pending.Radiator.target(id))
 
     private fun countEffect(id: String, effect: String) {
         val all = _effectUsage.value
