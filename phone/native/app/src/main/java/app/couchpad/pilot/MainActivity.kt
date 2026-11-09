@@ -22,12 +22,15 @@ import androidx.compose.ui.graphics.toArgb
  * Po każdym wyjściu na wierzch łączy się od nowa i pobiera świeży stan (ADR 0005).
  */
 class MainActivity : ComponentActivity() {
+    private val windowDisplay by lazy { WindowDisplay(this) }
+    private val releaseRotation = Runnable { windowDisplay.releaseRotation() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppGraph.init(this)
         setupWindow()
         Haptics.tick = vibration()
-        setContent { PilotApp(AppGraph.repo, WindowDisplay(this), AppGraph.home) }
+        setContent { PilotApp(AppGraph.repo, windowDisplay, AppGraph.home) }
     }
 
     private fun setupWindow() {
@@ -93,10 +96,18 @@ class MainActivity : ComponentActivity() {
         AppGraph.repo.start()
         AppGraph.repo.wake()
         AppGraph.goHome()
+        // Czujnik położenia rusza z ekranem; do tego czasu trzymamy obrót sprzed zgaszenia.
+        window.decorView.removeCallbacks(releaseRotation)
+        window.decorView.postDelayed(releaseRotation, ROTATION_PIN_MS)
     }
 
     override fun onStop() {
         super.onStop()
+        window.decorView.removeCallbacks(releaseRotation)
+        windowDisplay.pinRotation()
         AppGraph.repo.stop()
     }
 }
+
+/** Jak długo po zapaleniu ekranu trzymać obrót sprzed zgaszenia (czujnik potrzebuje ~0,9 s). */
+private const val ROTATION_PIN_MS = 1500L
