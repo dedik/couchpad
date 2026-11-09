@@ -2,7 +2,10 @@ package app.couchpad.pilot.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import app.couchpad.pilot.ui.theme.haptic
@@ -22,6 +25,25 @@ fun Modifier.tap(
         if (enabled) {
             if (feedback) haptic()
             onClick()
+        }
+    }
+}
+
+/** Podwójne stuknięcie: budzi wygaszacz, ignoruje pojedyncze przypadkowe dotknięcia. */
+fun Modifier.doubleTap(
+    feedback: Boolean = true,
+    timeoutMs: Long = 400L,
+    onDoubleTap: () -> Unit,
+): Modifier = composed {
+    var lastTapTime by remember { mutableLongStateOf(0L) }
+    clickable(remember { MutableInteractionSource() }, indication = null) {
+        val now = System.currentTimeMillis()
+        if (now - lastTapTime <= timeoutMs) {
+            lastTapTime = 0L
+            if (feedback) haptic()
+            onDoubleTap()
+        } else {
+            lastTapTime = now
         }
     }
 }
