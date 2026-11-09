@@ -48,9 +48,21 @@ import kotlin.math.hypot
 private const val CENTER_RATIO = 0.22f
 private const val HOLD_MS = 600L
 
+/** Palec stoi, jeśli przez tyle ms nie przesunął się dalej niż [STILL_DP]. */
+private const val PAUSE_MS = 100L
+private const val STILL_DP = 1.5f
+
+/**
+ * Machnięcie to jeden krok. Kolejne kroki tylko przy dalszym przeciąganiu, jak powtarzanie
+ * klawisza: drugi po [REPEAT_DELAY_MS], następne co najmniej co [REPEAT_MS]. Ruch w czasie
+ * blokady przepada, więc wyhamowanie palca po machnięciu nie dobija kolejnego kroku.
+ */
+private const val REPEAT_DELAY_MS = 300L
+private const val REPEAT_MS = 120L
+
 /**
  * Gładzik jak pilot Siri: stuknięcie strzałki lub środka to pojedynczy klawisz,
- * przesunięcie palcem przewija listy krokami [stepUnits] (Klawiatura i gładzik → Czułość),
+ * machnięcie palcem to jeden krok o [stepUnits] (Klawiatura i gładzik → Czułość), przeciąganie powtarza krok,
  * przytrzymanie środka otwiera menu kontekstowe.
  */
 @Composable
@@ -59,7 +71,9 @@ internal fun Trackpad(modifier: Modifier, stepUnits: Int, onKey: (key: String, a
     val key by rememberUpdatedState(onKey)
     BoxWithConstraints(modifier.aspectRatio(1f)) {
         val sizePx = constraints.maxWidth.toFloat()
-        val stepPx = stepUnits * LocalUnits.current.dpPerUnit * LocalDensity.current.density
+        val density = LocalDensity.current.density
+        val stepPx = stepUnits * LocalUnits.current.dpPerUnit * density
+        val stillPx = STILL_DP * density
         fun send(k: String, action: String = "tap") {
             haptic()
             key(k, action)
@@ -68,18 +82,38 @@ internal fun Trackpad(modifier: Modifier, stepUnits: Int, onKey: (key: String, a
             Modifier.fillMaxSize().clip(CircleShape).background(C.surface).border(1.u, C.line, CircleShape)
                 .pointerInput(sizePx, stepPx) {
                     awaitEachGesture {
-                        val start = awaitFirstDown().position
+                        val down = awaitFirstDown()
+                        val start = down.position
                         val downAt = System.currentTimeMillis()
                         val atCenter = hypot(start.x - sizePx / 2, start.y - sizePx / 2) < sizePx * CENTER_RATIO
                         var acc = Offset.Zero
+                        // Kotwica ruchu: gdzie i kiedy palec ostatnio przesunął się o więcej niż drgnięcie.
+                        var anchor = start
+                        var movingAt = down.uptimeMillis
+                        var steps = 0
+                        var stepAt = 0L
                         var moved = false
                         var held = false
                         while (true) {
                             val change = awaitPointerEvent().changes.firstOrNull() ?: break
                             if (!change.pressed) break
-                            acc += change.positionChange()
+                            // Po zatrzymaniu palca reszta ruchu przepada: inaczej przesunięcie punktu
+                            // styku przy odrywaniu palca dobija ją do progu i daje dodatkowy krok.
+                            if (change.uptimeMillis - movingAt > PAUSE_MS) acc = Offset.Zero
+                            if ((change.position - anchor).getDistance() > stillPx) {
+                                anchor = change.position
+                                movingAt = change.uptimeMillis
+                            }
+                            val gap = if (steps <= 1) REPEAT_DELAY_MS else REPEAT_MS
+                            if (steps > 0 && change.uptimeMillis - stepAt < gap) {
+                                acc = Offset.Zero
+                            } else {
+                                acc += change.positionChange()
+                            }
                             if (abs(acc.x) > stepPx || abs(acc.y) > stepPx) {
                                 moved = true
+                                steps++
+                                stepAt = change.uptimeMillis
                                 lit = direction(acc.x, acc.y).also { send(it) }
                                 acc = Offset.Zero
                             }
