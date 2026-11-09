@@ -197,6 +197,22 @@ script:
                 - { id: lampa_lewa, label: Lewa, entity: light.living_room_lamp_left }
                 - { id: lampa_srodek, label: Środkowa, entity: light.living_room_lamp_center }
                 - { id: lampa_prawa, label: Prawa, entity: light.living_room_lamp_right }
+            # Kuchnia: włącznik na ścianie (kanał L2) odcina żarówkom prąd. `power` to ten kanał:
+            # przy odciętym prądzie lampa jest „wyłączona”, nie „niedostępna”, a każde polecenie
+            # poza wyłączeniem najpierw włącza kanał i czeka, aż żarówki wstaną (~7 s).
+            # Wyłączenie z pilota gasi żarówki, kanał zostaje włączony. Barwa i jasność z tabeli,
+            # bo encja bez prądu ich nie podaje.
+            - room: kuchnia
+              id: lampa_kuchnia
+              label: Lampa
+              entity: light.kitchen_lamp
+              power: switch.kitchen_light_switch_l2
+              min_kelvin: 2000
+              max_kelvin: 5000
+              members:
+                - { id: lampa_kuchnia_lewa, label: Lewa, entity: light.kitchen_lamp_left }
+                - { id: lampa_kuchnia_srodek, label: Środkowa, entity: light.kitchen_lamp_center }
+                - { id: lampa_kuchnia_prawa, label: Prawa, entity: light.kitchen_lamp_right }
 
       - variables: &climate
           climate_entity: climate.living_room_ac
@@ -302,11 +318,13 @@ script:
               {% set bad = ['unavailable', 'unknown', 'none'] %}
               {% set ns = namespace(out=[]) %}
               {% for r in light_rooms %}
+                {# Prąd odcięty włącznikiem (`power`): lampa wyłączona, ale sterowalna. #}
+                {% set cut = r.power is defined and is_state(r.power, 'off') %}
                 {% set m = namespace(items=[]) %}
                 {% for b in r.members | default([]) %}
                   {% set m.items = m.items + [{
                     'id': b.id, 'label': b.label,
-                    'available': states(b.entity) not in bad,
+                    'available': cut or states(b.entity) not in bad,
                     'on': is_state(b.entity, 'on'),
                     'brightness': ((state_attr(b.entity, 'brightness') or 0) / 2.55) | round(0) | int,
                     'kelvin': state_attr(b.entity, 'color_temp_kelvin') or 0 }] %}
@@ -316,13 +334,13 @@ script:
                 {% set modes = state_attr(e, 'supported_color_modes') or [] %}
                 {% set ns.out = ns.out + [{
                   'room': r.room, 'id': r.id, 'label': r.label,
-                  'available': states(e) not in bad,
+                  'available': cut or states(e) not in bad,
                   'on': is_state(e, 'on'),
-                  'dimmable': is_light and (modes | reject('eq', 'onoff') | list | count > 0),
+                  'dimmable': is_light and (r.min_kelvin is defined or modes | reject('eq', 'onoff') | list | count > 0),
                   'brightness': ((state_attr(e, 'brightness') or 0) / 2.55) | round(0) | int,
                   'kelvin': state_attr(e, 'color_temp_kelvin') or 0,
-                  'min_kelvin': state_attr(e, 'min_color_temp_kelvin') or 0,
-                  'max_kelvin': state_attr(e, 'max_color_temp_kelvin') or 0,
+                  'min_kelvin': state_attr(e, 'min_color_temp_kelvin') or r.min_kelvin | default(0),
+                  'max_kelvin': state_attr(e, 'max_color_temp_kelvin') or r.max_kelvin | default(0),
                   'effect': state_attr(e, 'effect') or '',
                   'effects': (state_attr(e, 'effect_list') or [])[:16],
                   'members': m.items }] %}
@@ -665,8 +683,28 @@ automation:
           {% endfor %}
         {% endfor %}
         {{ ns.e }}
+      # Kanał włącznika, który zasila żarówki tego światła (kuchnia), albo pusty.
+      power: >-
+        {% set ns = namespace(p='') %}
+        {% for r in light_rooms if r.power is defined %}
+          {% if r.id == args.id | default('') or args.id | default('') in
+                (r.members | default([]) | map(attribute='id') | list) %}{% set ns.p = r.power %}{% endif %}
+        {% endfor %}
+        {{ ns.p }}
     action:
       - condition: "{{ target | length > 0 }}"
+      # Prąd odcięty włącznikiem na ścianie: wyłączenie nie ma czego gasić, każde inne polecenie
+      # najpierw włącza kanał. Żarówki startują zapalone, potem dostają właściwe polecenie.
+      - if: >-
+          {{ power | length > 0 and is_state(power, 'off') and
+             not (command == 'light.power.set' and not args.on) }}
+        then:
+          - service: switch.turn_on
+            target:
+              entity_id: "{{ power }}"
+          - wait_template: "{{ states(target) not in ['unavailable', 'unknown'] }}"
+            timeout: "00:00:20"
+            continue_on_timeout: false
       - choose:
           # Przełącznik (`switch.*`) też może być głównym światłem — wtedy tylko wł./wył.
           - conditions: "{{ command == 'light.power.set' }}"
@@ -819,6 +857,11 @@ automation:
           - light.living_room_lamp_left
           - light.living_room_lamp_center
           - light.living_room_lamp_right
+          - light.kitchen_lamp
+          - light.kitchen_lamp_left
+          - light.kitchen_lamp_center
+          - light.kitchen_lamp_right
+          - switch.kitchen_light_switch_l2
         to: ~
       - platform: state
         entity_id: *light_entities
