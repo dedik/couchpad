@@ -28,6 +28,8 @@ i usługi → MQTT.
 | automatyzacja „wykonaj polecenie” | odbiera temat `command` i ustawia encje, także `climate.*` ([ADR 0009](../docs/architecture/adr/0009-climate-via-home-assistant.md)) |
 | tabela `light_rooms` i automatyzacja „światło” | główne światło pomieszczeń: sekcja `lights` w snapshocie i polecenia `light.*` ([ADR 0014](../docs/architecture/adr/0014-rooms-and-lights.md)); nowe pomieszczenie = wpis w tabeli + encje w wyzwalaczach automatyzacji niżej |
 | automatyzacja „snapshot po zmianie światła” | jeden snapshot 0,5 s po zmianach grupy i żarówek (`mode: restart`) |
+| tabela `radiator_rooms` i automatyzacja „grzejnik” | głowice termostatyczne: sekcja `radiators` w snapshocie (tryb, nastawa, zawór, bateria, kontaktron okna, następny punkt harmonogramu) i polecenia `radiator.*` ([ADR 0018](../docs/architecture/adr/0018-radiators.md)) |
+| automatyzacja „snapshot po zmianie grzejnika” | jeden snapshot 1 s po zmianie trybu, nastawy, `hvac_action` albo baterii (`mode: restart`) |
 | automatyzacja „nawigacja Apple TV” | `appletv.navigate` → `remote.send_command`, bez snapshotu |
 | skrypt i automatyzacja „lista kanałów TV” | retained lista tunera na `.../channels`: po starcie, co godzinę, na `tv.channels.request` |
 | automatyzacja „kanał TV” + `rest_command` | `tv.channel.open` → lista tunera i `open` na Glasshouse, bez snapshotu ([ADR 0008](../docs/architecture/adr/0008-tv-via-glasshouse.md)) |

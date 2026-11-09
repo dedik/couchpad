@@ -8,9 +8,14 @@ i cień. Mały kafel bierze obraz w 1 x (24 px), duży kafel bieżącej opcji w 
 * efekty — `fx_<id>.png`: brak, przytulnie, relaks, seans TV, świeca, ciepła biel, złota biel,
   dzienne, zimna biel, skupienie, nocne, do snu, pobudka, puls, steampunk, diwali, alarm,
   plus `fx_more` na kafel „Więcej”,
-* tryby klimy — `mode_<id>.png`: auto, cool, heat, fan_only, dry.
+* tryby klimy — `mode_<id>.png`: auto, cool, heat, fan_only, dry,
+* głowica grzejnika — `trv_<id>.png`: auto (harmonogram), zawór grzeje / nie grzeje, bateria
+  pełna / słaba, okno otwarte / zamknięte (kontaktron pokoju), następny punkt harmonogramu (zegar), cel − pokój; tryb „heat” bierze
+  `mode_heat` (ten sam identyfikator HA). `trv_mark` (siatka 12) — mały płomień „grzeje”
+  przy temperaturze na kafelku pokoju i w wierszach stanu.
 
-Wynik: docs/ux/mockup-pulpit/assets/pixel/ (źródło dla tools/gen_assets.py).
+Wynik: docs/ux/mockup-pulpit/assets/pixel/ (źródło dla tools/gen_assets.py); ikony `trv_*`
+i `mode_heat` także w docs/ux/mockup-dom/assets/.
 
 Uruchomienie:  tools/.venv/bin/python tools/draw_option_icons.py [--preview plik.png]
 """
@@ -31,6 +36,7 @@ from PIL import Image, ImageDraw  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "ux" / "mockup-pulpit" / "assets" / "pixel"
+MOCKUP_DOM = ROOT / "docs" / "ux" / "mockup-dom" / "assets"
 MOCKUP = ROOT / "docs" / "ux" / "mockup-option-icons" / "index.html"
 S = 24
 
@@ -357,6 +363,157 @@ def mode_dry():
     return fin(c)
 
 
+# ============================== głowica grzejnika ==============================
+
+def trv_auto():
+    """Harmonogram: kartka kalendarza z czerwonym grzbietem i zegar w rogu."""
+    c = Canvas(S)
+    c.rect(2, 4, 17, 19, "white", 3, radius=1)
+    c.rect(2, 4, 17, 7, "red", 3, bevel=False)
+    for x in (5, 14):
+        c.rect(x, 2, x + 1, 5, "steel", 4, bevel=False)
+    for y in (10, 13, 16):
+        for x in (5, 8, 11, 14):
+            c.set(x, y, ramp("steel", 2))
+    c.disc(16.5, 16.5, 6.4, "amber", 3)
+    c.disc(16.5, 16.5, 4.6, "cream", 5, light=False, rim=False)
+    c.line(16, 13.5, 16, 16, ramp("graphite", 1))
+    c.line(16, 16, 18.5, 16, ramp("graphite", 1))
+    return fin(c)
+
+
+def _radiator(c, heat):
+    """Mały kaloryfer: cztery żeberka, rurka, przy `heat` rozgrzany i z falami ciepła."""
+    body = "red" if heat else "white"
+    lvl = 3 if heat else 2
+    c.rect(3, 10, 20, 11, "steel", 3, bevel=False)
+    for i in range(4):
+        x = 4 + i * 4
+        c.rect(x, 8, x + 2, 20, body, lvl, radius=1)
+    c.rect(4, 19, 18, 20, body, lvl - 1, bevel=False)
+    c.rect(19, 12, 21, 16, "white", 4, radius=0)
+    c.set(20, 13, ramp("red", 4))
+    if heat:
+        for x in (6, 11, 16):
+            for k in range(5):
+                c.set(x + (1 if k % 2 else 0), 1 + k, ramp("amber", 4 - (k % 2)))
+
+
+def trv_valve_on():
+    """Zawór otwarty: kaloryfer rozgrzany, nad nim fale ciepła."""
+    c = Canvas(S)
+    _radiator(c, True)
+    return fin(c)
+
+
+def trv_valve_off():
+    """Zawór zamknięty: kaloryfer szary, bez fal."""
+    c = Canvas(S)
+    _radiator(c, False)
+    return fin(c)
+
+
+def _battery(c, level):
+    """Bateria pozioma: obudowa, biegun i `level` z czterech kresek (zielone, przy jednej czerwona)."""
+    c.rect(1, 6, 20, 17, "steel", 3, radius=1)
+    c.rect(21, 9, 22, 14, "steel", 4, bevel=False)
+    c.rect(3, 8, 18, 15, "graphite", 1, bevel=False)
+    tone = "red" if level <= 1 else "green"
+    for i in range(level):
+        x = 4 + i * 4
+        c.rect(x, 9, x + 2, 14, tone, 4)
+
+
+def trv_battery_ok():
+    """Bateria głowicy: pełna (≥ 30 %)."""
+    c = Canvas(S)
+    _battery(c, 4)
+    return fin(c)
+
+
+def trv_battery_low():
+    """Bateria głowicy: słaba (< 30 %)."""
+    c = Canvas(S)
+    _battery(c, 1)
+    return fin(c)
+
+
+def _window(c, open_):
+    c.rect(3, 2, 20, 21, "wood", 3)
+    c.rect(5, 4, 18, 19, "screen", 4 if open_ else 3, bevel=False)
+    c.line(11, 4, 11, 19, ramp("wood", 2))
+    c.line(12, 4, 12, 19, ramp("wood", 3))
+    c.line(5, 11, 18, 11, ramp("wood", 3))
+    c.set(6, 5, WHITE)
+    c.set(7, 5, WHITE)
+    c.set(6, 6, WHITE)
+    if open_:
+        # prawe skrzydło uchylone do środka (trapez) i podmuch zimnego powietrza
+        c.poly([(12, 4), (20, 2), (20, 21), (12, 19)], "wood", 4)
+        c.poly([(13, 5.5), (19, 4), (19, 19), (13, 18)], "ice", 4)
+        for y, x0 in ((8, 0), (13, 1)):
+            c.line(x0, y, x0 + 4, y, ramp("ice", 5))
+        c.set(0, 16, ramp("ice", 5))
+        c.set(1, 16, ramp("ice", 5))
+
+
+def trv_window_open():
+    """Okno otwarte (kontaktron pokoju): uchylone skrzydło i zimny podmuch."""
+    c = Canvas(S)
+    _window(c, True)
+    return fin(c)
+
+
+def trv_window_closed():
+    """Okno zamknięte."""
+    c = Canvas(S)
+    _window(c, False)
+    return fin(c)
+
+
+def trv_next():
+    """Następny punkt harmonogramu: zegar ścienny."""
+    c = Canvas(S)
+    c.disc(12, 12, 9.6, "steel", 3)
+    c.disc(12, 12, 7.6, "cream", 5, light=False, rim=False)
+    for a in range(12):
+        t = a * math.pi / 6
+        c.set(round(11.5 + math.cos(t) * 6.6), round(11.5 + math.sin(t) * 6.6), ramp("cream", 1 if a % 3 else 0))
+    c.line(12, 12, 12, 6.5, ramp("graphite", 1))
+    c.line(12, 12, 16, 12, ramp("graphite", 1))
+    c.set(12, 12, ramp("red", 3))
+    return fin(c)
+
+
+def trv_delta():
+    """Cel − pokój: termometr ze strzałkami w górę i w dół."""
+    c = Canvas(S)
+    c.rect(7, 2, 11, 15, "white", 4, radius=2)
+    c.rect(8, 7, 10, 16, "red", 3, bevel=False)
+    c.disc(9, 18, 4, "red", 3)
+    c.set(7, 16, ramp("red", 5))
+    c.poly([(17.5, 2), (21.5, 7), (13.5, 7)], "amber", 4)
+    c.rect(16, 7, 19, 10, "amber", 4, bevel=False)
+    c.rect(16, 13, 19, 16, "ice", 4, bevel=False)
+    c.poly([(13.5, 16), (21.5, 16), (17.5, 21)], "ice", 4)
+    return fin(c)
+
+
+def trv_mark():
+    """Mały płomień „grzeje” (siatka 12) przy temperaturze pokoju."""
+    c = Canvas(12)
+    c.poly([(6, 0), (9, 4), (10, 7), (8.5, 10), (3.5, 10), (2, 7), (3, 4), (4.5, 5.5)], "red", 3)
+    c.poly([(6, 3.5), (7.8, 6.5), (7.5, 9), (6, 10), (4.5, 9), (4.4, 6.6)], "amber", 4)
+    c.poly([(6, 6.5), (7, 8.2), (6, 10), (5, 8.2)], "glass", 5)
+    c.outline()
+    return c
+
+
+TRV = {"auto": trv_auto, "valve_on": trv_valve_on, "valve_off": trv_valve_off,
+       "battery_ok": trv_battery_ok, "battery_low": trv_battery_low,
+       "window_open": trv_window_open, "window_closed": trv_window_closed,
+       "next": trv_next, "delta": trv_delta, "mark": trv_mark}
+
 EFFECTS = {
     "none": fx_none, "cozy": fx_cozy, "relax": fx_relax, "tv": fx_tv, "candle": fx_candle,
     "warm": fx_warm, "golden": fx_golden, "daylight": fx_daylight, "cool": fx_cool, "focus": fx_focus,
@@ -372,11 +529,16 @@ LABELS = {
     "steampunk": "Steampunk", "diwali": "Diwali", "alarm": "Alarm", "more": "Więcej",
     "auto": "Auto", "heat": "Grzanie", "fan_only": "Wentylator", "dry": "Osuszanie",
 }
+TRV_LABELS = {
+    "auto": "Harmonogram", "valve_on": "Grzeje", "valve_off": "Nie grzeje", "battery_ok": "Bateria",
+    "battery_low": "Słaba bateria", "window_open": "Okno otwarte", "window_closed": "Okno zamknięte", "next": "Następny punkt", "delta": "Cel − pokój", "mark": "Znacznik",
+}
 
 
 def images() -> dict[str, Image.Image]:
     out = {f"fx_{k}": f().image() for k, f in EFFECTS.items()}
     out.update({f"mode_{k}": f().image() for k, f in MODES.items()})
+    out.update({f"trv_{k}": f().image() for k, f in TRV.items()})
     return out
 
 
@@ -385,6 +547,8 @@ def main() -> int:
     imgs = images()
     for name, image in imgs.items():
         image.save(OUT / f"{name}.png")
+        if (name.startswith("trv_") or name == "mode_heat") and MOCKUP_DOM.is_dir():
+            image.save(MOCKUP_DOM / f"{name}.png")
     print(f"  {len(imgs)} ikon -> {OUT.relative_to(ROOT)}")
     if MOCKUP.exists():
         # Makieta jako jeden plik: obrazy w data URI między znacznikami.

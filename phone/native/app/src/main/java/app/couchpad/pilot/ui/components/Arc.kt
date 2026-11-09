@@ -14,6 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
@@ -28,9 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import app.couchpad.pilot.ui.theme.C
@@ -79,6 +86,11 @@ internal fun ArcTrack(
     strokeRatio: Float,
     modifier: Modifier = Modifier,
     draggable: Boolean = true,
+    brush: Brush? = null,
+    alpha: Float = 1f,
+    knob: Boolean = true,
+    marker: Float? = null,
+    markerColor: Color = Color.White,
     onDragStart: (Float) -> Unit = {},
     onDrag: (Float) -> Unit = {},
     onDragEnd: () -> Unit = {},
@@ -109,12 +121,28 @@ internal fun ArcTrack(
             val topLeft = Offset(inset, inset)
             val cap = Stroke(stroke, cap = StrokeCap.Round)
             drawArc(C.surface3, ArcGeometry.START, ArcGeometry.SWEEP, false, topLeft, arc, style = cap)
+            val r = arc.width / 2
+            fun at(f: Float): Offset {
+                val angle = (ArcGeometry.START + ArcGeometry.SWEEP * f.coerceIn(0f, 1f)) * PI.toFloat() / 180f
+                return Offset(size.width / 2 + r * cos(angle), size.height / 2 + r * sin(angle))
+            }
             if (fraction != null) {
                 val sweep = ArcGeometry.SWEEP * fraction.coerceIn(0f, 1f)
-                drawArc(color, ArcGeometry.START, sweep, false, topLeft, arc, style = cap)
-                val angle = (ArcGeometry.START + sweep) * PI.toFloat() / 180f
-                val r = arc.width / 2
-                drawCircle(Color.White, stroke * 0.62f, Offset(size.width / 2 + r * cos(angle), size.height / 2 + r * sin(angle)))
+                if (brush != null) {
+                    // Pędzel obrócony do początku łuku: ułamki gradientu liczą się od startu łuku.
+                    rotate(ArcGeometry.START) {
+                        drawArc(brush, 0f, sweep, false, topLeft, arc, alpha = alpha, style = cap)
+                    }
+                } else {
+                    drawArc(color, ArcGeometry.START, sweep, false, topLeft, arc, alpha = alpha, style = cap)
+                }
+                if (knob) drawCircle(Color.White, stroke * 0.62f, at(fraction))
+            }
+            // Znacznik na łuku (np. temperatura w pokoju): kropka z obwódką w kolorze tła.
+            if (marker != null) {
+                val p = at(marker)
+                drawCircle(C.bg, side * 0.034f, p)
+                drawCircle(markerColor, side * 0.024f, p)
             }
         }
         content()
@@ -141,6 +169,9 @@ fun Dial(
     pending: Boolean = false,
     minLabel: String = format(min) + unit,
     maxLabel: String = format(max) + unit,
+    brush: Brush? = null,
+    marker: Double? = null,
+    detailDot: Boolean = false,
     onCommit: (Double) -> Unit,
 ) {
     var local by remember { mutableStateOf<Double?>(null) }
@@ -164,12 +195,19 @@ fun Dial(
     LaunchedEffect(value) { if (tapCommitAt == 0L && !dragging) local = null }
 
     val faded = if (enabled) C.text else C.faint
+    val waiting = pending && local == null
     ArcTrack(
         fraction = if (enabled && shown != null) ((shown - min) / span).toFloat() else null,
-        color = if (pending && local == null) C.accentPending else C.accent,
+        color = if (waiting) C.accentPending else C.accent,
         strokeRatio = 0.07f,
         modifier = modifier,
         draggable = enabled,
+        // Łuk z gradientem (grzejnik) przy oczekiwaniu przygasa jak akcent.
+        brush = brush,
+        alpha = if (brush != null && waiting) 0.55f else 1f,
+        knob = brush == null,
+        marker = marker?.let { ((it - min) / span).toFloat() },
+        markerColor = if (enabled) C.text else C.dim,
         onDragStart = { dragging = true; local = at(it) },
         onDrag = { f -> at(f).let { if (it != local) { local = it; haptic() } } },
         // Po puszczeniu tarcza wraca do stanu z domu: pokazuje „oczekuje”, aż przyjdzie
@@ -180,7 +218,15 @@ fun Dial(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             T(caption, 12, FontWeight.Medium, C.faint)
             BigValue(shown?.let(format) ?: "—", unit, faded)
-            if (detail != null) T(detail, 13, color = C.dim)
+            if (detail != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (detailDot) {
+                        Box(Modifier.size(8.u).clip(CircleShape).background(C.text))
+                        Spacer(Modifier.width(6.u))
+                    }
+                    T(detail, 13, color = C.dim)
+                }
+            }
             Spacer(Modifier.height(14.u))
             Row(horizontalArrangement = Arrangement.spacedBy(20.u)) {
                 for (sign in listOf(-1, 1)) {

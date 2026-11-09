@@ -16,6 +16,11 @@ internal object Contract {
             appleTv = root.optJSONObject("appletv")?.let(::appleTv) ?: AppleTvState(),
             climate = root.optJSONObject("climate")?.let(::climate) ?: ClimateState(),
             lights = root.optJSONArray("lights").objects().map(::light),
+            // Najwyżej cztery głowice, jak w firmware; brak sekcji chowa karty grzejników.
+            radiators = root.optJSONArray("radiators").objects()
+                .filter { it.optString("room").isNotEmpty() && it.optString("id").isNotEmpty() }
+                .take(4)
+                .map(::radiator),
             receivedAt = receivedAt,
         )
     }
@@ -88,6 +93,25 @@ internal object Contract {
                 available = m.optBoolean("available"), on = m.optBoolean("on"),
                 brightness = m.optInt("brightness"), kelvin = m.optInt("kelvin"),
             )
+        },
+    )
+
+    private fun radiator(r: JSONObject) = Radiator(
+        room = r.optString("room"),
+        id = r.optString("id"),
+        available = r.optBoolean("available"),
+        mode = r.optString("mode", "off"),
+        modes = r.optJSONArray("modes").strings(),
+        target = r.optDoubleOrNull("target"),
+        min = r.optDouble("min", 5.0),
+        max = r.optDouble("max", 30.0),
+        step = r.optDouble("step", 0.5).takeIf { it > 0 } ?: 0.5,
+        heating = r.optBoolean("heating"),
+        battery = r.optIntOrNull("battery"),
+        windowOpen = if (r.has("window_open") && !r.isNull("window_open")) r.optBoolean("window_open") else null,
+        next = r.optJSONObject("next")?.let { n ->
+            val at = n.optString("at")
+            n.optDoubleOrNull("target")?.takeIf { at.isNotEmpty() }?.let { RadiatorNext(at, it) }
         },
     )
 

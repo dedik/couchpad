@@ -53,6 +53,7 @@ private:
     domain::AppleTvState appletv_;
     domain::ClimateState climate_;
     domain::LightsState lights_;
+    domain::RadiatorsState radiators_;
     domain::TvState tv_state_;
     domain::ChannelList channels_;
     // Nie czyszczona przy wybudzeniu ani po utracie brokera — to treść (ADR 0011).

@@ -45,7 +45,38 @@ class ContractTest {
         assertFalse(home.appleTv.available)
         assertEquals("off", home.climate.hvacMode)
         assertTrue(home.lights.isEmpty())
+        assertTrue("bridge sprzed ADR 0018: bez kart grzejników", home.radiators.isEmpty())
         assertNull(Contract.parseSnapshot("nie json", 1))
+    }
+
+    @Test
+    fun `radiators parse optional fields and keep at most four`() {
+        val home = Contract.parseSnapshot(
+            """{"revision": 4, "radiators": [
+                {"room": "salon", "id": "grzejnik_salon", "available": true, "mode": "auto",
+                 "modes": ["off", "auto", "heat"], "target": 19.0, "min": 4.0, "max": 35.0, "step": 0.5,
+                 "heating": false, "battery": 100, "window_open": false, "next": {"at": "23:00", "target": 16.0}},
+                {"room": "sypialnia", "id": "g2", "available": true, "mode": "heat", "target": 20.5, "heating": true,
+                 "window_open": true},
+                {"room": "lazienka", "id": "g3", "mode": "off", "heating": true},
+                {"room": "biuro", "id": "g4"}, {"room": "kuchnia", "id": "g5"}, {"id": "bez_pokoju"}]}""", 1,
+        )!!
+        assertEquals(4, home.radiators.size)
+        val salon = home.radiatorIn("salon")!!
+        assertEquals(RadiatorNext("23:00", 16.0), salon.next)
+        assertEquals(100, salon.battery)
+        assertEquals(false, salon.windowOpen)
+        assertEquals(listOf("off", "auto", "heat"), salon.modes)
+        assertFalse(salon.heats)
+        val bed = home.radiator("g2")!!
+        assertNull(bed.battery)
+        assertNull(bed.next)
+        assertEquals(0.5, bed.step, 0.0)
+        assertFalse("otwarte okno: nie grzeje", bed.heats)
+        val bath = home.radiator("g3")!!
+        assertNull("pokój bez kontaktronu", bath.windowOpen)
+        assertFalse("wyłączona nie grzeje", bath.heats)
+        assertNull(home.radiatorIn("kuchnia"))
     }
 
     @Test

@@ -2,6 +2,7 @@
  * Materiał projektowy, nie kod firmware.
  *
  * Poziomy:  Dom (siatka pokoi) → pokój (lista encji) → encja światła (grupa) → żarówka / efekt
+ *                                                   → grzejnik (głowica termostatyczna)
  *
  *   PilotRooms.grid(el, { land, open: id => …, toast })      siatka pokoi na zakładce Dom
  *   PilotRooms.detail(el, { land, nav: ({title, sub}) => …, openKlima: () => … })
@@ -35,14 +36,23 @@
     ],
   };
   const sw = (entity) => ({ entity, label: 'Światło', kind: 'sw', on: false });
+  // Głowica termostatyczna (climate.*, Zigbee TRV): tryby off / heat / auto (harmonogram w głowicy),
+  // nastawa 4–35 °C co 0,5. action = hvac_action (heating = zawór otwarty). Okno: kontaktron pokoju
+  // (window: true/false; undefined = brak czujnika → kafel schowany), nie switch open_window głowicy. Temperatury głowicy
+  // (current_temperature) NIE pokazujemy — mierzy przy kaloryferze. „W pokoju” = czujnik pokoju (r.temp).
+  const trv = (entity, mode, target, action, extra = {}) => ({ id: 'grzejnik', entity, label: 'Grzejnik', mode,
+    last: mode === 'off' ? 'heat' : mode, target, action, battery: 100, window: false, ...extra });
   const rooms = [
     // temp / hum: czujnik pokoju (stopnie, %); kuchnia = salon, przedpokój = biuro (wspólna przestrzeń)
-    { id: 'salon', name: 'Salon', temp: 22.8, hum: 41, light: lampa, entities: ['lampa', 'klima'] },
+    { id: 'salon', name: 'Salon', temp: 22.8, hum: 41, light: lampa, entities: ['lampa', 'klima', 'grzejnik'],
+      rad: trv('climate.salon_termostat', 'auto', 19, 'idle', { next: { at: '23:00', t: 16 } }) },
     { id: 'kuchnia', name: 'Kuchnia', temp: 22.8, hum: 41, light: sw('switch.kuchnia_wlacznik_swiatla_l1') },
     { id: 'przedpokoj', name: 'Przedpokój', temp: 21.9, hum: 33, light: { ...sw('switch.nspanel_korytarz_relay_1'), on: true } },
-    { id: 'biuro', name: 'Biuro', temp: 21.9, hum: 33, light: sw('switch.nspanel_biuro_relay_1') },
-    { id: 'lazienka', name: 'Łazienka', temp: 23.5, hum: 67, light: null },
-    { id: 'sypialnia', name: 'Sypialnia', temp: 20.1, hum: 45, light: sw('switch.nspanel_sypialnia_relay_1') },
+    { id: 'biuro', name: 'Biuro', temp: 21.9, hum: 33, light: sw('switch.nspanel_biuro_relay_1'), 
+      rad: trv('climate.biuro_termostat', 'heat', 21, 'idle') },  // głowica od 2026-11-09 wieczorem; entity_id do potwierdzenia,
+    { id: 'lazienka', name: 'Łazienka', temp: 23.5, hum: 67, light: null, rad: trv('climate.lazienka_termostat', 'heat', 24.5, 'heating') },
+    { id: 'sypialnia', name: 'Sypialnia', temp: 20.1, hum: 45, light: sw('switch.nspanel_sypialnia_relay_1'),
+      rad: trv('climate.0x8c73dafffeb6abb3', 'heat', 20.5, 'heating', { battery: 18, window: true }) },
   ];
 
   const deg = v => v.toFixed(1).replace('.', ',') + '°';
@@ -56,8 +66,8 @@
   function climaHtml(land) {
     const r = room();
     if (r.temp === undefined && r.hum === undefined) return '';
-    const cell = (icon, val, unit, label, [word, cls]) => `<div class="rcv" aria-label="${label} ${val} ${unit}, ${word}"><img src="${A(icon)}" alt="">
-        <div><b>${val}<small>${unit}</small></b><span class="rcl ${cls}">${word}</span></div></div>`;
+    const cell = (icon, val, unit, label, [word, cls]) => `<div class="rcv" aria-label="${label} ${val} ${unit}"><img src="${A(icon)}" alt="">
+        <div><b>${val}<small>${unit}</small></b></div></div>`;
     const t = r.temp !== undefined ? cell('sensor_temp', deg(r.temp).slice(0, -1), '°C', 'Temperatura', tempWord(r.temp)) : '';
     const h = r.hum !== undefined ? cell('sensor_humidity', r.hum, '%', 'Wilgotność', humWord(r.hum)) : '';
     return `<div class="rclim ${land ? 'is-land' : ''}">${t}${t && h ? '<i class="rsep"></i>' : ''}${h}</div>`;
@@ -108,7 +118,7 @@
   };
   const gridHtml = () => rooms.map(r => `<div class="room ${lOn(r.light) ? 'is-lit' : ''} ${r.temp !== undefined ? 'has-temp' : ''}" data-room="${r.id}" role="button">
       <img class="room-icon" src="${A('room_' + r.id)}" alt="">${chip(r)}
-      <span class="room-name">${r.name}</span><span class="room-st">${status(r.light)}</span>${r.temp !== undefined ? `<span class="room-temp">${deg(r.temp)}</span>` : ''}
+      <span class="room-name">${r.name}</span><span class="room-st">${status(r.light)}</span>${r.temp !== undefined ? `<span class="room-temp ${heats(r) ? 'heat' : ''}">${heats(r) ? FLAME : ''}${deg(r.temp)}</span>` : ''}
     </div>`).join('');
 
   /* ---------- poziomy podstrony ---------- */
@@ -120,6 +130,7 @@
   function headerPower() {
     const t = top();
     if (!t) return null;
+    if (t.t === 'rad') { const g = room().rad; return { on: g.mode !== 'off', pending: !!g.pending }; }
     const l = t.t === 'bulb' ? target() : lampa;
     return { on: lOn(l), pending: !!pendingOf(l) };
   }
@@ -127,6 +138,7 @@
     const t = top();
     if (!t) return { title: room().name, sub: 'POMIESZCZENIE', power: null };
     const power = headerPower();
+    if (t.t === 'rad') return { title: 'Grzejnik', sub: `${room().name.toUpperCase()} · GŁOWICA`, power };
     if (t.t === 'light') return { title: lampa.label, sub: `${room().name.toUpperCase()} · ${lampa.bulbs.length} ŻARÓWKI`, power };
     return { title: `Żarówka ${target().label.toLowerCase()}`, sub: `${lampa.label.toUpperCase()} · ${room().name.toUpperCase()}`, power };
   }
@@ -134,6 +146,7 @@
   function power() {
     const t = top();
     if (!t) return;
+    if (t.t === 'rad') return radPower(room().rad);
     togglePower(t.t === 'bulb' ? target() : lampa);
   }
 
@@ -152,7 +165,8 @@
         ${pwr(lOn(l), pendingOf(l), r.id)}
       </div>`);
     }
-    cards.push(`<div class="rent rempty"><div class="rlc"><b>${l ? 'Inne encje' : 'Brak encji'}</b><span>do wybrania w konfiguracji pilota</span></div></div>`);
+    if (r.rad) cards.push(radCard(r));
+    if (!cards.length) cards.push(`<div class="rent rempty"><div class="rlc"><b>Brak encji</b><span>do wybrania w konfiguracji pilota</span></div></div>`);
     return roomBody(land, cards.join(''));
   }
 
@@ -172,7 +186,7 @@
         <div class="rlc"><b>Klimatyzacja</b><span>Chłodzenie · 22,0°</span><em>w pokoju 24,0°</em></div>
         ${chev}
       </div>`;
-    return roomBody(land, lampCard + klCard);
+    return roomBody(land, lampCard + klCard + radCard(room()));
   }
 
   // Pion: karta klimatu nad listą urządzeń. Poziom: karta klimatu jako pierwsza kolumna rzędu.
@@ -254,9 +268,86 @@
     if (window.lucide) window.lucide.createIcons();
   }
 
+  /* ---------- grzejnik: głowica termostatyczna ---------- */
+  const RAD_MIN = 5, RAD_MAX = 30;    // skala tarczy; encja pozwala 4–35, skrajne wartości z −/+
+  let radDraft = null, radTimer = null;
+  // Ikony pixel art z tools/draw_option_icons.py (trv_*, mode_heat) i draw_device_icons.py (dev_radiator*).
+  const FLAME = `<img class="rflame" src="${A('trv_mark')}" alt="">`;   // siatka 12, 1×
+  const hasTrv = r => !!r.rad;  // kuchnia i przedpokój: bez grzejnika
+  const heats = r => hasTrv(r) && r.rad.mode !== 'off' && !r.rad.window && r.rad.action === 'heating';
+  const MODE_PL = { heat: 'Grzanie', auto: 'Harmonogram', off: 'Wyłączony' };
+  function radSub(g) { return g.mode === 'off' ? 'Wyłączony' : `${MODE_PL[g.mode] || g.mode} · ${deg(g.target)}`; }
+  function radCard(r) {
+    const g = r.rad;
+    if (!g) return '';
+    const h = heats(r);
+    const st = g.mode === 'off' ? '' : g.window ? ' · okno otwarte' : h ? ' · grzeje' : ' · nie grzeje';
+    return `<div class="rent ${g.pending ? 'pending' : ''}" data-go="rad" role="button">
+        <div class="rwell sm rad ${h ? 'heat' : ''} ${g.mode === 'off' ? 'off' : ''}"><img src="${A(h ? 'dev_radiator' : 'dev_radiator_idle')}" alt=""></div>
+        <div class="rlc"><b>Grzejnik</b><span>${radSub(g)}</span><em>${h ? FLAME : ''}w pokoju ${deg(r.temp)}${st}</em></div>
+        ${chev}
+      </div>`;
+  }
+  function radPower(g) {
+    confirm(g, () => { if (g.mode === 'off') g.mode = g.last; else { g.last = g.mode; g.mode = 'off'; } });
+  }
+  // −/+ zmienia wartość od razu na tarczy; polecenie idzie 0,7 s po ostatnim stuknięciu (jedno na gest).
+  function radStep(dir) {
+    const g = room().rad;
+    if (g.mode === 'off') { if (dir > 0) radPower(g); return; }
+    radDraft = Math.max(4, Math.min(35, (radDraft ?? g.target) + dir * 0.5));
+    renderAll();
+    clearTimeout(radTimer); radTimer = setTimeout(radCommit, 700);
+  }
+  function radCommit() {
+    const g = room().rad, v = radDraft, r = room();
+    radDraft = null;
+    if (v === null) return;
+    confirm(g, () => { g.target = v; g.action = v > r.temp ? 'heating' : 'idle'; });
+  }
+  const fmt = v => deg(v).slice(0, -1);
+  function radHtml(land) {
+    const r = room(), g = r.rad, on = g.mode !== 'off', t = radDraft ?? g.target;
+    const pos = v => Math.max(0, Math.min(1, (v - RAD_MIN) / (RAD_MAX - RAD_MIN)));
+    const cap = !on ? 'WYŁĄCZONY' : g.mode === 'auto' ? 'HARMONOGRAM' : 'GRZANIE';
+    // znacznik temperatury w pokoju (czujnik pokoju) na łuku
+    const a = (135 + pos(r.temp) * 270) * Math.PI / 180;
+    const mx = 150 + 138 * Math.cos(a), my = 150 + 138 * Math.sin(a);
+    const dial = `<div class="ldial rdial ${on ? '' : 'off'} ${g.pending ? 'pending' : ''}">
+        <svg viewBox="0 0 300 300" class="ldial-ring">
+          <circle cx="150" cy="150" r="138" fill="none" stroke="var(--surface-3)" stroke-width="20" stroke-linecap="round" stroke-dasharray="${ARC} ${CIRC}" transform="rotate(135 150 150)"/>
+          <circle cx="150" cy="150" r="138" fill="none" stroke="url(#tgrad)" stroke-width="20" stroke-linecap="round" stroke-dasharray="${on ? ARC * pos(t) : 0} ${CIRC}" transform="rotate(135 150 150)"/>
+          <!-- gradient w układzie ekranu (kontr-obrót łuku): lewo = zimno (niebieski), prawo = gorąco (czerwony) -->
+          <defs><linearGradient id="tgrad" gradientUnits="userSpaceOnUse" x1="12" y1="150" x2="288" y2="150" gradientTransform="rotate(-135 150 150)">
+            <stop offset="0" stop-color="#3d8bff"/><stop offset=".5" stop-color="#f2a93b"/><stop offset="1" stop-color="#e5281b"/></linearGradient></defs>
+          <circle class="rdial-room" cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="7"/>
+        </svg>
+        <div class="ldial-in"><span class="ldial-cap">${cap}</span><b>${on ? fmt(t) : '—'}<small>${on ? '°C' : ''}</small></b>
+          <span class="ldial-note"><i class="rdial-dot"></i>w pokoju ${deg(r.temp)}</span></div>
+        <span class="ldial-scale lo">${RAD_MIN}°</span><span class="ldial-scale hi">${RAD_MAX}°</span>
+        <button class="ldial-step minus" data-tstep="-1" aria-label="Chłodniej">−</button>
+        <button class="ldial-step plus" data-tstep="1" aria-label="Cieplej">+</button>
+      </div>`;
+    const mode = (m, ic, lab) => `<button class="ltile ${on && g.mode === m ? 'on' : ''}" data-tmode="${m}"><img src="${A(ic)}" alt=""><b>${lab}</b></button>`;
+    const modes = `<p class="rsec">Tryb</p><div class="lbulbs two">${mode('heat', 'mode_heat', 'Grzanie')}${mode('auto', 'trv_auto', 'Harmonogram')}</div>`;
+    const h = heats(r);
+    const valve = !on ? ['wyłączony', ''] : h ? ['grzeje', 'heat'] : g.window ? ['nie grzeje', 'warn'] : ['nie grzeje', ''];
+    const stat = (icon, cap, val, cls = '') => `<div class="ltile static rstat ${cls}"><img src="${A(icon)}" alt=""><span class="ltile-cap">${cap}</span><b>${val}</b></div>`;
+    const now = `<p class="rsec">Teraz</p><div class="lbulbs ${g.window === undefined ? '' : 'four'}">
+        ${stat(valve[1] === 'heat' ? 'trv_valve_on' : 'trv_valve_off', 'ZAWÓR', valve[0], valve[1])}
+        ${g.window === undefined ? '' : stat(g.window ? 'trv_window_open' : 'trv_window_closed', 'OKNO', g.window ? 'otwarte' : 'zamknięte', g.window ? 'warn' : '')}
+        ${stat(g.battery < 30 ? 'trv_battery_low' : 'trv_battery_ok', 'BATERIA', g.battery + '%', g.battery < 30 ? 'warn' : '')}
+        ${g.mode === 'auto' && g.next ? stat('trv_next', `OD ${g.next.at}`, fmt(g.next.t) + '°') : stat('trv_delta', 'CEL – POKÓJ', on ? `${t - r.temp > 0 ? '+' : ''}${(t - r.temp).toFixed(1).replace('.', ',')}°` : '—')}
+      </div>`;
+    const quick = `<p class="rsec">Szybko</p><div class="lbulbs four">${[17, 19, 21, 23].map(v =>
+      `<button class="ltile ${on && t === v ? 'on' : ''}" data-tset="${v}"><b>${v}°</b></button>`).join('')}</div>`;
+    return `<div class="llayout ${land ? 'is-land' : ''}">${dial}<div class="lside">${modes}${now}${quick}</div></div>`;
+  }
+
   function detailHtml(land) {
     const t = top();
     if (!t) return roomHtml(land);
+    if (t.t === 'rad') return radHtml(land);
     return lightHtml(land);
   }
 
@@ -322,12 +413,18 @@
         if (!isGroup(l)) lampa.effect = null;
         renderAll(); return;
       }
+      const ts = e.target.closest('[data-tstep]');
+      if (ts) { radStep(+ts.dataset.tstep); return; }
+      const tm = e.target.closest('[data-tmode]');
+      if (tm) { const g = room().rad; const m = tm.dataset.tmode; confirm(g, () => { g.mode = m; g.last = m; }); return; }
+      const tq = e.target.closest('[data-tset]');
+      if (tq) { const g = room().rad; const v = +tq.dataset.tset; confirm(g, () => { g.target = v; if (g.mode === 'off') g.mode = g.last; g.action = v > room().temp ? 'heating' : 'idle'; }); return; }
       const go = e.target.closest('[data-go]');
       if (!go) return;
       const g = go.dataset.go;
       if (g === 'klima') { if (opts.openKlima) opts.openKlima(); return; }
       if (g === 'effect') { openEffects(el, !!opts.land); return; }
-      if (g === 'light') stack.push({ t: g });
+      if (g === 'light' || g === 'rad') stack.push({ t: g });
       else if (g.startsWith('bulb:')) stack.push({ t: 'bulb', id: g.slice(5) });
       renderAll();
     });
@@ -350,13 +447,22 @@
   function dialGesture(el) {
     let last = null;
     const angle = e => { const r = el.querySelector('.ldial-ring').getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI; };
-    el.addEventListener('pointerdown', e => { if (!e.target.closest('.ldial-ring')) return; const l = target(); if (!lOn(l)) return; last = angle(e); dialDraft = lBr(l); });
+    let raw = 0;
+    const isRad = () => top() && top().t === 'rad';
+    el.addEventListener('pointerdown', e => {
+      if (!e.target.closest('.ldial-ring')) return;
+      if (isRad()) { const g = room().rad; if (g.mode === 'off') return; last = angle(e); raw = g.target; radDraft = g.target; return; }
+      const l = target(); if (!lOn(l)) return; last = angle(e); dialDraft = lBr(l);
+    });
     el.addEventListener('pointermove', e => {
       if (last === null) return;
       const a = angle(e); let d = a - last; if (d > 180) d -= 360; if (d < -180) d += 360; last = a;
+      if (isRad()) { raw = Math.max(RAD_MIN, Math.min(RAD_MAX, raw + d * (RAD_MAX - RAD_MIN) / 270)); radDraft = Math.round(raw * 2) / 2; renderAll(); return; }
       dialDraft = Math.max(1, Math.min(100, dialDraft + d * 100 / 270)); dialDraft = Math.round(dialDraft); renderAll();
     });
-    const end = () => { if (last === null) return; last = null; const v = dialDraft, l = target(); dialDraft = null;
+    const end = () => { if (last === null) return; last = null;
+      if (isRad()) { radCommit(); return; }
+      const v = dialDraft, l = target(); dialDraft = null;
       confirm(l, () => { (isGroup(l) ? l.bulbs.filter(b => b.on) : [l]).forEach(b => { b.br = v; }); }); };
     el.addEventListener('pointerup', end); el.addEventListener('pointerleave', end);
   }

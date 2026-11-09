@@ -43,6 +43,10 @@ enum class ControlId : uint8_t {
     LightBrightness,  // value: 1..100 %
     LightKelvin,      // number: kelwiny
     LightEffect,      // payload: nazwa efektu z listy, pusty = bez efektu
+    // Grzejniki (ADR 0018). Identyfikator grzejnika jedzie w `target`.
+    RadiatorPower,    // flag; text: id
+    RadiatorMode,     // text: tryb (`heat`, `auto`)
+    RadiatorTarget,   // number: nastawa w dziesiątych; text: id
 };
 
 enum class IntentKind : uint8_t {
@@ -128,6 +132,18 @@ inline bool targets_lights(const UiIntent& intent) {
         case ControlId::LightBrightness:
         case ControlId::LightKelvin:
         case ControlId::LightEffect:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// `true` dla zamiarów grzejników. Idą kontraktem v1 do Home Assistanta (ADR 0018).
+inline bool targets_radiators(const UiIntent& intent) {
+    switch (intent.control) {
+        case ControlId::RadiatorPower:
+        case ControlId::RadiatorMode:
+        case ControlId::RadiatorTarget:
             return true;
         default:
             return false;

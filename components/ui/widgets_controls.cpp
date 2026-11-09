@@ -172,6 +172,7 @@ constexpr int32_t kThermoSize = 300;
 constexpr int32_t kThermoRing = 20;
 constexpr int32_t kThermoKnobPad = 6;      // uchwyt = szerokość łuku + 2 × 6 = 32 px
 constexpr int32_t kThermoDeadZone = 40;
+constexpr int32_t kThermoMarker = 16;       // kropka temperatury pokoju na łuku (grzejnik)
 // −/+ w otwarciu łuku u dołu, jak przy tarczy głośności (2026-11-03).
 constexpr int32_t kThermoStepSize = 64;
 constexpr int32_t kThermoStepGap = 24;
@@ -309,6 +310,9 @@ void Thermostat::set_range(int32_t min_tenths, int32_t max_tenths, int32_t step_
     max_ = max_tenths;
     step_ = step_tenths;
     lv_arc_set_range(arc, min_, max_);
+    if (marker_shown_) {
+        set_marker(true, marker_value_);
+    }
     if (percent_) {
         lv_label_set_text_fmt(scale_min, "%d%%", static_cast<int>(min_));
         lv_label_set_text_fmt(scale_max, "%d%%", static_cast<int>(max_));
@@ -328,6 +332,42 @@ void Thermostat::set_percent() {
     const int32_t min = min_, max = max_, step = step_;
     min_ = max_ = step_ = 0;  // wymusza przepisanie skali
     set_range(min, max, step);
+}
+
+void Thermostat::set_gradient(const void* ring_image) {
+    lv_obj_set_style_arc_image_src(arc, ring_image, LV_PART_INDICATOR);
+}
+
+void Thermostat::set_marker(bool visible, int32_t tenths) {
+    if (marker_ == nullptr) {
+        // Biała kropka z obwódką w kolorze tła, mniejsza niż uchwyt nastawy.
+        marker_ = plain(ring);
+        lv_obj_remove_flag(marker_, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_flag(marker_, LV_OBJ_FLAG_FLOATING);
+        lv_obj_set_size(marker_, kThermoMarker, kThermoMarker);
+        lv_obj_set_style_radius(marker_, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(marker_, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(marker_, theme::text(), LV_PART_MAIN);
+        lv_obj_set_style_border_width(marker_, 3, LV_PART_MAIN);
+        lv_obj_set_style_border_color(marker_, theme::bg(), LV_PART_MAIN);
+    }
+    marker_shown_ = visible;
+    marker_value_ = tenths;
+    if (!visible) {
+        lv_obj_add_flag(marker_, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    // Łuk 270° od 135° zgodnie z ruchem wskazówek zegara, w środku grubości łuku.
+    const float span = static_cast<float>(max_ - min_);
+    const float t = std::clamp(static_cast<float>(tenths - min_) / span, 0.0F, 1.0F);
+    const float angle = (135.0F + 270.0F * t) * 3.14159265F / 180.0F;
+    const float radius = static_cast<float>(kThermoSize - kThermoRing) / 2.0F;
+    const float center = static_cast<float>(kThermoSize) / 2.0F;
+    lv_obj_set_pos(marker_,
+                   static_cast<int32_t>(std::lround(center + radius * std::cos(angle) - kThermoMarker / 2.0F)),
+                   static_cast<int32_t>(std::lround(center + radius * std::sin(angle) - kThermoMarker / 2.0F)));
+    lv_obj_remove_flag(marker_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(marker_);
 }
 
 void Thermostat::set_value(int32_t tenths) {

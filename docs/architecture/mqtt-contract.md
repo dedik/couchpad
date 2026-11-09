@@ -77,6 +77,14 @@ light.color_temp.set   { "id": "lampa", "kelvin": 3500 }         w zakresie min_
 light.effect.set       { "id": "lampa", "effect": "Cozy" }       z `effects`; "" = bez efektu
 ```
 
+Akcje grzejników ([ADR 0018](adr/0018-radiators.md)). `id` to identyfikator z sekcji `radiators`:
+
+```text
+radiator.power.set     { "id": "grzejnik_salon", "on": true }           włączenie wraca do ostatniego trybu
+radiator.mode.set      { "id": "grzejnik_salon", "mode": "auto" }       z `modes`: off | heat | auto
+radiator.target.set    { "id": "grzejnik_salon", "temperature": 20.5 }  w zakresie min..max encji
+```
+
 `action` w `appletv.navigate` jest opcjonalne, domyślnie `tap`. `double` i `hold` odtwarzają
 ukryte gesty pilota Siri: Home ×2 otwiera przełącznik aplikacji, przytrzymanie Home — Centrum
 sterowania, przytrzymanie `select` — menu kontekstowe.
@@ -154,6 +162,15 @@ Temat `state`: QoS 1, retained. Każdy komunikat zawiera pełny, samowystarczaln
       ]
     }
   ],
+  "radiators": [
+    {
+      "room": "salon", "id": "grzejnik_salon", "available": true,
+      "mode": "auto", "modes": ["off", "auto", "heat"],
+      "target": 19.0, "min": 4.0, "max": 35.0, "step": 0.5,
+      "heating": false, "battery": 100, "window_open": false,
+      "next": { "at": "23:00", "target": 16.0 }
+    }
+  ],
   "shortcuts": [
     { "id": "movie-mode", "label": "Film", "enabled": true }
   ]
@@ -188,6 +205,22 @@ Sekcja `lights` ([ADR 0014](adr/0014-rooms-and-lights.md)):
 - `dimmable: false` dla przełącznika (`switch.*`) — wtedy tylko wł./wył.
 - `effects` to `effect_list` encji grupy (najwyżej 16), `effect` — bieżący albo pusty.
 - Brak sekcji (bridge sprzed ADR 0014) gasi światła, reszta pilota działa.
+
+Sekcja `radiators` ([ADR 0018](adr/0018-radiators.md)):
+
+- Jedna pozycja na głowicę termostatyczną, `room` jak w `lights`. Pokój bez pozycji nie ma karty
+  grzejnika. Pilot czyta najwyżej cztery pozycje.
+- `mode` to stan encji: `off`, `heat` (stała nastawa) albo `auto` (harmonogram w głowicy);
+  `modes` — `hvac_modes` encji. `target`, `min`, `max`, `step` w stopniach.
+- **Bez temperatury głowicy.** Głowica mierzy przy kaloryferze; temperaturę w pokoju pilot bierze
+  z `indoor.rooms` wiadomości pogody (czujnik pokoju).
+- `heating` — `hvac_action == heating` (zawór otwarty). `battery` — procent baterii głowicy,
+  brak pola, gdy nieznany. `window_open` — kontaktron okna pokoju (nie przełącznik `open_window`
+  głowicy); brak pola, gdy pokój nie ma czujnika albo jest niedostępny.
+- `next` — następny punkt harmonogramu głowicy, który zmienia temperaturę (`at` = `HH:MM`,
+  `target` w stopniach), liczony przez bridge z dzisiejszego i jutrzejszego planu. Brak pola,
+  gdy planu nie da się odczytać. Harmonogram jest tylko do podglądu.
+- Brak sekcji (bridge sprzed ADR 0018) chowa karty grzejników.
 
 Pilot ignoruje snapshot o rewizji nie większej niż ostatnio przetworzona. Przy braku stanu pokazuje urządzenie jako niedostępne, nie zgaduje jego statusu.
 
@@ -248,7 +281,7 @@ Pilot czyta najwyżej sześć pozycji.
 
 `condition` to identyfikator stanu encji `weather` w HA; pilot dobiera do niego ikonę i polską nazwę. `night` mówi, że słońce jest pod horyzontem (`sun.sun`): HA ma nocny wariant tylko dla bezchmurnego nieba (`clear-night`), więc np. `partlycloudy` w nocy pilot rysuje z księżycem. Pogoda nie należy do snapshotu: to treść, nie stan urządzenia, więc pilot pokazuje ostatnią z pamięci od razu po wybudzeniu, a po 6 godzinach bez aktualizacji ją chowa.
 
-Automatyzacja/bridge Home Assistanta publikuje snapshot po każdej zmianie TV, Z906, Apple TV, klimatyzacji, świateł lub skrótu, po restarcie oraz po otrzymaniu `remote.sync.request`. Żądanie synchronizacji po wybudzeniu musi wygenerować nową rewizję po sprawdzeniu bieżącego stanu przez Home Assistant; nie może jedynie odesłać starej wiadomości retained.
+Automatyzacja/bridge Home Assistanta publikuje snapshot po każdej zmianie TV, Z906, Apple TV, klimatyzacji, świateł, grzejników lub skrótu, po restarcie oraz po otrzymaniu `remote.sync.request`. Żądanie synchronizacji po wybudzeniu musi wygenerować nową rewizję po sprawdzeniu bieżącego stanu przez Home Assistant; nie może jedynie odesłać starej wiadomości retained.
 
 ## Dostępność i błędy
 

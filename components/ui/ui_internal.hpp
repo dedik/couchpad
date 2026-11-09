@@ -218,7 +218,7 @@ struct HomeScreen {
 // Pełny ekran. Pion: pasek pomieszczeń pod nagłówkiem. Poziom: pasek zakładek i pasek
 // pomieszczeń schowane w szufladach — wysuwa je przeciągnięcie od lewej / prawej krawędzi.
 struct RoomScreen {
-    enum class Level : uint8_t { Room, Light, Bulb };
+    enum class Level : uint8_t { Room, Light, Bulb, Radiator };
 
     bool built = false;
     bool open = false;
@@ -259,8 +259,6 @@ struct RoomScreen {
         lv_obj_t* root = nullptr;
         lv_obj_t* value = nullptr;
         lv_obj_t* unit = nullptr;
-        lv_obj_t* dot = nullptr;
-        lv_obj_t* verdict = nullptr;
     };
     lv_obj_t* clima_cap = nullptr;     // pion: `W POKOJU` nad kartą
     lv_obj_t* devices_cap = nullptr;   // `URZĄDZENIA` (poziom: `W POKOJU · URZĄDZENIA`)
@@ -272,7 +270,9 @@ struct RoomScreen {
     std::size_t shown_clima_room = kRoomCount;
     Card lamp;
     Card climate;
+    Card radiator;   // głowica termostatyczna (ADR 0018)
     Card empty;
+    bool compact = false;   // poziom: trzy urządzenia w rzędzie — węższe karty
 
     // Poziom 2 i 3: światło — grupa albo jedna żarówka. Układ jak podstrona klimy:
     // tarcza jasności i obok kafle barwy, efektu i żarówek.
@@ -324,6 +324,27 @@ struct RoomScreen {
         domain::EffectName name;
     };
     EffectTile effects[kEffectTiles];
+
+    // Poziom 2: grzejnik (ADR 0018) — tarcza nastawy w barwach od zimnej do gorącej, kropka
+    // temperatury z czujnika pokoju, obok kafle: tryb, stan (zawór, okno, bateria, następny
+    // punkt albo cel – pokój) i szybkie nastawy.
+    struct StatTile {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* icon = nullptr;
+        lv_obj_t* cap = nullptr;
+        lv_obj_t* value = nullptr;
+    };
+    static constexpr std::size_t kQuickTargets = 4;
+    lv_obj_t* view_rad = nullptr;
+    widgets::Thermostat* rad_dial = nullptr;
+    lv_obj_t* rad_mode_row = nullptr;
+    lv_obj_t* rad_heat = nullptr;
+    lv_obj_t* rad_auto = nullptr;
+    StatTile rad_valve;
+    StatTile rad_window;
+    StatTile rad_battery;
+    StatTile rad_extra;   // Harmonogram: następny punkt; Grzanie: cel – pokój
+    lv_obj_t* rad_quick[kQuickTargets]{};
 };
 
 // ---------- Ekran Więcej ----------

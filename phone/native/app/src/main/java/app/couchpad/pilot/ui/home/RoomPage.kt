@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import app.couchpad.pilot.R
@@ -31,6 +32,7 @@ import app.couchpad.pilot.data.Light
 import app.couchpad.pilot.data.Pending
 import app.couchpad.pilot.data.PilotRepository
 import app.couchpad.pilot.data.PilotState
+import app.couchpad.pilot.data.Radiator
 import app.couchpad.pilot.data.RoomReading
 import app.couchpad.pilot.ui.climate.ClimateLabels
 import app.couchpad.pilot.ui.components.Card
@@ -52,8 +54,12 @@ private data class Device(
     val detail: String?,
     val lit: Boolean,
     val well: @Composable () -> Unit,
+    /** Studzienka „grzeje” (grzejnik z otwartym zaworem): ciepła poświata zamiast akcentu. */
+    val heat: Boolean = false,
     val power: Boolean? = null,
     val pending: Boolean = false,
+    /** Oczekiwanie na całej karcie (urządzenie bez skrótu zasilania). */
+    val cardPending: Boolean = false,
     val onPower: ((Boolean) -> Unit)? = null,
     val onOpen: () -> Unit,
 )
@@ -77,8 +83,8 @@ private fun lightDevice(light: Light, state: PilotState, repo: PilotRepository, 
 )
 
 /**
- * Pokój (home-screen.md §3): pasek pokoi (pion), karty urządzeń — lampy i, w salonie,
- * klimatyzacja. Bez urządzeń karta „Brak encji”.
+ * Pokój (home-screen.md §3): pasek pokoi (pion), karty urządzeń — lampy, w salonie
+ * klimatyzacja i grzejnik, jeśli pokój go ma (ADR 0018). Bez urządzeń karta „Brak encji”.
  */
 @Composable
 internal fun RoomPage(
@@ -89,8 +95,11 @@ internal fun RoomPage(
     switchRoom: (String) -> Unit,
     openLight: (String) -> Unit,
     openClimate: () -> Unit,
+    openRadiator: () -> Unit,
 ) {
     val landscape = LocalLandscape.current
+    // Karta „W pokoju” (ADR 0017): czujnik pokoju z wiadomości pogody, tak samo świeży jak ona.
+    val reading = state.weather.takeIf { it.current(System.currentTimeMillis()) }?.room(roomId)
     val climate = state.home.climate.takeIf { roomId == ClimateRoom && it.available }
     val devices = state.home.lightsIn(roomId).map { lightDevice(it, state, repo, openLight) } +
         listOfNotNull(
@@ -103,11 +112,11 @@ internal fun RoomPage(
                     well = { Pixel(R.drawable.px_dev_aircon, 48.u) },
                     onOpen = openClimate,
                 )
-            }
+            },
+            state.home.radiatorIn(roomId)?.let { r -> radiatorDevice(r, reading?.temperature, state, openRadiator) },
         )
-
-    // Karta „W pokoju” (ADR 0017): czujnik pokoju z wiadomości pogody, tak samo świeży jak ona.
-    val reading = state.weather.takeIf { it.current(System.currentTimeMillis()) }?.room(roomId)
+    // Salon w poziomie: „W pokoju” i trzy urządzenia — węższa kolumna „W pokoju”.
+    val compact = landscape && devices.size + (if (reading != null) 1 else 0) >= 4
 
     Column(Modifier.fillMaxSize()) {
         PageHeader(room(roomId).label, "POMIESZCZENIE", back)
@@ -120,11 +129,13 @@ internal fun RoomPage(
             Spacer(Modifier.height(10.u))
             Row(
                 Modifier.fillMaxSize().padding(start = 24.u, end = 40.u, bottom = 20.u),
-                horizontalArrangement = Arrangement.spacedBy(12.u),
+                horizontalArrangement = Arrangement.spacedBy(if (compact) 10.u else 12.u),
             ) {
-                if (reading != null) RoomClimateCard(reading, landscape = true, Modifier.width(210.u).fillMaxHeight())
+                if (reading != null) {
+                    RoomClimateCard(reading, landscape = true, Modifier.width(if (compact) 160.u else 210.u).fillMaxHeight(), compact)
+                }
                 if (devices.isEmpty()) Box(Modifier.weight(1f)) { NoDevices(state.home.known, padded = false) }
-                for (d in devices) DeviceCard(d, landscape = true, Modifier.weight(1f).fillMaxHeight())
+                for (d in devices) DeviceCard(d, landscape = true, Modifier.weight(1f).fillMaxHeight(), compact)
             }
         } else {
             Column(
@@ -147,42 +158,40 @@ internal fun RoomPage(
     }
 }
 
-/** Ocena odczytu (ADR 0017): słowo wersalikami i kolor kropki. */
-private data class Verdict(val text: String, val color: Color)
+/**
+ * Karta grzejnika (ADR 0018): stan i nastawa, dopisek z temperaturą czujnika pokoju [roomTemp]
+ * (nigdy głowicy) i stanem zaworu. Bez skrótu zasilania — strzałka otwiera ekran grzejnika.
+ */
+private fun radiatorDevice(r: Radiator, roomTemp: Double?, state: PilotState, open: () -> Unit) = Device(
+    name = "Grzejnik",
+    status = RadiatorLabels.status(r),
+    detail = RadiatorLabels.note(r, roomTemp),
+    lit = false,
+    heat = r.heats,
+    well = { RadiatorWell(r) },
+    cardPending = state.isPendingAny(Pending.Radiator.any(r.id)),
+    onOpen = open,
+)
 
-private val Cold = Color(0xFF4AA8E0)
-
-@Composable
-private fun temperatureVerdict(t: Double) = when {
-    t < 19.0 -> Verdict("CHŁODNO", Cold)
-    t > 24.5 -> Verdict("CIEPŁO", C.accent)
-    else -> Verdict("KOMFORTOWO", C.ok)
-}
-
-@Composable
-private fun humidityVerdict(h: Int) = when {
-    h < 35 -> Verdict("SUCHO", C.accent)
-    h > 60 -> Verdict("WILGOTNO", Cold)
-    h < 40 -> Verdict("LEKKO SUCHO", C.ok)
-    else -> Verdict("KOMFORTOWO", C.ok)
-}
+/** Poświata studzienki grzejącego grzejnika (makieta: radial-gradient z #ff6b4a). */
+private val HeatGlow = Brush.radialGradient(listOf(Color(0x6BFF6B4A), Color(0x0FFF6B4A)))
 
 /**
  * Karta „W pokoju”: temperatura i wilgotność z czujnika pokoju, każda z ikoną pixel art
- * (48 px), dużą liczbą i oceną. Pion: obok siebie; poziom: wąska kolumna, jedna nad drugą.
+ * (48 px) i dużą liczbą, bez oceny słowem. Pion: obok siebie; poziom: wąska kolumna, jedna nad drugą.
  */
 @Composable
-private fun RoomClimateCard(r: RoomReading, landscape: Boolean, modifier: Modifier) {
+private fun RoomClimateCard(r: RoomReading, landscape: Boolean, modifier: Modifier, compact: Boolean = false) {
     val cells = listOfNotNull(
-        r.temperature?.let { t -> Cell(R.drawable.px_sensor_temp, oneDecimal(t), "°C", temperatureVerdict(t)) },
-        r.humidity?.let { h -> Cell(R.drawable.px_sensor_humidity, "$h", "%", humidityVerdict(h)) },
+        r.temperature?.let { t -> Cell(R.drawable.px_sensor_temp, oneDecimal(t), "°C") },
+        r.humidity?.let { h -> Cell(R.drawable.px_sensor_humidity, "$h", "%") },
     )
     Card(modifier, radius = 20) {
         if (landscape) {
-            Column(Modifier.fillMaxSize().padding(20.u)) {
+            Column(Modifier.fillMaxSize().padding(horizontal = if (compact) 14.u else 20.u, vertical = if (compact) 16.u else 20.u)) {
                 cells.forEachIndexed { i, cell ->
                     if (i > 0) Box(Modifier.fillMaxWidth().height(1.u).background(C.line))
-                    Reading(cell, Modifier.weight(1f))
+                    Reading(cell, Modifier.weight(1f), compact)
                 }
             }
         } else {
@@ -200,25 +209,19 @@ private fun RoomClimateCard(r: RoomReading, landscape: Boolean, modifier: Modifi
     }
 }
 
-private data class Cell(val icon: Int, val value: String, val unit: String, val verdict: Verdict)
+private data class Cell(val icon: Int, val value: String, val unit: String)
 
 @Composable
-private fun Reading(cell: Cell, modifier: Modifier) {
-    val (icon, value, unit, verdict) = cell
+private fun Reading(cell: Cell, modifier: Modifier, compact: Boolean = false) {
+    val (icon, value, unit) = cell
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        Pixel(icon, 48.u)
-        Spacer(Modifier.width(12.u))
+        Pixel(icon, if (compact) 32.u else 48.u)
+        Spacer(Modifier.width(if (compact) 8.u else 12.u))
         Column {
             Row(verticalAlignment = Alignment.Bottom) {
-                T(value, 46, FontWeight.Bold)
+                T(value, if (compact) 32 else 46, FontWeight.Bold)
                 Spacer(Modifier.width(3.u))
-                T(unit, 15, FontWeight.Medium, C.dim, Modifier.padding(bottom = 8.u))
-            }
-            Spacer(Modifier.height(4.u))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(7.u).clip(RoundedCornerShape(50)).background(verdict.color))
-                Spacer(Modifier.width(6.u))
-                T(verdict.text, 11, FontWeight.Medium, verdict.color)
+                T(unit, if (compact) 13 else 15, FontWeight.Medium, C.dim, Modifier.padding(bottom = if (compact) 5.u else 8.u))
             }
         }
     }
@@ -236,16 +239,22 @@ private fun NoDevices(known: Boolean, padded: Boolean = true) {
 
 /**
  * Karta urządzenia w pokoju (§4.2): studzienka 80 px, nazwa, stan, szczegół, skrót
- * zasilania. W pionie wiersz ze strzałką, w poziomie wysoka karta.
+ * zasilania. W pionie wiersz ze strzałką, w poziomie wysoka karta; [compact] (trzy
+ * urządzenia obok „W pokoju”) — mniejsze marginesy, ten sam układ.
  */
 @Composable
-private fun DeviceCard(d: Device, landscape: Boolean, modifier: Modifier) {
+private fun DeviceCard(d: Device, landscape: Boolean, modifier: Modifier, compact: Boolean = false) {
     val well: @Composable () -> Unit = {
         val shape = RoundedCornerShape(16.u)
         Box(
             Modifier.size(80.u).clip(shape)
-                .background(if (d.lit) C.accentSoft else C.surface2)
-                .border(1.u, if (d.lit) C.accent.copy(alpha = 0.6f) else C.line, shape),
+                .then(
+                    when {
+                        d.heat -> Modifier.background(HeatGlow).border(1.u, HeatInk.copy(alpha = 0.55f), shape)
+                        d.lit -> Modifier.background(C.accentSoft).border(1.u, C.accent.copy(alpha = 0.6f), shape)
+                        else -> Modifier.background(C.surface2).border(1.u, C.line, shape)
+                    },
+                ),
             contentAlignment = Alignment.Center,
         ) { d.well() }
     }
@@ -254,18 +263,24 @@ private fun DeviceCard(d: Device, landscape: Boolean, modifier: Modifier) {
             T(d.name, 19, FontWeight.Bold)
             Spacer(Modifier.height(4.u))
             T(d.status, 13, color = C.dim)
-            if (d.detail != null) T(d.detail, 11, color = C.faint)
+            if (d.detail != null) T(d.detail, 11, color = C.faint, maxLines = 2)
         }
     }
     val shortcut: @Composable () -> Unit = {
         if (d.power != null && d.onPower != null) PowerButton(d.power, size = 48, pending = d.pending, onToggle = d.onPower)
     }
-    Card(modifier, radius = 20, onClick = d.onOpen) {
+    Card(modifier, radius = 20, pending = d.cardPending, onClick = d.onOpen) {
         if (landscape) {
-            Box(Modifier.fillMaxSize().padding(18.u)) {
+            // [compact] tylko zmniejsza marginesy — układ jak zawsze: zasilanie w prawym górnym
+            // rogu obok studzienki, nazwa i stan przy dolnej krawędzi.
+            Box(Modifier.fillMaxSize().padding(if (compact) 14.u else 18.u)) {
                 Box(Modifier.align(Alignment.TopStart)) { well() }
                 Box(Modifier.align(Alignment.TopEnd)) { shortcut() }
-                texts(Modifier.align(Alignment.BottomStart))
+                texts(Modifier.align(Alignment.BottomStart).padding(end = 28.u))
+                Icon(
+                    Icons.Rounded.ChevronRight, null, tint = C.faint,
+                    modifier = Modifier.align(Alignment.BottomEnd).size(26.u),
+                )
             }
         } else {
             Row(Modifier.fillMaxSize().padding(horizontal = 16.u), verticalAlignment = Alignment.CenterVertically) {

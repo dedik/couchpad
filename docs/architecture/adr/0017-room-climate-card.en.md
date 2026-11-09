@@ -20,6 +20,8 @@ sensors, and three of them also have thermostatic radiator valves.
   humidity 40–60 % "comfortable", 35–39 % "slightly dry", lower "dry", above 60 % "humid". No
   chart. In portrait the card sits under the room rail with the caption `W POKOJU`; in landscape
   it is the first, narrower column of the card row (temperature above humidity).
+  *Change 2026-11-09:* the verdict word and dot were removed at the user's request — they told
+  nothing; the icon and number remain.
 - **Source: the room sensor, not the valve.** The "Termostat" valves report no humidity and
   measure temperature next to the radiator, which would inflate the reading (see ADR 0015). The
   bridge uses the "<Room> - Czujnik temperatury" sensors, the same ones automations feed to the

@@ -103,6 +103,15 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    „URZĄDZENIA”, poziom: pierwsza kolumna 210 px. Karta klimy w salonie ma ikonę
    klimatyzatora `px_dev_aircon`. `tools/screenshots.sh`: w pionie lampa i klima zjechały
    w dół (nowe tapnięcia 480 945 i 482 1245).
+7. ~~Grzejniki~~ (2026-11-09, [ADR 0018](../../docs/architecture/adr/0018-radiators.md)) — sekcja
+   `radiators` snapshotu (najwyżej cztery, `Contract.radiator`, test w `ContractTest`), akcje
+   `radiator.power.set` / `mode.set` / `target.set`, oczekiwanie `Pending.Radiator`. Karta
+   „Grzejnik” w pokoju (studzienka `px_dev_radiator` / `_idle`, „w pokoju” tylko z czujnika
+   pokoju) i ekran `ui/home/RadiatorPage.kt`: tarcza 5–30 ° z łukiem od niebieskiego do
+   czerwieni (`Dial(brush, marker)`) i kropką temperatury pokoju, kafle Tryb / Teraz / Szybko
+   (ikony `px_trv_*`). W poziomie salon ma trzy karty urządzeń: „W pokoju” zwęża się do 156 px,
+   zasilanie lampy schodzi na dół obok strzałki; karty w poziomie mają strzałkę. Do zrobienia:
+   tapnięcia grzejnika w `tools/screenshots.sh` i odświeżenie zrzutów.
 
 ---
 
