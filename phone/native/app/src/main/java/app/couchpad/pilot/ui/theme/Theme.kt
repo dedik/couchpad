@@ -36,9 +36,14 @@ data class Palette(
     val accent: Color, val accentPressed: Color, val accentInk: Color, val ok: Color, val danger: Color,
 )
 
+/**
+ * Ciemny styl pod OLED: tło czysto czarne (piksele gasną — głęboka czerń, mniej prądu).
+ * Karty odrobinę jaśniejsze niż na płytce, żeby nie zlewały się z czernią; najciemniejsze
+ * szarości na OLED-zie potrafią „smużyć” przy przewijaniu.
+ */
 val DarkPalette = Palette(
-    bg = Color(0xFF0A0B0E), surface = Color(0xFF14161B), surface2 = Color(0xFF1C1F26),
-    surface3 = Color(0xFF282C35), line = Color(0xFF30353F), text = Color(0xFFF3F5F9),
+    bg = Color(0xFF000000), surface = Color(0xFF15171C), surface2 = Color(0xFF1E2128),
+    surface3 = Color(0xFF2A2E37), line = Color(0xFF2C3039), text = Color(0xFFF3F5F9),
     dim = Color(0xFF98A0AE), faint = Color(0xFF626A78), accent = Color(0xFFFF8000),
     accentPressed = Color(0xFFFF941A), accentInk = Color(0xFF17120A), ok = Color(0xFF56D6A0),
     danger = Color(0xFFFF5F5F),
