@@ -609,8 +609,86 @@ screen files; `make_intent(kind, control)` in `ui_internal.hpp`. The Home tab is
 parts. UI compiler warnings removed (`theme::selector`, `theme::kOpaTransp`/`kOpaCover`).
 Portrait was not checked on the board after the refactor — the changes touch code, not layout.
 
+## Radiators and the kitchen lamp — 2026-11-09
+
+Branch `feat/radiators` (not pushed, not merged into `main`): `07f277b` radiators
+([ADR 0018](../architecture/adr/0018-radiators.en.md)), `117941d` kitchen lamp, then this entry.
+
+**Radiators.** SONOFF TRVZB heads (Zigbee2MQTT) in the living room, bedroom and bathroom; the
+office gets a fourth on the evening of 2026-11-09. The kitchen and hallway have no radiator and
+never will.
+
+- Contract: the `radiators` section and `radiator.*` actions (`docs/architecture/mqtt-contract.en.md`).
+  Deliberately **no head temperature** — it measures next to the radiator; the remote takes the
+  room temperature from `indoor.rooms` in the weather message (the room sensor).
+- Bridge: the `radiator_rooms` table (`entity`, optional `battery`, `window`, `schedule`), the
+  "Pilot — grzejnik" and "Pilot — snapshot po zmianie grzejnika" automations. The next schedule
+  point (`next`) is computed by a template from `text.*_weekly_schedule_<day>`; the schedule is
+  view-only.
+- Firmware: `ui/screens/home_radiator.cpp` (card and screen), `Level::Radiator` in `RoomScreen`,
+  `widgets::Thermostat::set_gradient` (arc texture `ring_heat` from `tools/gen_assets.py`) and
+  `set_marker` (room temperature dot), domain `RadiatorsState`, parsing in
+  `transport/ha_client.cpp`, routing in `live_source.cpp`. Icons `icon_trv_*`,
+  `icon_dev_radiator(_idle)`: `tools/draw_option_icons.py`, `tools/draw_device_icons.py`.
+- App: `phone/native/.../ui/home/RadiatorPage.kt`, described in `phone/docs/PROGRESS.md` (item 7).
+- **Window** only from the room's contact sensor (`window` in `radiator_rooms`), not from the
+  head's `switch.*_open_window` — that enables the detection feature, it is not a reading.
+  Contact sensors are due 2026-11-09; no room has `window` yet, so the "Okno" tile is hidden.
+- The "W pokoju" card lost its verdict word and dot (user request; ADR 0017 has a note).
+- In landscape the living room has three devices: the "W pokoju" card narrows to 160 px
+  (`apply_compact` in `home_room.cpp`), card layout unchanged — the lamp power stays top right.
+
+**Kitchen lamp.** A WiZ group of three bulbs; **the wall switch (channel L2) cuts their power**
+(in the living room the channel is decoupled and an automation toggles the group — the kitchen
+has no such automation). In `light_rooms` the `lampa_kuchnia` entry has `power` (channel L2) and
+`min_kelvin`/`max_kelvin`: with power cut the lamp is "off", not "unavailable"; every command
+except off first turns the channel on and waits up to 20 s for the bulbs (~7 s). Off from the
+remote turns the bulbs off and leaves the channel on (user's choice) — the wall switch then needs
+two presses. Firmware and app unchanged (lights are looked up by room).
+
+**Deployment on the HA server.** Backups: `…before-radiators.20261109-064218`,
+`…before-kitchen-lamp.20261109-080333`; `check_config`, scripts and automations reloaded through
+the API (`script.reload`, `automation.reload`), no restart. The repo file has **example entity
+names**, the server has real ones — move changes block by block with context, not `patch -U0`
+(it once inserted a block in the wrong place; `check_config` caught it). Real names: from the
+file on the server or `/api/states`.
+
+**Checked on the board (landscape):** living room with three cards, radiator screen (off), the
+kitchen tile, room and lamp screen. **Not checked:** portrait on the board; heating and
+Harmonogram on the board (the subagent saw them on the phone, partly on sample data); the phone
+after the last fixes; the "Okno" tile; the kitchen lamp on the phone.
+
+**Open, in order:**
+
+1. Screenshots in all four variants + a new `15-radiator.png` (`docs/ux/home-screen.en.md` §6),
+   radiator and kitchen taps in `phone/tools/screenshots.sh`, `tools/overview.py`. Only then merge
+   `feat/radiators` into `main`.
+2. Office: once the head is paired and named "Biuro - Termostat" in Zigbee2MQTT the entity is
+   `climate.biuro_termostat` — already in `radiator_rooms` on the server. Another name → fix the
+   entry (server and repo) and the triggers.
+3. Window contact sensors: add `window: binary_sensor.…` to the rooms in `radiator_rooms` and the
+   entities to the "snapshot po zmianie grzejnika" triggers.
+4. The heads have `select.*_temperature_sensor_select = internal`: the "czujnik temperatury do
+   termostatu" automations write the room reading to `external_temperature_input`, but the head
+   ignores it. Switching to `external` is the user's decision.
+5. The climate card shows "w pokoju" from the air conditioner's sensor (23.0°) while the room
+   sensor reads 22.6° — the same inconsistency as with the heads; to be decided (ADR 0009).
+6. On 2026-11-09 06:56–06:58 commands arrived on the remote topic that changed the heads (living
+   room to Grzanie 24.5°, bedroom off) and turned the living-room lamp on. The source (panel or
+   phone) cannot be told — the contract carries no client id. The user said to leave the state.
+   If it recurs: log commands in the bridge (`system_log.write` with `trigger.payload`).
+7. A change of the head's schedule alone does not trigger a snapshot; `next` refreshes when the
+   head's setpoint changes.
+8. `trv_mark` (small flame, 12 grid) is drawn but used only in the mockup — the firmware room
+   tiles show no temperature.
+9. The panel's USB port can change (`/dev/cu.usbmodem1101`) — `PILOT_PORT=…` for
+   `tools/remote.py`, `-p` for `idf.py flash`.
+10. The auto-mode classifier blocks deploying to the HA server (ssh) and tapping the phone
+    (`adb input`) — each time it needs the user's explicit OK in chat.
+
 ## Next safe step
 
+0. Close the "Open" items of the "Radiators and the kitchen lamp" entry (screenshots, merge `feat/radiators`).
 1. The WIĘCEJ screen according to the plan above (stage 2).
 2. TV: the LG integration in Home Assistant and the `tv` section — the HA client is already there, it just needs to read it.
 3. Real power saving, not just turning off the backlight: requires confirming the
