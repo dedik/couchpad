@@ -82,6 +82,10 @@ i usługi → MQTT.
    | `media_player.living_room_apple_tv`, `remote.living_room_apple_tv`, `binary_sensor.living_room_apple_tv_keyboard_focus` | Apple TV (kotwica `&appletv`) |
    | `WPISZ_ID_WPISU_APPLE_TV` | identyfikator wpisu integracji Apple TV |
    | `climate.living_room_ac` | klimatyzacja (kotwica `&climate`) |
+   | `light.living_room_lamp`, `light.living_room_lamp_left/center/right` | lampa w salonie i jej żarówki (`light_rooms`) |
+   | `light.kitchen_lamp`, `light.kitchen_lamp_left/center/right`, `switch.kitchen_light_switch_l2` | lampa w kuchni, jej żarówki i kanał włącznika, który odcina im prąd (`power`) |
+   | `climate.living_room_radiator`, `climate.bedroom_radiator`, `climate.bathroom_radiator`, `climate.office_radiator` | głowice grzejników (`radiator_rooms`, ADR 0018) |
+   | `sensor.*_radiator_battery`, `text.*_radiator_weekly_schedule_<dzień>` | bateria i harmonogram głowicy (opcjonalne) |
    | `weather.forecast_home` | pogoda na ekranie startowym |
 
    Encje Z906 występują w kilku szablonach — najprościej podmienić je wyszukiwaniem

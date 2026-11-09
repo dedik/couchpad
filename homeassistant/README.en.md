@@ -84,6 +84,10 @@ Settings → Devices & services → MQTT.
    | `media_player.living_room_apple_tv`, `remote.living_room_apple_tv`, `binary_sensor.living_room_apple_tv_keyboard_focus` | Apple TV (`&appletv` anchor) |
    | `WPISZ_ID_WPISU_APPLE_TV` | placeholder (Polish for "enter Apple TV entry ID"): the config entry identifier of the Apple TV integration |
    | `climate.living_room_ac` | air conditioning (`&climate` anchor) |
+   | `light.living_room_lamp`, `light.living_room_lamp_left/center/right` | living-room lamp and its bulbs (`light_rooms`) |
+   | `light.kitchen_lamp`, `light.kitchen_lamp_left/center/right`, `switch.kitchen_light_switch_l2` | kitchen lamp, its bulbs and the switch channel that cuts their power (`power`) |
+   | `climate.living_room_radiator`, `climate.bedroom_radiator`, `climate.bathroom_radiator`, `climate.office_radiator` | radiator heads (`radiator_rooms`, ADR 0018) |
+   | `sensor.*_radiator_battery`, `text.*_radiator_weekly_schedule_<day>` | head battery and schedule (optional) |
    | `weather.forecast_home` | weather on the start screen |
 
    The Z906 entities appear in several templates — the simplest way is to replace them with a

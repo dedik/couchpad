@@ -99,7 +99,7 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
 6. ~~Karta „W pokoju”~~ (2026-11-09, [ADR 0017](../../docs/architecture/adr/0017-room-climate-card.md))
    — 1:1 z panelem: temperatura i wilgotność czujnika pokoju z `indoor.rooms` w wiadomości
    pogody (`Contract.parseWeather`, `Weather.room`, test w `ContractTest`), ikony
-   `px_sensor_temp` / `px_sensor_humidity` (48 px), ocena z kolorową kropką. Pion: nad
+   `px_sensor_temp` / `px_sensor_humidity` (48 px), bez oceny słowem (usunięta 2026-11-09). Pion: nad
    „URZĄDZENIA”, poziom: pierwsza kolumna 210 px. Karta klimy w salonie ma ikonę
    klimatyzatora `px_dev_aircon`. `tools/screenshots.sh`: w pionie lampa i klima zjechały
    w dół (nowe tapnięcia 480 945 i 482 1245).
@@ -109,9 +109,14 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    „Grzejnik” w pokoju (studzienka `px_dev_radiator` / `_idle`, „w pokoju” tylko z czujnika
    pokoju) i ekran `ui/home/RadiatorPage.kt`: tarcza 5–30 ° z łukiem od niebieskiego do
    czerwieni (`Dial(brush, marker)`) i kropką temperatury pokoju, kafle Tryb / Teraz / Szybko
-   (ikony `px_trv_*`). W poziomie salon ma trzy karty urządzeń: „W pokoju” zwęża się do 156 px,
-   zasilanie lampy schodzi na dół obok strzałki; karty w poziomie mają strzałkę. Do zrobienia:
-   tapnięcia grzejnika w `tools/screenshots.sh` i odświeżenie zrzutów.
+   (ikony `px_trv_*`). W poziomie salon ma trzy karty urządzeń: „W pokoju” zwęża się do 160 px
+   (mniejsze liczby), układ kart bez zmian — zasilanie lampy w prawym górnym rogu; karty
+   w poziomie mają strzałkę na dole po prawej. Do zrobienia: tapnięcia grzejnika
+   w `tools/screenshots.sh` i odświeżenie zrzutów (stukanie w telefon zablokował klasyfikator
+   trybu auto — trzeba zgody użytkownika). Ekranu grzejnika ani lampy w kuchni na żywych danych
+   w telefonie po ostatnich poprawkach nikt jeszcze nie oglądał.
+8. ~~Lampa w kuchni~~ (2026-11-09) — bez zmian w aplikacji: bridge podaje drugą pozycję `lights`
+   (`room: kuchnia`, `id: lampa_kuchnia`), a aplikacja szuka świateł po pomieszczeniu.
 
 ---
 

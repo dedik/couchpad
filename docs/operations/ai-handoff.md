@@ -613,8 +613,86 @@ i `climate_tile.cpp` (kafelek) z `climate_internal.hpp`. `build_start` rozbity n
 Usunięte ostrzeżenia kompilatora w UI (`theme::selector`, `theme::kOpaTransp`/`kOpaCover`).
 Pion po refaktorze nie był sprawdzony na płytce — zmiany nie dotykają układu, tylko kodu.
 
+## Grzejniki i lampa w kuchni — 2026-11-09
+
+Gałąź `feat/radiators` (niewypchnięta, niescalona z `main`): `07f277b` grzejniki
+([ADR 0018](../architecture/adr/0018-radiators.md)), `117941d` lampa w kuchni, potem ten wpis.
+
+**Grzejniki.** Głowice SONOFF TRVZB (Zigbee2MQTT) w salonie, sypialni, łazience; biuro dostaje
+czwartą 2026-11-09 wieczorem. Kuchnia i przedpokój grzejnika nie mają i mieć nie będą.
+
+- Kontrakt: sekcja `radiators` i akcje `radiator.*` (`docs/architecture/mqtt-contract.md`).
+  Celowo **bez temperatury głowicy** — mierzy przy kaloryferze; pilot bierze temperaturę pokoju
+  z `indoor.rooms` wiadomości pogody (czujnik pokoju).
+- Bridge: tabela `radiator_rooms` (`entity`, opcjonalnie `battery`, `window`, `schedule`),
+  automatyzacje „Pilot — grzejnik” i „Pilot — snapshot po zmianie grzejnika”. Następny punkt
+  harmonogramu (`next`) liczy szablon z `text.*_weekly_schedule_<dzień>`; harmonogram tylko do
+  podglądu.
+- Firmware: `ui/screens/home_radiator.cpp` (karta i ekran), poziom `Level::Radiator`
+  w `RoomScreen`, `widgets::Thermostat::set_gradient` (tekstura łuku `ring_heat` z
+  `tools/gen_assets.py`) i `set_marker` (kropka temperatury pokoju), domena
+  `RadiatorsState`, parsowanie w `transport/ha_client.cpp`, routing w `live_source.cpp`.
+  Ikony `icon_trv_*`, `icon_dev_radiator(_idle)`: `tools/draw_option_icons.py`,
+  `tools/draw_device_icons.py`.
+- Aplikacja: `phone/native/.../ui/home/RadiatorPage.kt`, opis w `phone/docs/PROGRESS.md` (pkt 7).
+- **Okno** tylko z kontaktronu pokoju (`window` w `radiator_rooms`), nie z
+  `switch.*_open_window` głowicy — to włącznik funkcji wykrywania, nie odczyt. Kontaktrony mają
+  dojść 2026-11-09; dziś żaden pokój nie ma `window`, więc kafla „Okno” nie widać.
+- Karta „W pokoju” straciła ocenę słowem i kropkę (prośba użytkownika, ADR 0017 ma adnotację).
+- W poziomie salon ma trzy urządzenia: karta „W pokoju” zwęża się do 160 px (`apply_compact`
+  w `home_room.cpp`), układ kart bez zmian — zasilanie lampy zostaje w prawym górnym rogu.
+
+**Lampa w kuchni.** Grupa WiZ z trzech żarówek; **włącznik na ścianie (kanał L2) odcina im prąd**
+(w salonie kanał jest odsprzęgnięty, a automatyzacja przełącza grupę — w kuchni takiej nie ma).
+W `light_rooms` pozycja `lampa_kuchnia` z opcją `power` (kanał L2) i `min_kelvin`/`max_kelvin`:
+przy odciętym prądzie lampa jest „wyłączona”, nie „niedostępna”; każde polecenie poza wyłączeniem
+najpierw włącza kanał i czeka do 20 s na żarówki (~7 s). Wyłączenie z pilota gasi żarówki,
+kanał zostaje (wybór użytkownika) — wtedy włącznik na ścianie trzeba nacisnąć dwa razy.
+Firmware i aplikacja bez zmian (światła po pomieszczeniu).
+
+**Wdrożenie na serwerze HA.** Kopie: `…before-radiators.20261109-064218`,
+`…before-kitchen-lamp.20261109-080333`; `check_config`, przeładowanie skryptów i automatyzacji
+przez API (`script.reload`, `automation.reload`), bez restartu. Plik w repo ma **przykładowe
+nazwy encji**, na serwerze są prawdziwe — zmiany przenoś blokami z kontekstem, nie `patch -U0`
+(raz wstawił blok w złe miejsce; złapał to `check_config`). Prawdziwe nazwy: z pliku na serwerze
+albo `/api/states`.
+
+**Sprawdzone na płytce (poziom):** salon z trzema kartami, ekran grzejnika (stan wyłączony),
+kafelek, pokój i ekran lampy w kuchni. **Niesprawdzone:** pion na płytce; grzanie i Harmonogram
+na płytce (subagent oglądał je w telefonie, częściowo na danych przykładowych); telefon po
+ostatnich poprawkach; kafel „Okno”; lampa w kuchni w telefonie.
+
+**Otwarte, w kolejności:**
+
+1. Zrzuty we wszystkich czterech wariantach + nowy `15-radiator.png`
+   (`docs/ux/home-screen.md` §6), tapnięcia grzejnika i kuchni w `phone/tools/screenshots.sh`,
+   `tools/overview.py`. Dopiero potem scalić `feat/radiators` z `main`.
+2. Biuro: po sparowaniu i nazwaniu głowicy w Zigbee2MQTT „Biuro - Termostat” encja to
+   `climate.biuro_termostat` — tak już stoi w `radiator_rooms` na serwerze. Inna nazwa → popraw
+   wpis (serwer i repo) i wyzwalacze.
+3. Kontaktrony okien: dopisz `window: binary_sensor.…` do pokoi w `radiator_rooms` i encje do
+   wyzwalaczy „snapshot po zmianie grzejnika”.
+4. Głowice mają `select.*_temperature_sensor_select = internal`: automatyzacje „czujnik
+   temperatury do termostatu” wpisują odczyt pokoju do `external_temperature_input`, ale głowica
+   go nie używa. Zmiana na `external` to decyzja użytkownika.
+5. Karta klimy pokazuje „w pokoju” z czujnika klimatyzatora (23,0°), a czujnik pokoju ma 22,6° —
+   ta sama niespójność co przy głowicach; do decyzji (ADR 0009).
+6. 2026-11-09 06:56–06:58 z tematu pilota przyszły polecenia, które przestawiły głowice (salon na
+   Grzanie 24,5°, sypialnia wyłączona) i zapaliły lampę w salonie. Źródła (panel / telefon) nie
+   da się ustalić — kontrakt nie niesie identyfikatora klienta. Użytkownik kazał zostawić stan.
+   Jeśli się powtórzy: logować polecenia w bridge'u (`system_log.write` z `trigger.payload`).
+7. Zmiana samego harmonogramu w głowicy nie wyzwala snapshotu; `next` odświeża się przy zmianie
+   nastawy głowicy.
+8. `trv_mark` (mały płomień, siatka 12) jest narysowany, ale użyty tylko w makiecie — temperatury
+   na kafelkach pokoi w firmware nie ma.
+9. Port USB panelu potrafi się zmienić (`/dev/cu.usbmodem1101`) — `PILOT_PORT=…` dla
+   `tools/remote.py`, `-p` dla `idf.py flash`.
+10. Klasyfikator trybu auto blokuje wdrożenie na serwer HA (ssh) i stukanie w telefon (`adb
+    input`) — za każdym razem potrzebna wyraźna zgoda użytkownika w czacie.
+
 ## Następny bezpieczny krok
 
+0. Zamknąć „Otwarte” z wpisu „Grzejniki i lampa w kuchni” (zrzuty, scalenie `feat/radiators`).
 1. Ekran WIĘCEJ według planu powyżej (etap 2).
 2. TV: integracja LG w Home Assistant i sekcja `tv` — klient HA już jest, wystarczy ją czytać.
 3. Oszczędzanie energii naprawdę, a nie samo gaszenie podświetlenia: wymaga potwierdzenia
