@@ -37,9 +37,13 @@ class MainActivity : ComponentActivity() {
         // przy wyjściu do innych aplikacji.
         if (Build.VERSION.SDK_INT >= 27) {
             setShowWhenLocked(true)
+            setTurnScreenOn(true)
         } else {
             @Suppress("DEPRECATION")
-            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
         }
         // Rysujemy także obok przedniej kamery: w poziomie pasek zakładek wchodzi w ten pas,
         // a ikonę na wysokości kamery odsuwa (TabBars.kt, SideRail).

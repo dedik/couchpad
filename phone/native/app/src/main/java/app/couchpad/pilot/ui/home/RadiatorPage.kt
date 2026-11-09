@@ -107,7 +107,7 @@ internal val HeatInk = Color(0xFFFF7E5F)
  */
 private val HeatBrush = Brush.sweepGradient(
     0f to Color(0xFF3D8BFF),
-    0.375f to Color(0xFFF2A93B),
+    0.375f to Color(0xFFFF8000),
     0.75f to Color(0xFFE5281B),
     0.87f to Color(0xFFE5281B),
     0.88f to Color(0xFF3D8BFF),

@@ -12,8 +12,8 @@ internal object ScreenPolicy {
     const val DIM_PERCENT = 15
     const val DIM_BEFORE_MS = 10_000L
 
-    /** Jasność uśpionego pilota: ekran gaśnie po czasie systemowym. */
-    const val ASLEEP_PERCENT = 1
+    /** Jasność uśpionego pilota: ekran wygaszony do 0%. */
+    const val ASLEEP_PERCENT = 0
 
     fun dark(prefs: Preferences, hour: Int): Boolean = when (prefs.theme) {
         1 -> false

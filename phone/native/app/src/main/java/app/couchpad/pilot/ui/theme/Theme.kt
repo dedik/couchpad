@@ -39,16 +39,16 @@ data class Palette(
 val DarkPalette = Palette(
     bg = Color(0xFF0A0B0E), surface = Color(0xFF14161B), surface2 = Color(0xFF1C1F26),
     surface3 = Color(0xFF282C35), line = Color(0xFF30353F), text = Color(0xFFF3F5F9),
-    dim = Color(0xFF98A0AE), faint = Color(0xFF626A78), accent = Color(0xFFF2A93B),
-    accentPressed = Color(0xFFF4B25A), accentInk = Color(0xFF17120A), ok = Color(0xFF56D6A0),
+    dim = Color(0xFF98A0AE), faint = Color(0xFF626A78), accent = Color(0xFFFF8000),
+    accentPressed = Color(0xFFFF941A), accentInk = Color(0xFF17120A), ok = Color(0xFF56D6A0),
     danger = Color(0xFFFF5F5F),
 )
 
 val LightPalette = Palette(
     bg = Color(0xFFEEF0F3), surface = Color(0xFFFFFFFF), surface2 = Color(0xFFE4E7EC),
     surface3 = Color(0xFFCFD4DC), line = Color(0xFFD9DDE4), text = Color(0xFF15171C),
-    dim = Color(0xFF586070), faint = Color(0xFF878F9D), accent = Color(0xFFE08A12),
-    accentPressed = Color(0xFFB86F0A), accentInk = Color(0xFF1A1206), ok = Color(0xFF1C9A68),
+    dim = Color(0xFF586070), faint = Color(0xFF878F9D), accent = Color(0xFFFF8000),
+    accentPressed = Color(0xFFE67300), accentInk = Color(0xFF1A1206), ok = Color(0xFF1C9A68),
     danger = Color(0xFFE03A3A),
 )
 

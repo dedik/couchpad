@@ -38,6 +38,7 @@ import app.couchpad.pilot.data.zoneId
 import app.couchpad.pilot.ui.appletv.AppleTvScreen
 import app.couchpad.pilot.ui.audio.AudioScreen
 import app.couchpad.pilot.ui.components.EdgeDrawer
+import app.couchpad.pilot.ui.components.doubleTap
 import app.couchpad.pilot.ui.components.tap
 import app.couchpad.pilot.ui.home.HomeScreen
 import app.couchpad.pilot.ui.hourIn
@@ -45,6 +46,7 @@ import app.couchpad.pilot.ui.settings.SettingsScreen
 import app.couchpad.pilot.ui.start.StartScreen
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.DarkPalette
+import app.couchpad.pilot.ui.theme.Haptics
 import app.couchpad.pilot.ui.theme.LightPalette
 import app.couchpad.pilot.ui.theme.LocalLandscape
 import app.couchpad.pilot.ui.theme.ProvideUnits
@@ -102,8 +104,9 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
     val dimmed = !asleep && ScreenPolicy.dimmed(prefs, idle)
     val level = ScreenPolicy.brightness(prefs, hour, asleep, dimmed)
     LaunchedEffect(level) { display.brightness(level) }
-    // Uśpiony pilot oddaje ekran systemowi, który wygasi go po swoim czasie.
-    LaunchedEffect(asleep) { display.keepScreenOn(!asleep) }
+    // Ekran pozostaje włączony (w uśpieniu wygaszony do 0% czarną nakładką),
+    // dzięki czemu digitizer reaguje na podwójne puknięcie bez użycia przycisku zasilania.
+    LaunchedEffect(Unit) { display.keepScreenOn(true) }
     LaunchedEffect(prefs.orientation) { display.orientation(prefs.orientation) }
 
     // Wstecz cofa do ekranu startowego; na nim niczego nie zamyka — pilot jest ekranem głównym.
@@ -166,13 +169,16 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
             // Listy wyboru nad całym ekranem, pod zasłoną uśpienia.
             overlay.Content()
             if (asleep) {
-                // Uśpiony pilot: czarny ekran zabiera pierwsze dotknięcie i budzi pilota na
-                // ekranie startowym (ADR 0010), a stan pobiera się w tle (ADR 0005).
+                // Uśpiony pilot: czarna zasłona wygaszona do 0% z aktywnym ekranem.
+                // Podwójne stuknięcie budzi pilota na ekranie startowym (ADR 0010),
+                // przywraca zadaną jasność i odświeża stan w tle (ADR 0005).
                 Box(
-                    Modifier.fillMaxSize().background(Color.Black).tap(feedback = false) {
-                        wakeUp()
-                        repo.wake()
-                    },
+                    Modifier.fillMaxSize()
+                        .background(Color.Black)
+                        .doubleTap {
+                            wakeUp()
+                            repo.wake()
+                        }
                 )
             }
         }

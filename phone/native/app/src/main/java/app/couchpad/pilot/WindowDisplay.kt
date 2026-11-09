@@ -16,7 +16,7 @@ class WindowDisplay(private val activity: Activity) : DisplayControl {
 
     override fun brightness(percent: Int) {
         val attrs = window.attributes
-        val value = percent.coerceIn(1, 100) / 100f
+        val value = percent.coerceIn(0, 100) / 100f
         if (attrs.screenBrightness != value) {
             attrs.screenBrightness = value
             window.attributes = attrs
@@ -27,7 +27,7 @@ class WindowDisplay(private val activity: Activity) : DisplayControl {
     override fun orientation(index: Int) {
         activity.requestedOrientation = when (index) {
             1 -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            2 -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            2 -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             3 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
         }
