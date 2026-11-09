@@ -244,8 +244,12 @@ void trackpad_highlight(Trackpad* pad, domain::NavKey key) {
 }
 
 domain::NavKey trackpad_zone(Trackpad* pad) {
+    lv_indev_t* indev = lv_indev_active();
+    if (indev == nullptr) {
+        return domain::NavKey::None;
+    }
     lv_point_t point{};
-    lv_indev_get_point(lv_indev_active(), &point);
+    lv_indev_get_point(indev, &point);
     lv_area_t area;
     lv_obj_get_coords(pad->root, &area);
     const float width = static_cast<float>(lv_area_get_width(&area));
@@ -293,8 +297,12 @@ void trackpad_event(lv_event_t* event) {
     }
 
     if (code == LV_EVENT_PRESSING) {
+        lv_indev_t* indev = lv_indev_active();
+        if (indev == nullptr) {
+            return;
+        }
         lv_point_t vect{};
-        lv_indev_get_vect(lv_indev_active(), &vect);
+        lv_indev_get_vect(indev, &vect);
         pad->acc_x += vect.x;
         pad->acc_y += vect.y;
         pad->travelled += std::abs(vect.x) + std::abs(vect.y);

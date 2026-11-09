@@ -41,6 +41,12 @@ namespace {
 
 float angle_at(lv_obj_t* root, int32_t* out_distance) {
     lv_indev_t* indev = lv_indev_active();
+    if (indev == nullptr) {
+        if (out_distance != nullptr) {
+            *out_distance = 0;
+        }
+        return 0.0F;
+    }
     lv_point_t point{};
     lv_indev_get_point(indev, &point);
 
@@ -592,8 +598,12 @@ void level_event(lv_event_t* event) {
     if (code == LV_EVENT_PRESSING) {
         // lv_indev_get_vect() podaje przyrost ruchu palca — dokładnie to,
         // czego potrzebuje gest względny.
+        lv_indev_t* indev = lv_indev_active();
+        if (indev == nullptr) {
+            return;
+        }
         lv_point_t vect{};
-        lv_indev_get_vect(lv_indev_active(), &vect);
+        lv_indev_get_vect(indev, &vect);
         if (vect.y == 0) {
             return;
         }
