@@ -101,7 +101,7 @@ class PilotRepository(private val store: SettingsStore) {
         val config = MqttClient.Config(
             host = s.host.trim(),
             port = s.port,
-            clientId = "pilot-$id-android",
+            clientId = "pilot-$id-android-${store.deviceTag}",
             username = s.username,
             password = s.password,
             willTopic = if (s.remoteId.isNotBlank()) "${s.v1Base}/availability" else null,

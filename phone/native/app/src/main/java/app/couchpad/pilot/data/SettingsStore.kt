@@ -2,11 +2,22 @@ package app.couchpad.pilot.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.provider.Settings
 import org.json.JSONObject
 
 /** Ustawienia pilota w prywatnych SharedPreferences aplikacji (`shared_prefs/pilot.xml`). */
 class SettingsStore(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("pilot", Context.MODE_PRIVATE)
+
+    /**
+     * Krótki znacznik tego telefonu (z ANDROID_ID, nie z ustawień — te kopiuje się między
+     * telefonami). Broker rozłącza starsze połączenie o tym samym identyfikatorze klienta,
+     * więc dwa telefony z jednym pilotem wyrzucałyby się nawzajem.
+     */
+    @Suppress("HardwareIds")
+    val deviceTag: String = runCatching {
+        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    }.getOrNull()?.takeLast(6)?.ifBlank { null } ?: "phone"
 
     fun loadBroker(): BrokerSettings {
         val d = BrokerSettings()
