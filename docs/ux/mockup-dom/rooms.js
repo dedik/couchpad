@@ -36,13 +36,32 @@
   };
   const sw = (entity) => ({ entity, label: 'Światło', kind: 'sw', on: false });
   const rooms = [
-    { id: 'salon', name: 'Salon', temp: '22,8°', light: lampa, entities: ['lampa', 'klima'] },
-    { id: 'kuchnia', name: 'Kuchnia', light: sw('switch.kuchnia_wlacznik_swiatla_l1') },
-    { id: 'przedpokoj', name: 'Przedpokój', light: { ...sw('switch.nspanel_korytarz_relay_1'), on: true } },
-    { id: 'biuro', name: 'Biuro', light: sw('switch.nspanel_biuro_relay_1') },
-    { id: 'lazienka', name: 'Łazienka', temp: '23,5°', light: null },
-    { id: 'sypialnia', name: 'Sypialnia', temp: '20,1°', light: sw('switch.nspanel_sypialnia_relay_1') },
+    // temp / hum: czujnik pokoju (stopnie, %); kuchnia = salon, przedpokój = biuro (wspólna przestrzeń)
+    { id: 'salon', name: 'Salon', temp: 22.8, hum: 41, light: lampa, entities: ['lampa', 'klima'] },
+    { id: 'kuchnia', name: 'Kuchnia', temp: 22.8, hum: 41, light: sw('switch.kuchnia_wlacznik_swiatla_l1') },
+    { id: 'przedpokoj', name: 'Przedpokój', temp: 21.9, hum: 33, light: { ...sw('switch.nspanel_korytarz_relay_1'), on: true } },
+    { id: 'biuro', name: 'Biuro', temp: 21.9, hum: 33, light: sw('switch.nspanel_biuro_relay_1') },
+    { id: 'lazienka', name: 'Łazienka', temp: 23.5, hum: 67, light: null },
+    { id: 'sypialnia', name: 'Sypialnia', temp: 20.1, hum: 45, light: sw('switch.nspanel_sypialnia_relay_1') },
   ];
+
+  const deg = v => v.toFixed(1).replace('.', ',') + '°';
+  // Ocena odczytu zamiast podpisu: ikona mówi, co mierzymy, słowo — czy jest dobrze.
+  // Temperatura: 19–24,5 °C komfort. Wilgotność: 40–60 % komfort, poniżej 35 % sucho.
+  const tempWord = t => t < 19 ? ['chłodno', 'cold'] : t > 24.5 ? ['ciepło', 'warm'] : ['komfortowo', 'ok'];
+  const humWord = h => h < 35 ? ['sucho', 'warm'] : h > 60 ? ['wilgotno', 'cold'] : h < 40 ? ['lekko sucho', 'ok'] : ['komfortowo', 'ok'];
+
+  // Karta klimatu pokoju: dwa odczyty z czujnika, ikona pixel art + duża liczba + ocena.
+  // Pion: pod paskiem pokoi, nad urządzeniami. Poziom: pierwsza kolumna w rzędzie kart.
+  function climaHtml(land) {
+    const r = room();
+    if (r.temp === undefined && r.hum === undefined) return '';
+    const cell = (icon, val, unit, label, [word, cls]) => `<div class="rcv" aria-label="${label} ${val} ${unit}, ${word}"><img src="${A(icon)}" alt="">
+        <div><b>${val}<small>${unit}</small></b><span class="rcl ${cls}">${word}</span></div></div>`;
+    const t = r.temp !== undefined ? cell('sensor_temp', deg(r.temp).slice(0, -1), '°C', 'Temperatura', tempWord(r.temp)) : '';
+    const h = r.hum !== undefined ? cell('sensor_humidity', r.hum, '%', 'Wilgotność', humWord(r.hum)) : '';
+    return `<div class="rclim ${land ? 'is-land' : ''}">${t}${t && h ? '<i class="rsep"></i>' : ''}${h}</div>`;
+  }
 
   /* ---------- model światła: grupa albo pojedyncza żarówka ---------- */
   const isGroup = l => !!(l && l.bulbs);
@@ -87,9 +106,9 @@
     const bar = dimmable(r.light) && lOn(r.light) ? `<span class="rbar"><i style="width:${lBr(r.light)}%"></i></span>` : '';
     return `<span class="rlamp ${s} ${pendingOf(r.light) ? 'pending' : ''}" data-power="${r.id}" role="button" aria-label="${r.name}: przełącz światło"><img src="${A('lamp_' + s)}" alt="">${bar}</span>`;
   };
-  const gridHtml = () => rooms.map(r => `<div class="room ${lOn(r.light) ? 'is-lit' : ''} ${r.temp ? 'has-temp' : ''}" data-room="${r.id}" role="button">
+  const gridHtml = () => rooms.map(r => `<div class="room ${lOn(r.light) ? 'is-lit' : ''} ${r.temp !== undefined ? 'has-temp' : ''}" data-room="${r.id}" role="button">
       <img class="room-icon" src="${A('room_' + r.id)}" alt="">${chip(r)}
-      <span class="room-name">${r.name}</span><span class="room-st">${status(r.light)}</span>${r.temp ? `<span class="room-temp">${r.temp}</span>` : ''}
+      <span class="room-name">${r.name}</span><span class="room-st">${status(r.light)}</span>${r.temp !== undefined ? `<span class="room-temp">${deg(r.temp)}</span>` : ''}
     </div>`).join('');
 
   /* ---------- poziomy podstrony ---------- */
@@ -133,8 +152,8 @@
         ${pwr(lOn(l), pendingOf(l), r.id)}
       </div>`);
     }
-    cards.push(`<div class="rent rempty"><div class="rlc"><b>${l ? 'Inne encje' : 'Brak encji'}</b><span>do wybrania w konfiguracji pilota</span>${r.temp ? `<em>temperatura w pokoju ${r.temp}</em>` : ''}</div></div>`);
-    return `<p class="rsec">Urządzenia</p><div class="rents ${land ? 'is-land' : ''}">${cards.join('')}</div>`;
+    cards.push(`<div class="rent rempty"><div class="rlc"><b>${l ? 'Inne encje' : 'Brak encji'}</b><span>do wybrania w konfiguracji pilota</span></div></div>`);
+    return roomBody(land, cards.join(''));
   }
 
   function roomHtml(land) {
@@ -149,11 +168,18 @@
         ${on ? `<span class="rbar wide"><i style="width:${lBr(lampa)}%"></i></span>` : ''}
       </div>`;
     const klCard = `<div class="rent" data-go="klima" role="button">
-        <div class="rwell sm kl"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M12 2v20m-8-6 4-4-4-4m16 0-4 4 4 4M8 4l4 4 4-4M8 20l4-4 4 4"/></svg></div>
+        <div class="rwell sm kl"><img src="${A('dev_aircon')}" alt=""></div>
         <div class="rlc"><b>Klimatyzacja</b><span>Chłodzenie · 22,0°</span><em>w pokoju 24,0°</em></div>
         ${chev}
       </div>`;
-    return `<p class="rsec">Urządzenia</p><div class="rents ${land ? 'is-land' : ''}">${lampCard}${klCard}</div>`;
+    return roomBody(land, lampCard + klCard);
+  }
+
+  // Pion: karta klimatu nad listą urządzeń. Poziom: karta klimatu jako pierwsza kolumna rzędu.
+  function roomBody(land, cards) {
+    if (land) return `<p class="rsec">W pokoju · urządzenia</p><div class="rents is-land">${climaHtml(true)}${cards}</div>`;
+    const c = climaHtml(false);
+    return `${c ? `<p class="rsec">W pokoju</p>${c}` : ''}<p class="rsec">Urządzenia</p><div class="rents">${cards}</div>`;
   }
 
   function segs(n, f, cls, off) {

@@ -1,6 +1,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include "core/clock.hpp"
+
 #include "home_internal.hpp"
 #include "images.h"
 
@@ -100,13 +102,80 @@ RoomScreen::Card make_card(lv_obj_t* parent, bool wide, Context& context) {
     return c;
 }
 
+// Jedna połowa karty „W pokoju”: ikona 48 px, duża liczba z jednostką, pod nią ocena z kropką.
+RoomScreen::Reading make_reading(lv_obj_t* parent, const lv_image_dsc_t* icon, const char* unit, bool wide) {
+    RoomScreen::Reading r;
+    r.root = make_box(parent);
+    if (wide) {
+        lv_obj_set_width(r.root, LV_PCT(100));
+        lv_obj_set_height(r.root, 0);
+    } else {
+        lv_obj_set_height(r.root, LV_SIZE_CONTENT);
+        lv_obj_set_width(r.root, 0);
+    }
+    lv_obj_set_flex_grow(r.root, 1);
+    theme::make_row(r.root, theme::kS3);
+    lv_obj_t* image = lv_image_create(r.root);
+    lv_image_set_src(image, icon);
+    lv_obj_t* texts = make_box(r.root);
+    lv_obj_set_size(texts, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    theme::make_column(texts, 6);
+    lv_obj_t* line = make_box(texts);
+    lv_obj_set_size(line, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    theme::make_row(line, 3);
+    lv_obj_set_flex_align(line, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_END);
+    r.value = make_text(line, theme::font_b46num(), theme::text());
+    r.unit = make_text(line, theme::font_m15(), theme::dim());
+    lv_obj_set_style_pad_bottom(r.unit, 6, LV_PART_MAIN);
+    lv_label_set_text(r.unit, unit);
+    lv_obj_t* verdict = make_box(texts);
+    lv_obj_set_size(verdict, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    theme::make_row(verdict, 6);
+    r.dot = make_box(verdict);
+    lv_obj_set_size(r.dot, 7, 7);
+    lv_obj_set_style_radius(r.dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(r.dot, LV_OPA_COVER, LV_PART_MAIN);
+    r.verdict = make_text(verdict, theme::font_m11(), theme::ok());
+    lv_obj_set_style_text_letter_space(r.verdict, 1, LV_PART_MAIN);
+    return r;
+}
+
+void build_clima_card(Context& context, lv_obj_t* parent, bool wide) {
+    RoomScreen& screen = context.room_page;
+    screen.clima = card(parent);
+    if (wide) {
+        // Poziom: pierwsza, węższa kolumna rzędu kart; temperatura nad wilgotnością.
+        lv_obj_set_size(screen.clima, 210, LV_PCT(100));
+        lv_obj_set_style_pad_all(screen.clima, theme::kS5, LV_PART_MAIN);
+        theme::make_column(screen.clima, theme::kS4);
+    } else {
+        lv_obj_set_size(screen.clima, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_style_pad_hor(screen.clima, 18, LV_PART_MAIN);
+        lv_obj_set_style_pad_ver(screen.clima, theme::kS4, LV_PART_MAIN);
+        theme::make_row(screen.clima, theme::kS4);
+    }
+    lv_obj_remove_flag(screen.clima, LV_OBJ_FLAG_CLICKABLE);
+    screen.temperature = make_reading(screen.clima, &icon_sensor_temp_large, "°C", wide);
+    screen.clima_sep = make_box(screen.clima);
+    lv_obj_set_size(screen.clima_sep, wide ? LV_PCT(100) : 1, wide ? 1 : 64);
+    lv_obj_set_style_bg_opa(screen.clima_sep, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(screen.clima_sep, theme::line(), LV_PART_MAIN);
+    screen.humidity = make_reading(screen.clima, &icon_sensor_humidity_large, "%", wide);
+}
+
 void build_room_view(Context& context, bool wide) {
     RoomScreen& screen = context.room_page;
     screen.view_room = make_box(screen.body);
     lv_obj_set_width(screen.view_room, LV_PCT(100));
     lv_obj_set_height(screen.view_room, wide ? LV_PCT(100) : LV_SIZE_CONTENT);
     theme::make_column(screen.view_room, theme::kS2);
-    widgets::make_cap(screen.view_room, "URZĄDZENIA");
+    if (!wide) {
+        screen.clima_cap = widgets::make_cap(screen.view_room, "W POKOJU");
+        build_clima_card(context, screen.view_room, false);
+        // Odstęp jak między sekcjami: karta, potem podpis urządzeń.
+        lv_obj_set_style_margin_bottom(screen.clima, theme::kS3, LV_PART_MAIN);
+    }
+    screen.devices_cap = widgets::make_cap(screen.view_room, "URZĄDZENIA");
     lv_obj_t* cards = make_box(screen.view_room);
     lv_obj_set_width(cards, LV_PCT(100));
     if (wide) {
@@ -117,6 +186,9 @@ void build_room_view(Context& context, bool wide) {
         theme::make_column(cards, theme::kS3);
     }
 
+    if (wide) {
+        build_clima_card(context, cards, true);
+    }
     screen.lamp = make_card(cards, wide, context);
     screen.lamp.icon = lv_image_create(screen.lamp.well);
     screen.lamp.power = widgets::make_power_button(screen.lamp.root, &on_room_power, &context);
@@ -141,7 +213,7 @@ void build_room_view(Context& context, bool wide) {
 
     screen.climate = make_card(cards, wide, context);
     screen.climate.icon = lv_image_create(screen.climate.well);
-    lv_image_set_src(screen.climate.icon, &icon_mode_cool_large);
+    lv_image_set_src(screen.climate.icon, &icon_dev_aircon);
     lv_label_set_text(screen.climate.name, "Klimatyzacja");
     lv_obj_add_event_cb(screen.climate.root, open_climate, LV_EVENT_CLICKED, &context);
 
@@ -240,6 +312,7 @@ void render_room_view(Context& context, const domain::RoomLight* room) {
     const bool fresh = state.lights_fresh();
     const bool climate_here = screen.room == kClimateRoom;
 
+    render_room_climate(context, true);
     set_visible(screen.lamp.root, room != nullptr);
     set_visible(screen.climate.root, climate_here);
     set_visible(screen.empty.root, room == nullptr);
@@ -311,6 +384,97 @@ void render_room_view(Context& context, const domain::RoomLight* room) {
 }
 
 }  // namespace
+
+namespace {
+
+// Ocena odczytu: słowo wersalikami i kolor kropki (ADR 0017).
+struct Verdict {
+    const char* text;
+    lv_color_t color;
+};
+
+lv_color_t cold_color() { return lv_color_hex(0x4aa8e0); }
+
+Verdict temperature_verdict(int16_t tenths) {
+    if (tenths < 190) {
+        return {"CHŁODNO", cold_color()};
+    }
+    if (tenths > 245) {
+        return {"CIEPŁO", theme::accent()};
+    }
+    return {"KOMFORTOWO", theme::ok()};
+}
+
+Verdict humidity_verdict(uint8_t percent) {
+    if (percent < 35) {
+        return {"SUCHO", theme::accent()};
+    }
+    if (percent > 60) {
+        return {"WILGOTNO", cold_color()};
+    }
+    if (percent < 40) {
+        return {"LEKKO SUCHO", theme::ok()};
+    }
+    return {"KOMFORTOWO", theme::ok()};
+}
+
+void paint_reading(RoomScreen::Reading& r, bool known, const char* value, const Verdict& verdict) {
+    set_visible(r.root, known);
+    if (!known) {
+        return;
+    }
+    lv_label_set_text(r.value, value);
+    lv_label_set_text(r.verdict, verdict.text);
+    lv_obj_set_style_text_color(r.verdict, verdict.color, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(r.dot, verdict.color, LV_PART_MAIN);
+}
+
+}  // namespace
+
+void render_room_climate(Context& context, bool force) {
+    RoomScreen& screen = context.room_page;
+    if (!screen.built || !screen.open || screen.clima == nullptr) {
+        return;
+    }
+    const domain::Weather* weather = context.controller->weather();
+    const bool fresh = weather != nullptr && weather->known &&
+                       core::now_ms() - weather->received_ms < domain::kWeatherMaxAgeMs;
+    const uint32_t revision = fresh ? weather->revision : 0;
+    if (!force && revision == screen.shown_weather && screen.room == screen.shown_clima_room) {
+        return;  // bez nowej wiadomości nic się nie zmieniło
+    }
+    screen.shown_weather = revision;
+    screen.shown_clima_room = screen.room;
+
+    const domain::RoomReading* reading =
+        fresh ? domain::find_room_reading(*weather, kRooms[screen.room].id) : nullptr;
+    const bool has_t = reading != nullptr && reading->temperature_known;
+    const bool has_h = reading != nullptr && reading->humidity_known;
+    const bool show = has_t || has_h;
+    set_visible(screen.clima, show);
+    if (screen.clima_cap != nullptr) {
+        set_visible(screen.clima_cap, show);
+    } else {
+        lv_label_set_text(screen.devices_cap, show ? "W POKOJU · URZĄDZENIA" : "URZĄDZENIA");
+    }
+    if (!show) {
+        return;
+    }
+    char text[16];
+    if (has_t) {
+        widgets::format_tenths(text, sizeof(text), reading->temperature_tenths);
+        paint_reading(screen.temperature, true, text, temperature_verdict(reading->temperature_tenths));
+    } else {
+        paint_reading(screen.temperature, false, "", {"", theme::ok()});
+    }
+    if (has_h) {
+        std::snprintf(text, sizeof(text), "%u", static_cast<unsigned>(reading->humidity));
+        paint_reading(screen.humidity, true, text, humidity_verdict(reading->humidity));
+    } else {
+        paint_reading(screen.humidity, false, "", {"", theme::ok()});
+    }
+    set_visible(screen.clima_sep, has_t && has_h);
+}
 
 // Karta i pasek klimatyzacji otwierają jej podstronę (screen_climate.cpp).
 void open_climate(lv_event_t* event) {

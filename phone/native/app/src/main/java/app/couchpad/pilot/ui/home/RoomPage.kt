@@ -24,12 +24,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import app.couchpad.pilot.R
 import app.couchpad.pilot.data.Light
 import app.couchpad.pilot.data.Pending
 import app.couchpad.pilot.data.PilotRepository
 import app.couchpad.pilot.data.PilotState
+import app.couchpad.pilot.data.RoomReading
 import app.couchpad.pilot.ui.climate.ClimateLabels
 import app.couchpad.pilot.ui.components.Card
 import app.couchpad.pilot.ui.components.Divider
@@ -98,11 +100,14 @@ internal fun RoomPage(
                     status = ClimateLabels.mode(c.hvacMode),
                     detail = c.current?.let { "w pokoju ${oneDecimal(it)}°" },
                     lit = false,
-                    well = { Pixel(R.drawable.px_mode_cool, 48.u) },
+                    well = { Pixel(R.drawable.px_dev_aircon, 48.u) },
                     onOpen = openClimate,
                 )
             }
         )
+
+    // Karta „W pokoju” (ADR 0017): czujnik pokoju z wiadomości pogody, tak samo świeży jak ona.
+    val reading = state.weather.takeIf { it.current(System.currentTimeMillis()) }?.room(roomId)
 
     Column(Modifier.fillMaxSize()) {
         PageHeader(room(roomId).label, "POMIESZCZENIE", back)
@@ -110,29 +115,118 @@ internal fun RoomPage(
             RoomStrip(roomId, vertical = false, onSelect = switchRoom)
             Divider()
         }
-        Caption("URZĄDZENIA", Modifier.padding(horizontal = 24.u))
-        Spacer(Modifier.height(10.u))
-        when {
-            devices.isEmpty() -> NoDevices(state.home.known)
-            landscape -> Row(
+        if (landscape) {
+            Caption(if (reading != null) "W POKOJU · URZĄDZENIA" else "URZĄDZENIA", Modifier.padding(horizontal = 24.u))
+            Spacer(Modifier.height(10.u))
+            Row(
                 Modifier.fillMaxSize().padding(start = 24.u, end = 40.u, bottom = 20.u),
                 horizontalArrangement = Arrangement.spacedBy(12.u),
             ) {
+                if (reading != null) RoomClimateCard(reading, landscape = true, Modifier.width(210.u).fillMaxHeight())
+                if (devices.isEmpty()) Box(Modifier.weight(1f)) { NoDevices(state.home.known, padded = false) }
                 for (d in devices) DeviceCard(d, landscape = true, Modifier.weight(1f).fillMaxHeight())
             }
-            else -> Column(
+        } else {
+            Column(
                 Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.u),
-                verticalArrangement = Arrangement.spacedBy(12.u),
             ) {
-                for (d in devices) DeviceCard(d, landscape = false, Modifier.fillMaxWidth().height(124.u))
+                if (reading != null) {
+                    Caption("W POKOJU")
+                    Spacer(Modifier.height(10.u))
+                    RoomClimateCard(reading, landscape = false, Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(20.u))
+                }
+                Caption("URZĄDZENIA")
+                Spacer(Modifier.height(10.u))
+                if (devices.isEmpty()) NoDevices(state.home.known, padded = false)
+                Column(verticalArrangement = Arrangement.spacedBy(12.u)) {
+                    for (d in devices) DeviceCard(d, landscape = false, Modifier.fillMaxWidth().height(124.u))
+                }
+            }
+        }
+    }
+}
+
+/** Ocena odczytu (ADR 0017): słowo wersalikami i kolor kropki. */
+private data class Verdict(val text: String, val color: Color)
+
+private val Cold = Color(0xFF4AA8E0)
+
+@Composable
+private fun temperatureVerdict(t: Double) = when {
+    t < 19.0 -> Verdict("CHŁODNO", Cold)
+    t > 24.5 -> Verdict("CIEPŁO", C.accent)
+    else -> Verdict("KOMFORTOWO", C.ok)
+}
+
+@Composable
+private fun humidityVerdict(h: Int) = when {
+    h < 35 -> Verdict("SUCHO", C.accent)
+    h > 60 -> Verdict("WILGOTNO", Cold)
+    h < 40 -> Verdict("LEKKO SUCHO", C.ok)
+    else -> Verdict("KOMFORTOWO", C.ok)
+}
+
+/**
+ * Karta „W pokoju”: temperatura i wilgotność z czujnika pokoju, każda z ikoną pixel art
+ * (48 px), dużą liczbą i oceną. Pion: obok siebie; poziom: wąska kolumna, jedna nad drugą.
+ */
+@Composable
+private fun RoomClimateCard(r: RoomReading, landscape: Boolean, modifier: Modifier) {
+    val cells = listOfNotNull(
+        r.temperature?.let { t -> Cell(R.drawable.px_sensor_temp, oneDecimal(t), "°C", temperatureVerdict(t)) },
+        r.humidity?.let { h -> Cell(R.drawable.px_sensor_humidity, "$h", "%", humidityVerdict(h)) },
+    )
+    Card(modifier, radius = 20) {
+        if (landscape) {
+            Column(Modifier.fillMaxSize().padding(20.u)) {
+                cells.forEachIndexed { i, cell ->
+                    if (i > 0) Box(Modifier.fillMaxWidth().height(1.u).background(C.line))
+                    Reading(cell, Modifier.weight(1f))
+                }
+            }
+        } else {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 18.u, vertical = 16.u), verticalAlignment = Alignment.CenterVertically) {
+                cells.forEachIndexed { i, cell ->
+                    if (i > 0) {
+                        Spacer(Modifier.width(16.u))
+                        Box(Modifier.width(1.u).height(64.u).background(C.line))
+                        Spacer(Modifier.width(16.u))
+                    }
+                    Reading(cell, Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+private data class Cell(val icon: Int, val value: String, val unit: String, val verdict: Verdict)
+
+@Composable
+private fun Reading(cell: Cell, modifier: Modifier) {
+    val (icon, value, unit, verdict) = cell
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Pixel(icon, 48.u)
+        Spacer(Modifier.width(12.u))
+        Column {
+            Row(verticalAlignment = Alignment.Bottom) {
+                T(value, 46, FontWeight.Bold)
+                Spacer(Modifier.width(3.u))
+                T(unit, 15, FontWeight.Medium, C.dim, Modifier.padding(bottom = 8.u))
+            }
+            Spacer(Modifier.height(4.u))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(7.u).clip(RoundedCornerShape(50)).background(verdict.color))
+                Spacer(Modifier.width(6.u))
+                T(verdict.text, 11, FontWeight.Medium, verdict.color)
             }
         }
     }
 }
 
 @Composable
-private fun NoDevices(known: Boolean) {
-    Card(Modifier.padding(horizontal = 24.u).fillMaxWidth().height(96.u), radius = 20) {
+private fun NoDevices(known: Boolean, padded: Boolean = true) {
+    Card(Modifier.padding(horizontal = if (padded) 24.u else 0.u).fillMaxWidth().height(96.u), radius = 20) {
         Column(Modifier.fillMaxSize().padding(18.u), verticalArrangement = Arrangement.Center) {
             T("Brak encji", 17, FontWeight.Bold)
             T(if (known) "W tym pokoju nie ma jeszcze urządzeń w Home Assistancie." else "czekam na stan", 12, color = C.dim, maxLines = 2)

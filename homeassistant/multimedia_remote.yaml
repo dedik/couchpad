@@ -21,6 +21,7 @@
 #
 # W DOMU (ADR 0015): średnia temperatura i wilgotność z czujników pomieszczeń jedzie
 # w wiadomości pogody (`indoor`); lista czujników w skrypcie „Pilot — opublikuj pogodę”.
+# Tam też odczyty każdego pomieszczenia osobno (`indoor.rooms`, ADR 0017).
 #
 # OŚWIETLENIE (ADR 0014): główne światło pomieszczeń w `light_rooms` niżej. Pilot dostaje
 # krótkie identyfikatory (`lampa`, `lampa_lewa`), encje zna tylko ten plik. Lampa w salonie
@@ -107,6 +108,15 @@ script:
             - sensor.bedroom_humidity
             - sensor.office_humidity
             - sensor.bathroom_humidity
+          # Klimat pokoju (ADR 0017): te same czujniki per pomieszczenie, klucz to `room`
+          # z sekcji `lights`. Kuchnia jest w salonie, przedpokój w biurze — biorą ich czujniki.
+          room_sensors:
+            salon: [sensor.living_room_temperature, sensor.living_room_humidity]
+            kuchnia: [sensor.living_room_temperature, sensor.living_room_humidity]
+            przedpokoj: [sensor.office_temperature, sensor.office_humidity]
+            sypialnia: [sensor.bedroom_temperature, sensor.bedroom_humidity]
+            biuro: [sensor.office_temperature, sensor.office_humidity]
+            lazienka: [sensor.bathroom_temperature, sensor.bathroom_humidity]
       - if: "{{ states(weather_entity) not in ['unavailable', 'unknown', 'none'] }}"
         then:
           - service: mqtt.publish
@@ -125,6 +135,18 @@ script:
                   {% set indoor = {'temperature': ((t | sum) / (t | count)) | round(1)} %}
                   {% if h | count > 0 %}
                     {% set indoor = dict(indoor, humidity=((h | sum) / (h | count)) | round(0) | int) %}
+                  {% endif %}
+                  {% set ns = namespace(rooms=[]) %}
+                  {% for room, pair in room_sensors.items() %}
+                    {% set rt = states(pair[0]) %}
+                    {% set rh = states(pair[1]) %}
+                    {% set r = {'room': room} %}
+                    {% if rt not in bad %}{% set r = dict(r, temperature=rt | float | round(1)) %}{% endif %}
+                    {% if rh not in bad %}{% set r = dict(r, humidity=rh | float | round(0) | int) %}{% endif %}
+                    {% if r | length > 1 %}{% set ns.rooms = ns.rooms + [r] %}{% endif %}
+                  {% endfor %}
+                  {% if ns.rooms | count > 0 %}
+                    {% set indoor = dict(indoor, rooms=ns.rooms) %}
                   {% endif %}
                   {% set out = dict(out, indoor=indoor) %}
                 {% endif %}

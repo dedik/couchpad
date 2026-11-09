@@ -96,6 +96,13 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    `effect_usage`, JSON lampa → efekt → liczba; kasuje je reset fabryczny), bez nowych tematów
    MQTT; remis rozstrzyga kolejność z HA (`data/EffectUsage.kt`, test `EffectUsageTest`).
    Makieta: `docs/mockups/light-effects-tiles.html`.
+6. ~~Karta „W pokoju”~~ (2026-11-09, [ADR 0017](../../docs/architecture/adr/0017-room-climate-card.md))
+   — 1:1 z panelem: temperatura i wilgotność czujnika pokoju z `indoor.rooms` w wiadomości
+   pogody (`Contract.parseWeather`, `Weather.room`, test w `ContractTest`), ikony
+   `px_sensor_temp` / `px_sensor_humidity` (48 px), ocena z kolorową kropką. Pion: nad
+   „URZĄDZENIA”, poziom: pierwsza kolumna 210 px. Karta klimy w salonie ma ikonę
+   klimatyzatora `px_dev_aircon`. `tools/screenshots.sh`: w pionie lampa i klima zjechały
+   w dół (nowe tapnięcia 480 945 i 482 1245).
 
 ---
 

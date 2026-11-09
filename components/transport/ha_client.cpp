@@ -290,6 +290,25 @@ void HaClient::handle_weather(const char* data, int length) {
         weather_ready_.humidity_known = cJSON_IsNumber(humidity) != 0;
         weather_ready_.humidity = weather_ready_.humidity_known
             ? static_cast<uint8_t>(std::clamp(std::lround(humidity->valuedouble), 0L, 100L)) : 0;
+        // Pomieszczenia osobno (ADR 0017), też opcjonalne.
+        weather_ready_.room_count = 0;
+        const cJSON* entry = nullptr;
+        cJSON_ArrayForEach(entry, cJSON_GetObjectItemCaseSensitive(indoor, "rooms")) {
+            const char* room = string_from(entry, "room");
+            if (room[0] == '\0' || weather_ready_.room_count >= weather_ready_.rooms.size()) {
+                continue;
+            }
+            const cJSON* rt = cJSON_GetObjectItemCaseSensitive(entry, "temperature");
+            const cJSON* rh = cJSON_GetObjectItemCaseSensitive(entry, "humidity");
+            domain::RoomReading& reading = weather_ready_.rooms[weather_ready_.room_count++];
+            reading.room.assign(room);
+            reading.temperature_known = cJSON_IsNumber(rt) != 0;
+            reading.temperature_tenths =
+                reading.temperature_known ? static_cast<int16_t>(std::lround(rt->valuedouble * 10.0)) : 0;
+            reading.humidity_known = cJSON_IsNumber(rh) != 0;
+            reading.humidity = reading.humidity_known
+                ? static_cast<uint8_t>(std::clamp(std::lround(rh->valuedouble), 0L, 100L)) : 0;
+        }
         weather_ready_.received_ms = core::now_ms();
         weather_ready_.revision += 1;
         weather_fresh_ = true;

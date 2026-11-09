@@ -254,6 +254,22 @@ struct RoomScreen {
         lv_obj_t* chevron = nullptr;
     };
     lv_obj_t* view_room = nullptr;
+    // Karta „W pokoju” (ADR 0017): temperatura i wilgotność z czujnika pokoju.
+    struct Reading {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* value = nullptr;
+        lv_obj_t* unit = nullptr;
+        lv_obj_t* dot = nullptr;
+        lv_obj_t* verdict = nullptr;
+    };
+    lv_obj_t* clima_cap = nullptr;     // pion: `W POKOJU` nad kartą
+    lv_obj_t* devices_cap = nullptr;   // `URZĄDZENIA` (poziom: `W POKOJU · URZĄDZENIA`)
+    lv_obj_t* clima = nullptr;
+    lv_obj_t* clima_sep = nullptr;
+    Reading temperature;
+    Reading humidity;
+    uint32_t shown_weather = 0;        // rewizja pogody pokazana na karcie
+    std::size_t shown_clima_room = kRoomCount;
     Card lamp;
     Card climate;
     Card empty;
@@ -469,6 +485,11 @@ struct Context {
     MoreScreen more;
     DeviceScreens device;
 };
+
+namespace home {
+// Karta „W pokoju” na podstronie pomieszczenia (ADR 0017), screens/home_room.cpp.
+void render_room_climate(Context& context, bool force);
+}  // namespace home
 
 // Wysyła zamiar i od razu odświeża widok — dotknięcie nie czeka na sieć.
 void dispatch(Context& context, const domain::UiIntent& intent);

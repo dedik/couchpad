@@ -124,16 +124,23 @@ data class HomeSnapshot(
     fun light(id: String) = lights.firstOrNull { it.id == id }
 }
 
+/** Odczyt czujnika jednego pomieszczenia (ADR 0017); `room` jak w sekcji `lights`. */
+data class RoomReading(val room: String, val temperature: Double?, val humidity: Int?)
+
 data class Weather(
     val condition: String = "",
     val temperature: Double? = null,
     val night: Boolean = false,
     val indoorTemperature: Double? = null,
     val indoorHumidity: Int? = null,
+    val rooms: List<RoomReading> = emptyList(),
     val receivedAt: Long = 0,
 ) {
     /** Pogoda starsza niż 6 h nie jest pokazywana. */
     fun current(now: Long) = receivedAt != 0L && now - receivedAt <= 6 * 3600_000L
+
+    /** Odczyt pokoju z temperaturą albo wilgotnością; null, gdy pokój nie ma czujnika. */
+    fun room(id: String) = rooms.firstOrNull { it.room == id && (it.temperature != null || it.humidity != null) }
 }
 
 /** Wszystko, co pokazuje interfejs. */

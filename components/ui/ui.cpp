@@ -107,6 +107,8 @@ void on_tick(lv_timer_t* timer) {
         if (context->start.open) {
             render_start(*context);
         }
+        // Karta „W pokoju” (ADR 0017): nowa wiadomość pogody bez nowego snapshotu.
+        home::render_room_climate(*context, false);
     }
     const uint32_t timeout = screen_timeout_ms();
     const uint32_t inactive = lv_display_get_inactive_time(nullptr);

@@ -36,6 +36,10 @@ internal object Contract {
             night = root.optBoolean("night"),
             indoorTemperature = indoor?.optDoubleOrNull("temperature"),
             indoorHumidity = indoor?.optIntOrNull("humidity"),
+            rooms = indoor?.optJSONArray("rooms").objects()
+                .filter { it.optString("room").isNotEmpty() }
+                .take(6)
+                .map { RoomReading(it.optString("room"), it.optDoubleOrNull("temperature"), it.optIntOrNull("humidity")) },
             receivedAt = receivedAt,
         )
     }

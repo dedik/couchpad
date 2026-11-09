@@ -93,6 +93,14 @@ Dom (siatka pomieszczeń)
   nagłówkiem, w poziomie w prawej szufladzie.
 - Pod etykietą `URZĄDZENIA` karty urządzeń: pion — jedna pod drugą (124 px), poziom — obok
   siebie na pełną wysokość.
+- Karta „W pokoju” ([ADR 0017](../architecture/adr/0017-room-climate-card.md)): temperatura
+  i wilgotność z czujnika pokoju. Ikona pixel art 48 px (termometr, kropla — siatka 24 w 2 ×),
+  liczba `b46num` z jednostką `m15`, pod nią ocena wersalikami `m11` z kropką w kolorze:
+  zielona „komfortowo” / „lekko sucho”, bursztynowa „ciepło” / „sucho”, niebieska „chłodno” /
+  „wilgotno”. Bez wykresu, nieklikalna. Pion: pod paskiem pokoi, podpis `W POKOJU`, odczyty
+  obok siebie z kreską pośrodku. Poziom: pierwsza kolumna rzędu kart (210 px), temperatura nad
+  wilgotnością, podpis rzędu `W POKOJU · URZĄDZENIA`. Pokój bez czujnika nie ma karty; brak
+  jednego odczytu chowa tylko jego połowę.
 
 ### Ekran urządzenia
 
