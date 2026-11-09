@@ -81,6 +81,9 @@ void open_climate(lv_event_t* event);
 lv_obj_t* make_rail(lv_obj_t* parent, Context& context, bool wide);
 void open_room(Context& context, std::size_t index);
 void render_room(Context& context);
+// Karta „W pokoju” (ADR 0017): odczyt z wiadomości pogody; wołane też co sekundę, rysuje
+// tylko po nowej wiadomości albo zmianie pokoju.
+void render_room_climate(Context& context, bool force);
 
 // ---------- światło (home_light.cpp) ----------
 void build_light_view(Context& context, bool wide);

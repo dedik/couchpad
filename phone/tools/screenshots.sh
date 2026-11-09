@@ -57,10 +57,10 @@ else
     tap 540 2324;    shot 04-audio
     tap 742 2324;    shot 05-home
     tap 265 760;     shot 06-room
-    tap 480 614;     shot 07-light
+    tap 480 945;     shot 07-light   # lampa pod kartą „W pokoju” (ADR 0017)
     tap 881 1801 1.5; shot 08-effects; back
     tap 207 2066;    shot 09-bulb; back; back
-    tap 482 922;     shot 10-climate; back; back
+    tap 482 1245;    shot 10-climate; back; back
     tap 950 2324;    shot 11-settings
     tap 540 645;     shot 12-display; back
 fi

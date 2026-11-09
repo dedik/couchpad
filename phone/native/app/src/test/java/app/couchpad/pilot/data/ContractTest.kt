@@ -59,6 +59,20 @@ class ContractTest {
     }
 
     @Test
+    fun `room readings in weather`() {
+        val w = Contract.parseWeather(
+            """{"condition": "sunny", "temperature": 7.4, "indoor": {"temperature": 22.1, "rooms": [
+                {"room": "salon", "temperature": 22.6, "humidity": 39},
+                {"room": "biuro", "humidity": 38}, {"room": "kuchnia"}, {"temperature": 1}]}}""", 9,
+        )!!
+        assertEquals(RoomReading("salon", 22.6, 39), w.room("salon"))
+        assertEquals(RoomReading("biuro", null, 38), w.room("biuro"))
+        assertNull("pokój bez odczytu nie ma karty", w.room("kuchnia"))
+        assertNull(w.room("lazienka"))
+        assertEquals(3, w.rooms.size)
+    }
+
+    @Test
     fun `channels and command body`() {
         val list = Contract.parseChannels("""{"channels": [{"number": "1", "name": "TVP 1", "id": "x"}]}""")!!
         assertEquals(Channel("1", "TVP 1", "x"), list.single())

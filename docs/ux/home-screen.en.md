@@ -92,6 +92,14 @@ Home (room grid)
   portrait, in the right drawer in landscape.
 - Under the `URZĄDZENIA` caption, device cards: portrait — stacked (124 px), landscape — side by
   side at full height.
+- "In the room" card ([ADR 0017](../architecture/adr/0017-room-climate-card.en.md)): temperature
+  and humidity from the room sensor. A 48 px pixel-art icon (thermometer, droplet; 24 grid at
+  2×), a `b46num` number with an `m15` unit, under it a verdict in `m11` capitals with a coloured
+  dot: green "comfortable" / "slightly dry", amber "warm" / "dry", blue "cool" / "humid". No chart,
+  not clickable. Portrait: under the room rail, caption `W POKOJU`, readings side by side with a
+  divider. Landscape: the first column of the card row (210 px), temperature above humidity, row
+  caption `W POKOJU · URZĄDZENIA`. A room without a sensor has no card; a missing reading hides
+  only its half.
 
 ### Device screen
 

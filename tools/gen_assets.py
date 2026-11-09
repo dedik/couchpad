@@ -60,6 +60,10 @@ BULB_STATES = ["on", "off"]
 EFFECT_ICONS = ["none", "cozy", "relax", "tv", "candle", "warm", "golden", "daylight", "cool", "focus",
                 "night", "bedtime", "wakeup", "pulse", "steampunk", "diwali", "alarm", "more"]
 MODE_ICONS = ["auto", "cool", "heat", "fan_only", "dry"]
+# Urządzenia i czujniki (tools/draw_device_icons.py): klimatyzator 48 px w studzience karty,
+# termometr i kropla (siatka 24) w 2 x — 48 px na karcie „W pokoju” (ADR 0017).
+DEVICE_ICONS = ["aircon"]
+SENSOR_ICONS = ["temp", "humidity"]
 
 
 def c_identifier(name: str) -> str:
@@ -195,6 +199,8 @@ def main() -> int:
     for kind, icons in (("fx", EFFECT_ICONS), ("mode", MODE_ICONS)):
         jobs += [(f"{kind}_{icon}", 1, f"icon_{kind}_{icon}") for icon in icons]
         jobs += [(f"{kind}_{icon}", 2, f"icon_{kind}_{icon}_large") for icon in icons]
+    jobs += [(f"dev_{icon}", 1, f"icon_dev_{icon}") for icon in DEVICE_ICONS]
+    jobs += [(f"sensor_{icon}", 2, f"icon_sensor_{icon}_large") for icon in SENSOR_ICONS]
     for icon, scale, name in jobs:
         source = Image.open(MOCKUP / "assets" / "pixel" / f"{icon}.png").convert("RGBA")
         image = source.resize((source.width * scale, source.height * scale), Image.NEAREST)
