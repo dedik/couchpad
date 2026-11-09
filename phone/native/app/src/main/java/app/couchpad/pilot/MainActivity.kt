@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
     /** Krótkie „tyknięcie” przy dotknięciu kontrolki. */
     private fun vibration(): () -> Unit {
-        val vibrator = getSystemService(Vibrator::class.java)
+        val vibrator = applicationContext.getSystemService(Vibrator::class.java)
         return {
             if (vibrator?.hasVibrator() == true) {
                 when {
@@ -69,6 +69,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Haptics.tick = {}
     }
 
     override fun onNewIntent(intent: Intent) {

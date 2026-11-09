@@ -212,9 +212,7 @@ void render_radiator_card(Context& context, RoomScreen::Card& card, const domain
         std::snprintf(text, sizeof(text), "%s", doing);
     }
     lv_label_set_text(card.note, text);
-    widgets::set_status_outline(card.root, state.pending_of(domain::ControlId::RadiatorPower) != nullptr
-                                               ? state.status_of(domain::ControlId::RadiatorPower)
-                                               : domain::ControlStatus::Idle);
+    widgets::set_status_outline(card.root, state.status_of(domain::ControlId::RadiatorPower, r.id.c_str()));
 }
 
 void build_radiator_view(Context& context, bool wide) {
@@ -390,9 +388,8 @@ void render_radiator_view(Context& context, const domain::RadiatorState& r) {
     }
 
     widgets::set_power_state(screen.light_power, on, usable);
-    widgets::set_status_outline(screen.light_power, state.pending_of(domain::ControlId::RadiatorPower) != nullptr
-                                                        ? state.status_of(domain::ControlId::RadiatorPower)
-                                                        : domain::ControlStatus::Idle);
+    widgets::set_status_outline(screen.light_power,
+                                state.status_of(domain::ControlId::RadiatorPower, r.id.c_str()));
 }
 
 }  // namespace ui::home

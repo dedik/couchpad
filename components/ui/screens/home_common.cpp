@@ -122,14 +122,12 @@ const domain::LightState* current_light(const Context& context, const domain::Ro
 }
 
 bool pending_for(const domain::AppState& state, domain::ControlId control, const char* id) {
-    const domain::PendingEntry* pending = state.pending_of(control);
-    return pending != nullptr && pending->requested == id;
+    return state.pending_of(control, id) != nullptr;
 }
 
 domain::ControlStatus status_for(const domain::AppState& state, domain::ControlId control,
                                  const char* id) {
-    return pending_for(state, control, id) ? state.status_of(control)
-                                           : domain::ControlStatus::Idle;
+    return state.status_of(control, id);
 }
 
 void send_power(Context& context, const domain::LightState& light) {

@@ -1,11 +1,35 @@
 #include "domain/app_state.hpp"
 
 namespace domain {
+namespace {
 
-PendingEntry* AppState::find(ControlId control) {
+bool is_targeted(ControlId control) {
+    switch (control) {
+        case ControlId::LightPower:
+        case ControlId::LightBrightness:
+        case ControlId::LightKelvin:
+        case ControlId::LightEffect:
+        case ControlId::RadiatorPower:
+        case ControlId::RadiatorMode:
+        case ControlId::RadiatorTarget:
+            return true;
+        default:
+            return false;
+    }
+}
+
+}  // namespace
+
+PendingEntry* AppState::find(ControlId control, const char* target) {
     for (auto& entry : pending_) {
         if (entry.control == control && entry.status != ControlStatus::Idle) {
-            return &entry;
+            if (is_targeted(control) && target != nullptr && target[0] != '\0') {
+                if (entry.requested == target) {
+                    return &entry;
+                }
+            } else {
+                return &entry;
+            }
         }
     }
     return nullptr;
@@ -13,7 +37,7 @@ PendingEntry* AppState::find(ControlId control) {
 
 void AppState::mark_pending(ControlId control, const Label& requested, uint8_t value,
                             int64_t expires_at_ms, int16_t number) {
-    PendingEntry* slot = find(control);
+    PendingEntry* slot = find(control, requested.c_str());
     if (slot == nullptr) {
         for (auto& entry : pending_) {
             if (entry.status == ControlStatus::Idle) {
@@ -35,8 +59,8 @@ void AppState::mark_pending(ControlId control, const Label& requested, uint8_t v
     slot->expires_at_ms = expires_at_ms;
 }
 
-void AppState::mark_failed(ControlId control, int64_t clear_at_ms) {
-    PendingEntry* slot = find(control);
+void AppState::mark_failed(ControlId control, int64_t clear_at_ms, const char* target) {
+    PendingEntry* slot = find(control, target);
     if (slot == nullptr) {
         return;
     }
@@ -44,8 +68,8 @@ void AppState::mark_failed(ControlId control, int64_t clear_at_ms) {
     slot->expires_at_ms = clear_at_ms;
 }
 
-void AppState::clear_pending(ControlId control) {
-    PendingEntry* slot = find(control);
+void AppState::clear_pending(ControlId control, const char* target) {
+    PendingEntry* slot = find(control, target);
     if (slot != nullptr) {
         *slot = PendingEntry{};
     }
@@ -76,19 +100,21 @@ bool AppState::expire(int64_t now_ms) {
     return changed;
 }
 
-ControlStatus AppState::status_of(ControlId control) const {
-    for (const auto& entry : pending_) {
-        if (entry.control == control && entry.status != ControlStatus::Idle) {
-            return entry.status;
-        }
-    }
-    return ControlStatus::Idle;
+ControlStatus AppState::status_of(ControlId control, const char* target) const {
+    const PendingEntry* entry = pending_of(control, target);
+    return entry != nullptr ? entry->status : ControlStatus::Idle;
 }
 
-const PendingEntry* AppState::pending_of(ControlId control) const {
+const PendingEntry* AppState::pending_of(ControlId control, const char* target) const {
     for (const auto& entry : pending_) {
         if (entry.control == control && entry.status != ControlStatus::Idle) {
-            return &entry;
+            if (is_targeted(control) && target != nullptr && target[0] != '\0') {
+                if (entry.requested == target) {
+                    return &entry;
+                }
+            } else {
+                return &entry;
+            }
         }
     }
     return nullptr;

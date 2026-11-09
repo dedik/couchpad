@@ -115,7 +115,6 @@ bool LiveSource::poll(SourceEvent& out) {
             climate_.available = false;
             lights_.available = false;
             radiators_.available = false;
-    radiators_.available = false;
         }
         if (z906_fresh_) {
             merge_into(out);

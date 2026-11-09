@@ -60,18 +60,18 @@ public:
     // Rejestracja i wygasanie oczekiwania.
     void mark_pending(ControlId control, const Label& requested, uint8_t value, int64_t expires_at_ms,
                       int16_t number = 0);
-    void mark_failed(ControlId control, int64_t clear_at_ms);
-    void clear_pending(ControlId control);
+    void mark_failed(ControlId control, int64_t clear_at_ms, const char* target = nullptr);
+    void clear_pending(ControlId control, const char* target = nullptr);
     void clear_all_pending();
     // Przenosi przeterminowane wpisy do `Failed` i kasuje wygasłe `Failed`.
     // Zwraca `true`, gdy coś się zmieniło i trzeba przerysować.
     bool expire(int64_t now_ms);
 
-    ControlStatus status_of(ControlId control) const;
-    const PendingEntry* pending_of(ControlId control) const;
+    ControlStatus status_of(ControlId control, const char* target = nullptr) const;
+    const PendingEntry* pending_of(ControlId control, const char* target = nullptr) const;
 
 private:
-    PendingEntry* find(ControlId control);
+    PendingEntry* find(ControlId control, const char* target = nullptr);
 
     DeviceSnapshot snapshot_;
     LinkPhase phase_ = LinkPhase::Connecting;

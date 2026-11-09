@@ -4,6 +4,7 @@
 // jak duży jest największy wolny blok i ile zapasu ma stos każdego zadania.
 // Pamięć wewnętrzna (~768 kB) jest tu zasobem krytycznym, PSRAM (32 MB) — nie.
 
+#include <cstdlib>
 #include <new>
 #include <utility>
 
@@ -19,6 +20,9 @@ T& make_in_psram(Args&&... args) {
     void* raw = heap_caps_malloc(sizeof(T), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (raw == nullptr) {
         raw = heap_caps_malloc(sizeof(T), MALLOC_CAP_8BIT);
+    }
+    if (raw == nullptr) {
+        abort();
     }
     return *new (raw) T(std::forward<Args>(args)...);
 }
