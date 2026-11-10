@@ -169,7 +169,7 @@ private fun UpdateSection() {
         }
         UpdatePhase.Installing -> {
             Button("Instalowanie…", Modifier.fillMaxWidth(), pending = true) {}
-            Note("Potwierdź w oknie Androida. Po instalacji pilot uruchomi się od nowa.")
+            Note("Jeśli Android pokaże okno, potwierdź instalację. Po instalacji pilot uruchomi się od nowa.")
         }
         is UpdatePhase.Failed -> {
             Note("Aktualizacja nieudana: ${p.message}")
