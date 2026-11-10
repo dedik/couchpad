@@ -35,6 +35,17 @@ choć Apple TV odpowiadało w sieci (porty 49153 i 7000 otwarte). Pomogło prze�
 konfiguracji (Urządzenia i usługi → Apple TV → Uruchom ponownie). Przyczyny log nie pokazał;
 jeśli się powtórzy, włączyć logowanie debug dla `pyatv` i `homeassistant.components.apple_tv`.
 
+**Ciche zawieszenie i strażnik zasilania (2026-11-10).** Druga odmiana: `remote.…` dalej „on”,
+w logu nic, ale `media_player.…` stał na „paused” przez ponad 3,5 h, choć Apple TV dawno spał.
+`turn_off` kończył się bez błędu w kilka ms i niczego nie wysyłał. Pilot widział Apple TV jako
+włączony, więc przycisk zasilania wysyłał wyłącznie „wyłącz” i nie dało się go obudzić.
+Przeładowanie wpisu od razu pokazało prawdziwy stan `off`. Dlatego `appletv.power.set` idzie
+przez skrypt `script.multimedia_remote_atv_power`: po `media_player.turn_on/off` czeka do 8 s
+na żądany stan; jeśli nie przyjdzie, zapisuje ostrzeżenie w logu (`multimedia_remote`),
+przeładowuje wpis integracji (`homeassistant.reload_config_entry`) i ponawia polecenie, chyba
+że świeży stan już się zgadza. Gdy pilot pokazywał nieaktualne „włączony”, pierwsze dotknięcie
+tylko odświeża stan na „wyłączony” — drugie budzi Apple TV.
+
 ## Aplikacje na kafelkach
 
 Odczyt: **Narzędzia deweloperskie → Stany → `media_player.…`**. Otwórz każdą aplikację na

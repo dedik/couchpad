@@ -35,6 +35,17 @@ even though the Apple TV was responding on the network (ports 49153 and 7000 ope
 entry helped (Devices & services → Apple TV → Reload). The log showed no cause;
 if it happens again, enable debug logging for `pyatv` and `homeassistant.components.apple_tv`.
 
+**Silent hang and the power watchdog (2026-11-10).** A second variant: `remote.…` still "on",
+nothing in the log, but `media_player.…` stuck on "paused" for over 3.5 h while the Apple TV had
+long been asleep. `turn_off` returned without error in a few ms and sent nothing. The remote saw
+the Apple TV as on, so the power button only ever sent "off" and could not wake it. Reloading
+the entry immediately showed the real `off` state. So `appletv.power.set` now goes through the
+`script.multimedia_remote_atv_power` script: after `media_player.turn_on/off` it waits up to 8 s
+for the requested state; if it does not arrive, it logs a warning (`multimedia_remote`), reloads
+the integration entry (`homeassistant.reload_config_entry`) and repeats the command, unless the
+fresh state already matches. When the remote was showing a stale "on", the first tap only
+refreshes the state to "off" — the second one wakes the Apple TV.
+
 ## Apps on the tiles
 
 Reading: **Developer tools → States → `media_player.…`**. Open each app on the

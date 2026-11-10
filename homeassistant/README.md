@@ -23,6 +23,7 @@ i usługi → MQTT.
 | --- | --- |
 | `counter.multimedia_remote_revision` | rosnąca rewizja snapshotu; pilot ignoruje starsze |
 | `script.multimedia_remote_publish` | buduje pełny snapshot i publikuje go jako retained |
+| `script.multimedia_remote_atv_power` | zasilanie Apple TV ze strażnikiem: brak reakcji w 8 s → przeładowanie integracji i ponowienie ([szczegóły](../docs/integrations/appletv.md)) |
 | automatyzacja „po zmianie Z906, Apple TV lub klimy” | nowy snapshot po każdej zmianie encji; klima — stan i atrybuty pokazywane na pilocie |
 | automatyzacja „po starcie” | snapshot po restarcie Home Assistanta |
 | automatyzacja „wykonaj polecenie” | odbiera temat `command` i ustawia encje, także `climate.*` ([ADR 0009](../docs/architecture/adr/0009-climate-via-home-assistant.md)) |
