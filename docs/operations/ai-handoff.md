@@ -690,6 +690,34 @@ ostatnich poprawkach; kafel „Okno”; lampa w kuchni w telefonie.
 10. Klasyfikator trybu auto blokuje wdrożenie na serwer HA (ssh) i stukanie w telefon (`adb
     input`) — za każdym razem potrzebna wyraźna zgoda użytkownika w czacie.
 
+## Styl OLED, strażnik Apple TV i aktualizacja przez Wi-Fi — 2026-11-10
+
+Commity od `d2862c6` do `4675c27` (plus puste wydania testowe 0.3.61 i 0.3.64).
+
+- **Styl OLED w aplikacji** ([ADR 0019](../architecture/adr/0019-phone-oled-style.md)):
+  *Ustawienia → Telefon → Styl ciemny na tym telefonie*. Panel bez zmian.
+- **Strażnik zasilania Apple TV** w bridge'u HA (`script.multimedia_remote_atv_power`,
+  `docs/integrations/appletv.md`): integracja `apple_tv` po cichu zgubiła połączenie (stan
+  „paused” przez 3,5 h, `turn_off` nic nie robił). Skrypt czeka 8 s na stan, potem przeładowuje
+  wpis integracji i ponawia. Wdrożony na serwer (kopia `…before-atv-power-watchdog.*`);
+  sprawdzona ścieżka normalna, ścieżka z przeładowaniem jeszcze nie zaszła na żywo.
+- **Aktualizacja aplikacji przez Wi-Fi** ([ADR 0021](../architecture/adr/0021-phone-wifi-updates.md)):
+  retained `multimedia_remote/app/android`, APK w `www/pilot` HA, `phone/tools/publish-update.sh`,
+  `versionCode` = liczba commitów, `targetSdk` 35. Samsung M23 (Android 14) instaluje po jednym
+  dotknięciu bez okna; Xiaomi (HyperOS 3, Android 16) — dotknięcie i potwierdzenie (HyperOS
+  odrzuca ciche aktualizacje, aplikacja ponawia z oknem).
+  Oba telefony: 0.3.63–0.3.64.
+
+Otwarte:
+
+1. Xiaomi nie ma pilota jako ekranu głównego — po aktualizacji wraca launcher MIUI.
+2. Telewizor od rana „brak połączenia” na obu telefonach; przy testach Apple TV aplikacja na
+   Samsungu przeskoczyła na ekran TV i tap mógł trafić w zasilanie. Nie sprawdzone.
+3. Zrzuty README nie odświeżone po `targetSdk` 35 — porównanie Samsunga na oko bez różnic,
+   strona Telefon (sekcja „Wersja aplikacji”) nie jest w zestawie zrzutów.
+4. Klucz podpisu to klucz debug z laptopa (`~/.android/debug.keystore`) — jego utrata to
+   reinstalacja kablem na każdym telefonie.
+
 ## Następny bezpieczny krok
 
 0. Zamknąć „Otwarte” z wpisu „Grzejniki i lampa w kuchni” (zrzuty, scalenie `feat/radiators`).

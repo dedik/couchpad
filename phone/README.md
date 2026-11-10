@@ -44,23 +44,38 @@ pokój, lampa, efekty, żarówka, klimatyzacja i ustawienia; w stylu jasnym w po
   ([ADR 0019](../docs/architecture/adr/0019-phone-oled-style.md)).
 - **Aktualizacja przez Wi-Fi:** po `phone/tools/publish-update.sh` na laptopie każdy telefon
   pokaże w *Ustawienia → Telefon* „Zainstaluj wersję …”; pobiera APK z Home Assistanta,
-  sprawdza sumę i instaluje po potwierdzeniu w oknie Androida. Za pierwszym razem trzeba
-  zezwolić pilotowi instalować aplikacje ([ADR 0021](../docs/architecture/adr/0021-phone-wifi-updates.md)).
+  sprawdza sumę i instaluje. Na Androidzie 12+ bez okna potwierdzenia (Samsung), na Xiaomi
+  (HyperOS) z jednym potwierdzeniem. Za pierwszym razem trzeba zezwolić pilotowi instalować
+  aplikacje; Play Protect albo skaner producenta mogą przy nowej wersji poprosić o decyzję.
+  Pilot wraca sam po aktualizacji tylko jako ekran główny
+  ([ADR 0021](../docs/architecture/adr/0021-phone-wifi-updates.md)).
 - **Ustawienia 1:1:** MQTT (puste identyfikatory wykrywa sam), ekran (orientacja, styl,
   jasność, tryb nocny, wygaszanie), dźwięk, pokój i czas, klawiatura i gładzik, diagnostyka.
 
 ## Budowa i instalacja
 
-Wymaga JDK 17 (`brew install openjdk@17`) i Android SDK z `platforms;android-34`,
-`build-tools;34.0.0`.
+Wymaga JDK 17 (`brew install openjdk@17`) i Android SDK z `platforms;android-35`,
+`build-tools;34.0.0`. Numer wersji to liczba commitów (`versionCode`, `0.3.<n>`).
 
 ```bash
 cd native
 export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
 echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 ./gradlew assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb push app/build/outputs/apk/debug/app-debug.apk /data/local/tmp/pilot.apk
+adb shell pm install -r -i app.couchpad.pilot /data/local/tmp/pilot.apk
+adb shell am start -n app.couchpad.pilot/.MainActivity
 ./gradlew testDebugUnitTest   # testy logiki bez telefonu
+```
+
+`-i app.couchpad.pilot` zostawia pilota instalatorem samego siebie — zwykłe `adb install`
+to zeruje i następna aktualizacja przez Wi-Fi znów pokaże okno potwierdzenia.
+
+Wydanie dla telefonów w domu przez Wi-Fi (po commicie; konfiguracja w `tools/update.env`
+poza gitem, wzór `tools/update.env.example`):
+
+```bash
+tools/publish-update.sh
 ```
 
 Dane brokera wpisuje się na telefonie (Ustawienia → MQTT). Nie trafiają do repozytorium.

@@ -290,4 +290,16 @@ The Home Assistant automation/bridge publishes a snapshot after every change of 
 - A transport error must not block the UI or cause repeated, uncontrolled attempts to execute an action.
 - After wake-up the control screen is available only after receiving a new snapshot generated in response to `remote.sync.request`. Before that, the connecting screen is shown, not the state from memory.
 
+## Android app updates (outside contract v1)
+
+The `multimedia_remote/app/android` topic (retained, QoS 1) is not part of the remote contract:
+only the Android app reads it; the panel does not subscribe to it. The laptop publishes it with
+`phone/tools/publish-update.sh` via Home Assistant's `mqtt.publish` ([ADR 0021](adr/0021-phone-wifi-updates.en.md)).
+
+```json
+{"version_code": 64, "version_name": "0.3.64",
+ "url": "http://<ha>:8123/local/pilot/pilot-64.apk",
+ "sha256": "<64 hex chars>", "size": 14971167}
+```
+
 A change of topic, payload or semantics requires a new version (`v2`) or full backward compatibility and an ADR.

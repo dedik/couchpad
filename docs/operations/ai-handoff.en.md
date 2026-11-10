@@ -686,6 +686,37 @@ after the last fixes; the "Okno" tile; the kitchen lamp on the phone.
 10. The auto-mode classifier blocks deploying to the HA server (ssh) and tapping the phone
     (`adb input`) — each time it needs the user's explicit OK in chat.
 
+## OLED style, Apple TV watchdog and Wi-Fi updates — 2026-11-10
+
+Commits from `d2862c6` to `4675c27` (plus empty test releases 0.3.61 and 0.3.64).
+
+- **OLED style in the app** ([ADR 0019](../architecture/adr/0019-phone-oled-style.en.md)):
+  *Settings → Phone → Dark style on this phone*. The panel is unchanged.
+- **Apple TV power watchdog** in the HA bridge (`script.multimedia_remote_atv_power`,
+  `docs/integrations/appletv.en.md`): the `apple_tv` integration silently lost its connection
+  ("paused" for 3.5 h, `turn_off` did nothing). The script waits 8 s for the state, then reloads
+  the integration entry and retries. Deployed to the server (backup
+  `…before-atv-power-watchdog.*`); the normal path is verified, the reload path has not
+  happened live yet.
+- **Wi-Fi app updates** ([ADR 0021](../architecture/adr/0021-phone-wifi-updates.en.md)):
+  retained `multimedia_remote/app/android`, APK in HA `www/pilot`, `phone/tools/publish-update.sh`,
+  `versionCode` = commit count, `targetSdk` 35. Samsung M23 (Android 14) installs after one tap
+  with no dialog; Xiaomi (HyperOS 3, Android 16) — a tap plus confirmation (HyperOS rejects
+  silent updates, the app retries with the dialog).
+  Both phones: 0.3.63–0.3.64.
+
+Open:
+
+1. The Xiaomi does not have the remote as its home screen — after an update the MIUI launcher
+   comes back.
+2. The TV has shown "brak połączenia" (no connection) on both phones since the morning; during
+   the Apple TV tests the Samsung app jumped to the TV screen and a tap may have hit power. Not
+   checked.
+3. README screenshots not refreshed after `targetSdk` 35 — the Samsung looked the same by eye;
+   the Phone page ("App version" section) is not in the screenshot set.
+4. The signing key is the laptop's debug key (`~/.android/debug.keystore`) — losing it means a
+   cable reinstall on every phone.
+
 ## Next safe step
 
 0. Close the "Open" items of the "Radiators and the kitchen lamp" entry (screenshots, merge `feat/radiators`).
