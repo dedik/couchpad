@@ -63,6 +63,14 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
   przyciemnianie), Dźwięk (limit), Pokój i czas (nazwa, strefa), Klawiatura i gładzik
   (na żywo, wysuwanie, czułość), Diagnostyka, O urządzeniu (restart, fabryczne).
   Styl klawiatury (QWERTY/Apple TV) pominięty — tekst wpisuje się klawiaturą telefonu.
+- Odstępstwo od 1:1 (2026-11-10, [ADR 0019](../../docs/architecture/adr/0019-phone-oled-style.md)): strona Telefon ma przełącznik „Styl ciemny na tym
+  telefonie: standard / OLED” (`Preferences.oled`, `OledPalette` w `ui/theme/Theme.kt`).
+  Płytka ma ekran IPS, więc wariant istnieje tylko w aplikacji. OLED: karty i kontrolki
+  w środku czarne, kształt rysuje sam obrys (`Palette.outlined`, `C.edge` dla elementów
+  zwykle bez obrysu); szarość tylko na wciśnięciu (`C.pressed`) i torach łuków. Neutralne
+  szarości, tekst i gałki łuków ~75% bieli, `faint` z kontrastem ≥ 4,5:1, a duże pola akcentu (OK,
+  szerokie przyciski) jako miękkie tło z obrysem (`Palette.softAccent`).
+  Pasek nawigacji systemu idzie teraz za kolorem tła stylu (wcześniej zawsze ciemny).
 
 ### Następne kroki
 

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import app.couchpad.pilot.data.Preferences
 import app.couchpad.pilot.ui.components.Button
 import app.couchpad.pilot.ui.components.Card
 import app.couchpad.pilot.ui.theme.C
@@ -90,7 +91,7 @@ private fun Context.open(action: String) = startActivity(Intent(action).addFlags
  * telefonu: wybór ekranu głównego, ustawienia Androida i lista aplikacji.
  */
 @Composable
-internal fun PhonePage() {
+internal fun PhonePage(prefs: Preferences, update: Update) {
     val context = LocalContext.current
     val isHome by rememberIsDefaultHome()
     // Ikony i nazwy aplikacji czytamy poza wątkiem UI — przy kilkudziesięciu to zauważalne.
@@ -105,6 +106,10 @@ internal fun PhonePage() {
         runCatching { context.open(Settings.ACTION_HOME_SETTINGS) }.onFailure { context.open(Settings.ACTION_SETTINGS) }
     }
     Button("Ustawienia Androida", Modifier.fillMaxWidth()) { context.open(Settings.ACTION_SETTINGS) }
+    Choose("Styl ciemny na tym telefonie", listOf("standard", "OLED"), if (prefs.oled) 1 else 0) { i ->
+        update { it.copy(oled = i == 1) }
+    }
+    Note("OLED: karty prawie czarne z obrysem, mniej pełnego pomarańczu i łagodniejszy tekst. Dla ekranów OLED/AMOLED; na LCD zostaw standard.")
     Group("Aplikacje") {
         Column(verticalArrangement = Arrangement.spacedBy(8.u)) {
             for (app in apps) {

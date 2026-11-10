@@ -38,6 +38,11 @@ room, lamp, effects, bulb, air conditioning and settings; light theme in the `li
   above the lock screen (no swipe needed without a PIN), always on the start screen
   (ADR 0010). Set it in *Settings → Phone → Set as home screen*; the phone's app list and the
   way into Android settings are there too.
+- **OLED style** (app only): *Settings → Phone → Dark style on this phone*. Cards and
+  controls are black inside with an outline only, dimmer text and a soft accent on large
+  areas — for OLED/AMOLED screens; keep standard on LCD. The remote enforces the brightness
+  from *Settings → Display → Brightness*, so set it lower on OLED (40–60%)
+  ([ADR 0019](../docs/architecture/adr/0019-phone-oled-style.en.md)).
 - **Settings 1:1:** MQTT (empty identifiers are discovered automatically), display
   (orientation, theme, brightness, night mode, screen timeout), sound, room and time,
   keyboard and trackpad, diagnostics.

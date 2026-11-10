@@ -117,7 +117,7 @@ private fun EffectTile(
                 when {
                     pending -> Modifier.border(1.u, C.accentPending, shape)
                     selected -> Modifier.border(1.u, C.accent, shape)
-                    else -> Modifier
+                    else -> Modifier.border(1.u, C.edge, shape)
                 },
             )
             .tap(onClick = onClick)

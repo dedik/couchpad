@@ -60,6 +60,7 @@ class SettingsStore(context: Context) {
             keyboardAutoOpen = prefs.getBoolean("keyboard_auto", d.keyboardAutoOpen),
             trackpadStep = prefs.getInt("trackpad_step", d.trackpadStep),
             volumeLimit = prefs.getInt("volume_limit", d.volumeLimit),
+            oled = prefs.getBoolean("oled", d.oled),
         )
     }
 
@@ -78,6 +79,7 @@ class SettingsStore(context: Context) {
             .putBoolean("keyboard_auto", p.keyboardAutoOpen)
             .putInt("trackpad_step", p.trackpadStep)
             .putInt("volume_limit", p.volumeLimit)
+            .putBoolean("oled", p.oled)
             .apply()
     }
 

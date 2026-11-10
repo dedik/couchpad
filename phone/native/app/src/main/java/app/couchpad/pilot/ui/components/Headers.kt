@@ -1,6 +1,7 @@
 package app.couchpad.pilot.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +42,8 @@ fun DeviceHeader(
         Modifier.fillMaxWidth().padding(start = 24.u, end = 24.u, top = 10.u, bottom = 6.u).height(56.u),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(40.u).clip(RoundedCornerShape(12.u)).background(C.surface2), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(40.u).clip(RoundedCornerShape(12.u)).background(C.surface2)
+            .border(1.u, C.edge, RoundedCornerShape(12.u)), contentAlignment = Alignment.Center) {
             Pixel(icon, 30.u)
         }
         Spacer(Modifier.width(12.u))

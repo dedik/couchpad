@@ -235,7 +235,7 @@ fun OptionTile(
     Box(
         modifier.clip(shape)
             .background(if (active) C.accentSoft else C.surface2)
-            .then(if (active || pending) Modifier.border(1.u, pendingBorder(active, pending), shape) else Modifier)
+            .border(1.u, if (active || pending) pendingBorder(active, pending) else C.edge, shape)
             .tap(onClick = onClick)
             .padding(horizontal = 14.u, vertical = 10.u),
         contentAlignment = Alignment.CenterStart,

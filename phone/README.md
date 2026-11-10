@@ -37,6 +37,11 @@ pokój, lampa, efekty, żarówka, klimatyzacja i ustawienia; w stylu jasnym w po
   (bez PIN-u nie trzeba go przesuwać), zawsze na ekranie startowym (ADR 0010). Ustawia się
   go w *Ustawienia → Telefon → Ustaw jako ekran główny*; tam też lista aplikacji telefonu
   i wejście do ustawień Androida.
+- **Styl OLED** (tylko w aplikacji): *Ustawienia → Telefon → Styl ciemny na tym telefonie*.
+  Karty i kontrolki w środku czarne, sam obrys, przygaszony tekst i miękki akcent na dużych
+  polach — dla ekranów OLED/AMOLED; na LCD zostaw standard. Pilot narzuca jasność z
+  *Ustawienia → Ekran → Jasność*, więc na OLED-zie ustaw ją niżej (40–60%)
+  ([ADR 0019](../docs/architecture/adr/0019-phone-oled-style.md)).
 - **Ustawienia 1:1:** MQTT (puste identyfikatory wykrywa sam), ekran (orientacja, styl,
   jasność, tryb nocny, wygaszanie), dźwięk, pokój i czas, klawiatura i gładzik, diagnostyka.
 

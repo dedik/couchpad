@@ -25,7 +25,7 @@ import app.couchpad.pilot.ui.components.Button
 import app.couchpad.pilot.ui.components.ConfirmDialog
 
 /** Zmiana preferencji: zapis od razu, jak przełączniki na płytce. */
-private typealias Update = ((Preferences) -> Preferences) -> Unit
+internal typealias Update = ((Preferences) -> Preferences) -> Unit
 
 /** Indeks wartości w tabeli opcji albo [fallback], gdy zapisanej wartości nie ma w tabeli. */
 private fun <T> List<T>.indexOr(value: T, fallback: Int) = indexOf(value).takeIf { it >= 0 } ?: fallback

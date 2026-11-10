@@ -178,7 +178,7 @@ private fun ModeTile(
                 when {
                     pending -> Modifier.border(1.u, C.accentPending, shape)
                     selected -> Modifier.border(1.u, C.accent, shape)
-                    else -> Modifier
+                    else -> Modifier.border(1.u, C.edge, shape)
                 },
             )
             .tap(onClick = onClick),
@@ -227,7 +227,7 @@ private fun androidx.compose.foundation.layout.RowScope.OptionCard(
         val shape = RoundedCornerShape(14.u)
         Column(
             Modifier.weight(1f).fillMaxHeight().clip(shape).background(C.surface2)
-                .then(if (pending) Modifier.border(1.u, C.accentPending, shape) else Modifier)
+                .border(1.u, if (pending) C.accentPending else C.edge, shape)
                 .tap(onClick = onClick),
             verticalArrangement = Arrangement.spacedBy(6.u, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
