@@ -1,5 +1,9 @@
 package app.couchpad.pilot.ui.start
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,13 +14,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import app.couchpad.pilot.R
 import app.couchpad.pilot.data.LinkPhase
@@ -28,6 +37,7 @@ import app.couchpad.pilot.ui.components.Button
 import app.couchpad.pilot.ui.components.Card
 import app.couchpad.pilot.ui.components.RoundButton
 import app.couchpad.pilot.ui.components.StatusDot
+import app.couchpad.pilot.ui.components.tap
 import app.couchpad.pilot.ui.formatIn
 import app.couchpad.pilot.ui.oneDecimal
 import app.couchpad.pilot.ui.shell.Screen
@@ -98,28 +108,59 @@ fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () ->
     }
 }
 
+/**
+ * Kafelki 2 × 2 i na ich skrzyżowaniu duży okrągły przycisk zakładki Pilot (tylko aplikacja,
+ * makieta docs/mockups/start-remote.html). Górny rząd ma tytuł u góry, żeby przycisk nie
+ * zasłaniał napisów.
+ */
 @Composable
 private fun TileGrid(tiles: List<DeviceTile>, modifier: Modifier, iconSize: Int, open: (Screen) -> Unit) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.u)) {
-        for (row in tiles.chunked(2)) {
-            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.u)) {
-                for (tile in row) DeviceTileCard(tile, Modifier.weight(1f), iconSize) { open(tile.screen) }
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.u)) {
+            tiles.chunked(2).forEachIndexed { index, row ->
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.u)) {
+                    for (tile in row) DeviceTileCard(tile, Modifier.weight(1f), iconSize, titleOnTop = index == 0) { open(tile.screen) }
+                }
             }
         }
+        RemoteHub(if (iconSize < 96) 147 else 176) { open(Screen.Remote) }
+    }
+}
+
+/**
+ * Przycisk Pilota: koło z obrysem w akcencie i ikoną pilota. Obwódka w kolorze tła wycina łuk
+ * w narożnikach kafelków, więc przycisk wygląda na osadzony między nimi.
+ */
+@Composable
+private fun RemoteHub(size: Int, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    Box(Modifier.size((size + 24).u).clip(CircleShape).background(C.bg), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.size(size.u).clip(CircleShape)
+                .background(if (pressed) C.surface3 else C.surface2)
+                .border(2.u, C.accent, CircleShape)
+                .tap(interaction = interaction, onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) { Pixel(R.drawable.px_remote, (size * 0.48f).u) }
     }
 }
 
 @Composable
-private fun DeviceTileCard(tile: DeviceTile, modifier: Modifier, iconSize: Int, onClick: () -> Unit) {
+private fun DeviceTileCard(tile: DeviceTile, modifier: Modifier, iconSize: Int, titleOnTop: Boolean, onClick: () -> Unit) {
     val compact = iconSize < 96
     Card(modifier.fillMaxHeight(), radius = 24, onClick = onClick) {
         Column(Modifier.fillMaxSize().padding(if (compact) 14.u else 20.u)) {
+            val text: @Composable () -> Unit = {
+                T(tile.title, if (compact) 22 else 26, FontWeight.Bold)
+                Spacer(Modifier.height(8.u))
+                StatusDot(tile.status, if (tile.ok) C.accent else C.danger, size = 13)
+            }
+            if (titleOnTop) text()
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Pixel(tile.icon, iconSize.u)
             }
-            T(tile.title, if (compact) 22 else 26, FontWeight.Bold)
-            Spacer(Modifier.height(8.u))
-            StatusDot(tile.status, if (tile.ok) C.accent else C.danger, size = 13)
+            if (!titleOnTop) text()
         }
     }
 }
