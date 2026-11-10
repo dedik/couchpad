@@ -15,13 +15,13 @@ def gitCommitCount() {
 
 android {
     namespace 'app.couchpad.pilot'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId 'app.couchpad.pilot'
         // Galaxy S5 ma Androida 6 (API 23).
         minSdk 23
-        targetSdk 34
+        targetSdk 35
         // Numer wersji rośnie z każdym commitem — aktualizacja przez Wi-Fi (ADR 0021)
         // instaluje tylko APK o wyższym versionCode niż zainstalowany.
         versionCode gitCommitCount()
