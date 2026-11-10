@@ -70,6 +70,11 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
   zwykle bez obrysu); szarość tylko na wciśnięciu (`C.pressed`) i torach łuków. Neutralne
   szarości, tekst i gałki łuków ~75% bieli, `faint` z kontrastem ≥ 4,5:1, a duże pola akcentu (OK,
   szerokie przyciski) jako miękkie tło z obrysem (`Palette.softAccent`).
+- Aktualizacja przez Wi-Fi (2026-11-10, [ADR 0021](../../docs/architecture/adr/0021-phone-wifi-updates.md)):
+  retained manifest `multimedia_remote/app/android`, APK w `www/pilot` HA, `AppUpdater`
+  (pobranie, sha256, `PackageInstaller`), sekcja „Wersja aplikacji” na stronie Telefon,
+  `versionCode` = liczba commitów, publikacja `phone/tools/publish-update.sh`. Sprawdzone
+  na Xiaomi (kilka ekranów MIUI) i Samsungu.
   Pasek nawigacji systemu idzie teraz za kolorem tła stylu (wcześniej zawsze ciemny).
 
 ### Następne kroki

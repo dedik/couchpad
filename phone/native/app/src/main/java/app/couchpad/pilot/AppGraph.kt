@@ -13,7 +13,7 @@ object AppGraph {
     lateinit var repo: PilotRepository
         private set
 
-    /** Aktualizacja aplikacji przez Wi-Fi (ADR 0020). */
+    /** Aktualizacja aplikacji przez Wi-Fi (ADR 0021). */
     lateinit var updater: AppUpdater
         private set
 

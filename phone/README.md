@@ -42,6 +42,10 @@ pokój, lampa, efekty, żarówka, klimatyzacja i ustawienia; w stylu jasnym w po
   polach — dla ekranów OLED/AMOLED; na LCD zostaw standard. Pilot narzuca jasność z
   *Ustawienia → Ekran → Jasność*, więc na OLED-zie ustaw ją niżej (40–60%)
   ([ADR 0019](../docs/architecture/adr/0019-phone-oled-style.md)).
+- **Aktualizacja przez Wi-Fi:** po `phone/tools/publish-update.sh` na laptopie każdy telefon
+  pokaże w *Ustawienia → Telefon* „Zainstaluj wersję …”; pobiera APK z Home Assistanta,
+  sprawdza sumę i instaluje po potwierdzeniu w oknie Androida. Za pierwszym razem trzeba
+  zezwolić pilotowi instalować aplikacje ([ADR 0021](../docs/architecture/adr/0021-phone-wifi-updates.md)).
 - **Ustawienia 1:1:** MQTT (puste identyfikatory wykrywa sam), ekran (orientacja, styl,
   jasność, tryb nocny, wygaszanie), dźwięk, pokój i czas, klawiatura i gładzik, diagnostyka.
 

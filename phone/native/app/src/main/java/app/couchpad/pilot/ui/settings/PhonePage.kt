@@ -135,7 +135,7 @@ internal fun PhonePage(prefs: Preferences, update: Update) {
 }
 
 /**
- * Wersja aplikacji i aktualizacja przez Wi-Fi (ADR 0020). Nowsza wersja przychodzi jako
+ * Wersja aplikacji i aktualizacja przez Wi-Fi (ADR 0021). Nowsza wersja przychodzi jako
  * retained manifest z brokera; instalację i tak zatwierdza okno Androida.
  */
 @Composable

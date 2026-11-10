@@ -43,6 +43,10 @@ room, lamp, effects, bulb, air conditioning and settings; light theme in the `li
   areas — for OLED/AMOLED screens; keep standard on LCD. The remote enforces the brightness
   from *Settings → Display → Brightness*, so set it lower on OLED (40–60%)
   ([ADR 0019](../docs/architecture/adr/0019-phone-oled-style.en.md)).
+- **Wi-Fi updates:** after `phone/tools/publish-update.sh` on the laptop every phone shows
+  "Install version …" in *Settings → Phone*; it downloads the APK from Home Assistant, checks
+  the checksum and installs after confirmation in Android's dialog. The first time, the remote
+  needs permission to install apps ([ADR 0021](../docs/architecture/adr/0021-phone-wifi-updates.en.md)).
 - **Settings 1:1:** MQTT (empty identifiers are discovered automatically), display
   (orientation, theme, brightness, night mode, screen timeout), sound, room and time,
   keyboard and trackpad, diagnostics.

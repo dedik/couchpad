@@ -26,7 +26,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
 
-/** Wersja opublikowana na brokerze (retained `multimedia_remote/app/android`, ADR 0020). */
+/** Wersja opublikowana na brokerze (retained `multimedia_remote/app/android`, ADR 0021). */
 data class AppRelease(
     val versionCode: Int,
     val versionName: String,
@@ -61,7 +61,7 @@ sealed interface UpdatePhase {
 }
 
 /**
- * Aktualizacja aplikacji przez Wi-Fi (ADR 0020): pobranie APK z adresu z manifestu,
+ * Aktualizacja aplikacji przez Wi-Fi (ADR 0021): pobranie APK z adresu z manifestu,
  * sprawdzenie sha256 i instalacja przez [PackageInstaller]. Android i tak prosi o
  * potwierdzenie — bez uprawnień właściciela urządzenia nie da się tego ominąć.
  */

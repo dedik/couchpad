@@ -35,7 +35,7 @@ class PilotRepository(private val store: SettingsStore) {
     val effectUsage: StateFlow<Map<String, Map<String, Int>>> = _effectUsage.asStateFlow()
 
     private val _release = MutableStateFlow<AppRelease?>(null)
-    /** Nowsza wersja aplikacji opublikowana na brokerze (ADR 0020); null — brak. */
+    /** Nowsza wersja aplikacji opublikowana na brokerze (ADR 0021); null — brak. */
     val release: StateFlow<AppRelease?> = _release.asStateFlow()
 
     // Pisane z wątku UI, czytane z wątku klienta MQTT.

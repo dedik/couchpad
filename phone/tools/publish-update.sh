@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publikuje nową wersję aplikacji pilota dla telefonów w domu (ADR 0020):
+# Publikuje nową wersję aplikacji pilota dla telefonów w domu (ADR 0021):
 #   1. buduje APK (versionCode = liczba commitów),
 #   2. wgrywa go do katalogu `www/pilot` Home Assistanta (adres /local/pilot/…),
 #   3. publikuje retained manifest na `multimedia_remote/app/android` przez mqtt.publish w HA.
