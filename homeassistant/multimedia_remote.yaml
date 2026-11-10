@@ -401,6 +401,53 @@ script:
           retain: true
           payload: "{{ snapshot | to_json }}"
 
+  # Zasilanie Apple TV ze strażnikiem. Integracja `apple_tv` potrafi po cichu zgubić
+  # połączenie z urządzeniem: stan stoi (np. „paused” przez wiele godzin, choć Apple TV
+  # dawno śpi), a `turn_on`/`turn_off` niczego nie wysyła i nie zgłasza błędu
+  # (2026-11-10). Gdy stan nie dojdzie do żądanego w 8 s, przeładuj wpis integracji
+  # i ponów polecenie — chyba że świeży stan już się zgadza. Woła go automatyzacja
+  # poleceń przez `script.turn_on`, żeby kolejka poleceń nie czekała na strażnika.
+  multimedia_remote_atv_power:
+    alias: Pilot — zasilanie Apple TV ze strażnikiem
+    mode: restart
+    fields:
+      player: { description: "Encja media_player Apple TV" }
+      entry_id: { description: "Identyfikator wpisu integracji Apple TV" }
+      turn_on: { description: "true — obudź, false — uśpij" }
+    sequence:
+      - variables:
+          service: "media_player.turn_{{ 'on' if turn_on else 'off' }}"
+      - service: "{{ service }}"
+        target:
+          entity_id: "{{ player }}"
+      - wait_template: >-
+          {{ (states(player) not in ['off', 'standby', 'unavailable', 'unknown']) == turn_on }}
+        timeout: "00:00:08"
+      - if: "{{ wait.completed }}"
+        then:
+          - stop: "Apple TV zareagował"
+      - service: system_log.write
+        data:
+          level: warning
+          logger: multimedia_remote
+          message: >-
+            Apple TV nie zareagował na {{ service }} (stan {{ states(player) }}) —
+            przeładowuję integrację i ponawiam.
+      - service: homeassistant.reload_config_entry
+        data:
+          entry_id: "{{ entry_id }}"
+      - wait_template: "{{ states(player) not in ['unavailable', 'unknown'] }}"
+        timeout: "00:00:20"
+      # Po przeładowaniu integracja chwilę dociąga stan urządzenia.
+      - delay: "00:00:02"
+      - if: >-
+          {{ (states(player) not in ['off', 'standby', 'unavailable', 'unknown']) == turn_on }}
+        then:
+          - stop: "Stan po przeładowaniu już się zgadza"
+      - service: "{{ service }}"
+        target:
+          entity_id: "{{ player }}"
+
 automation:
   # ---------------------------------------------------------------------------
   # Każda zmiana po stronie Z906 daje nowy snapshot. Dzięki temu pilot pokazuje
@@ -539,12 +586,18 @@ automation:
 
           # Usypia i budzi samo urządzenie. `remote.turn_on/off` integracji apple_tv
           # przełącza tylko stan w HA i niczego na Apple TV nie zmienia
-          # (sprawdzone 2026-10-31, docs/integrations/appletv.md).
+          # (sprawdzone 2026-10-31, docs/integrations/appletv.md). Strażnik w skrypcie
+          # przeładowuje integrację, gdy Apple TV nie zareaguje.
           - conditions: "{{ command == 'appletv.power.set' }}"
             sequence:
-              - service: "media_player.turn_{{ 'on' if args.on else 'off' }}"
+              - service: script.turn_on
                 target:
-                  entity_id: "{{ atv_player }}"
+                  entity_id: script.multimedia_remote_atv_power
+                data:
+                  variables:
+                    player: "{{ atv_player }}"
+                    entry_id: "{{ atv_config_entry }}"
+                    turn_on: "{{ args.on | default(false) | bool }}"
 
           # Wyłącznie aplikacje z listy ulubionych — pilot nie uruchamia niczego,
           # czego bridge nie opublikował w `apps`.

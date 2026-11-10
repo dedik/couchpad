@@ -24,6 +24,7 @@ Settings → Devices & services → MQTT.
 | --- | --- |
 | `counter.multimedia_remote_revision` | increasing snapshot revision; the remote ignores older ones |
 | `script.multimedia_remote_publish` | builds the full snapshot and publishes it as retained |
+| `script.multimedia_remote_atv_power` | Apple TV power with a watchdog: no reaction within 8 s → reload the integration and retry ([details](../docs/integrations/appletv.en.md)) |
 | automation "on Z906, Apple TV or AC change" | new snapshot after every entity change; AC — state and attributes shown on the remote |
 | automation "on startup" | snapshot after a Home Assistant restart |
 | automation "execute command" | receives the `command` topic and sets entities, including `climate.*` ([ADR 0009](../docs/architecture/adr/0009-climate-via-home-assistant.en.md)) |
