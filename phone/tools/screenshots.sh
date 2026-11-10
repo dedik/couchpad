@@ -15,6 +15,8 @@ APP=app.couchpad.pilot
 OUT="$(cd "$(dirname "$0")/.." && pwd)/docs/screenshots/$MODE"
 [ "$STYLE" = light ] && OUT="$OUT/light"
 mkdir -p "$OUT"
+# Stare zrzuty usuwamy: po dodaniu ekranu zmienia się numeracja plików.
+rm -f "$OUT"/*.png
 
 tap() { adb shell input tap "$1" "$2"; sleep "${3:-2}"; }
 back() { adb shell input keyevent KEYCODE_BACK; sleep 1.5; }
@@ -40,29 +42,31 @@ sleep 5
 echo "$MODE → $OUT"
 if [ "$MODE" = landscape ]; then
     shot 01-start
-    tap 1400 300 3;  shot 02-tv
-    tap 90 330;      shot 03-appletv
-    tap 150 540;     shot 04-audio
-    tap 90 746;      shot 05-home
-    tap 482 482;     shot 06-room
-    tap 700 700;     shot 07-light
-    tap 2156 556 1.5; shot 08-effects; back
-    tap 1095 875;    shot 09-bulb; back; back
-    tap 1700 700;    shot 10-climate; back; back
-    tap 90 950; shot 11-settings
+    tap 1400 300 3;  shot 03-tv
+    tap 90 109;      shot 02-remote
+    tap 90 454;      shot 04-appletv
+    tap 150 626;     shot 05-audio
+    tap 90 799;      shot 06-home
+    tap 482 482;     shot 07-room
+    tap 700 700;     shot 08-light
+    tap 2156 556 1.5; shot 09-effects; back
+    tap 1095 875;    shot 10-bulb; back; back
+    tap 1700 700;    shot 11-climate; back; back
+    tap 90 971; shot 12-settings
 else
     shot 01-start
-    tap 289 795 3;   shot 02-tv
-    tap 325 2324;    shot 03-appletv
-    tap 540 2324;    shot 04-audio
-    tap 742 2324;    shot 05-home
-    tap 265 760;     shot 06-room
-    tap 480 945;     shot 07-light   # lampa pod kartą „W pokoju” (ADR 0017)
-    tap 881 1801 1.5; shot 08-effects; back
-    tap 207 2066;    shot 09-bulb; back; back
-    tap 482 1245;    shot 10-climate; back; back
-    tap 950 2324;    shot 11-settings
-    tap 540 645;     shot 12-display; back
+    tap 289 795 3;   shot 03-tv
+    tap 112 2324;    shot 02-remote
+    tap 454 2324;    shot 04-appletv
+    tap 625 2324;    shot 05-audio
+    tap 796 2324;    shot 06-home
+    tap 265 760;     shot 07-room
+    tap 480 945;     shot 08-light   # lampa pod kartą „W pokoju” (ADR 0017)
+    tap 881 1801 1.5; shot 09-effects; back
+    tap 207 2066;    shot 10-bulb; back; back
+    tap 482 1245;    shot 11-climate; back; back
+    tap 967 2324;    shot 12-settings
+    tap 540 645;     shot 13-display; back
 fi
 
 set_pref orientation "${OLD_ORIENTATION:-0}"

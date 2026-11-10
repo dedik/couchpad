@@ -125,6 +125,27 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    w telefonie po ostatnich poprawkach nikt jeszcze nie oglądał.
 8. ~~Lampa w kuchni~~ (2026-11-09) — bez zmian w aplikacji: bridge podaje drugą pozycję `lights`
    (`room: kuchnia`, `id: lampa_kuchnia`), a aplikacja szuka świateł po pomieszczeniu.
+9. Zakładka **Pilot** (2026-11-10) — **tylko w aplikacji, panel jej nie ma** (świadome
+   odstępstwo od 1:1 na życzenie użytkownika; przy przenoszeniu na płytkę potrzebny ADR).
+   Pierwsza w pasku (`Screen.Remote`, `ui/remote/RemoteScreen.kt`), bez nagłówka ekranu.
+   Makieta: `docs/mockups/remote-final.html` (wcześniejsze warianty: `remote-tab.html`,
+   `remote-tv-block.html`). Trzy bloki:
+   - Telewizor: wejścia jako segmenty — telewizja i wejścia nazwane w ustawieniach TV
+     (gołe „HDMI n” tylko na pełnym ekranie TV), **aktywne zawsze pierwsze**
+     (`remoteSources`, test `RemoteSourcesTest`); tryb obrazu jedną linią ‹ nazwa ›
+     (strzałki — poprzedni/następny w kółko, nazwa — lista, kropki — pozycja); Cofnij, P−, P+.
+     W poziomie dodatkowo skróty kanałów (`Shortcuts` z ekranu TV) i „Więcej” z listą kanałów.
+   - Apple TV: ten sam `Trackpad` i `HomeKey` co pełny ekran, Menu, Klawiatura
+     (`TextDialog` z ekranu Apple TV); klawisze pod gładzikiem w obu orientacjach.
+   - Głośność: nagłówek z ikoną Z906 i wejściem dźwięku (bez napisu), −/+ o poziom, wartość,
+     wyciszenie.
+   Bez nowych tematów MQTT. Ikony pixel-art z `tools/draw_remote_icons.py` (`px_remote`,
+   `px_key_*`; wejście PC tymczasowo ikoną monitora `px_key_home`).
+   Sprawdzone 2026-11-10 na Galaxy M23 i Xiaomi (1200 × 2608, styl OLED) w pionie i w poziomie;
+   klawiszy wysyłających polecenia nie stukano, sprawdzona lista trybów obrazu.
+   `tools/screenshots.sh` na 6 zakładek: nowa numeracja (02-remote, 03-tv…), stare pliki kasuje;
+   `overview.py` w poziomie pomija 09-effects i 12-settings. Z dwoma telefonami przy adb
+   ustawić `ANDROID_SERIAL` (współrzędne są dla M23). Zrzuty odświeżone.
 
 ---
 

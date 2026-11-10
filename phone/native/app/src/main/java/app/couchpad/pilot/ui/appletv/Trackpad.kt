@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +38,7 @@ import app.couchpad.pilot.ui.components.direction
 import app.couchpad.pilot.ui.components.keyAt
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.LocalUnits
+import app.couchpad.pilot.ui.theme.Pixel
 import app.couchpad.pilot.ui.theme.T
 import app.couchpad.pilot.ui.theme.haptic
 import app.couchpad.pilot.ui.theme.u
@@ -140,7 +142,7 @@ internal fun Trackpad(modifier: Modifier, stepUnits: Int, onKey: (key: String, a
 
 /** Home: stuknięcie, podwójne (przełącznik aplikacji) i przytrzymanie (Centrum sterowania). */
 @Composable
-internal fun HomeKey(modifier: Modifier, onAction: (String) -> Unit) {
+internal fun HomeKey(modifier: Modifier, height: Int = 56, pixel: Int? = null, onAction: (String) -> Unit) {
     var lastTap by remember { mutableStateOf(0L) }
     var pendingTap by remember { mutableStateOf(0L) }
     val action by rememberUpdatedState(onAction)
@@ -153,7 +155,7 @@ internal fun HomeKey(modifier: Modifier, onAction: (String) -> Unit) {
     }
     val shape = RoundedCornerShape(16.u)
     Box(
-        modifier.height(56.u).clip(shape).background(C.surface).border(1.u, C.line, shape)
+        modifier.height(height.u).clip(shape).background(C.surface).border(1.u, C.line, shape)
             .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown()
@@ -182,10 +184,19 @@ internal fun HomeKey(modifier: Modifier, onAction: (String) -> Unit) {
             },
         contentAlignment = Alignment.Center,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.Home, null, tint = C.text, modifier = Modifier.size(20.u))
-            Spacer(Modifier.size(8.u))
-            T("Home", 15, FontWeight.Medium)
+        if (pixel != null) {
+            // Zakładka Pilot: ikona pixel-art nad podpisem, jak pozostałe klawisze.
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Pixel(pixel, 24.u)
+                Spacer(Modifier.size(4.u))
+                T("Home", 12, FontWeight.Medium, C.dim)
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.Home, null, tint = C.text, modifier = Modifier.size(20.u))
+                Spacer(Modifier.size(8.u))
+                T("Home", 15, FontWeight.Medium)
+            }
         }
     }
 }
