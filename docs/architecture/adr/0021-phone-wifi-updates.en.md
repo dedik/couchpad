@@ -60,6 +60,9 @@ is still needed.
 - The first update needs the permission and confirmations: one on Samsung (One UI), several
   MIUI screens on Xiaomi (HyperOS/MIUI). Later ones on Android 12+ are a single
   "Install version …" tap in the remote. Verified on both on 2026-11-10.
+- Android's dialog can be skipped, the system scanners cannot: every version has a new
+  checksum, so Google Play Protect ("App scan recommended") or the vendor's scanner (MIUI) may
+  stop an update and ask for a decision. The app does not change these settings.
 - The remote shows over the lock screen (ADR 0010), but Android's permission and installer
   dialogs do not — the phone has to be unlocked.
 - After installation Android kills the remote's process; as the home screen it comes back on

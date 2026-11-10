@@ -58,6 +58,9 @@ na stałe: Xiaomi wyłącza je po restarcie i zmianie sieci, a i tak potrzebny j
 - Pierwsza aktualizacja wymaga zgody i potwierdzeń: na Samsungu (One UI) jednego, na Xiaomi
   (HyperOS/MIUI) kilku ekranów MIUI. Kolejne na Androidzie 12+ to jedno dotknięcie
   „Zainstaluj wersję …” w pilocie. Sprawdzone 2026-11-10 na obu.
+- Okno Androida da się pominąć, ale nie skanery systemu: każda wersja ma nową sumę, więc
+  Google Play Protect („App scan recommended”) albo skaner producenta (MIUI) mogą zatrzymać
+  aktualizację i poprosić o decyzję. Aplikacja tych ustawień nie zmienia.
 - Pilot pokazuje się nad ekranem blokady (ADR 0010), a okna zgody i instalatora Androida
   już nie — telefon trzeba odblokować.
 - Po instalacji Android zabija proces pilota; jako ekran główny wraca sam po Home.
