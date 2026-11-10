@@ -35,6 +35,7 @@ import app.couchpad.pilot.data.PilotRepository
 import app.couchpad.pilot.data.PilotState
 import app.couchpad.pilot.data.Preferences
 import app.couchpad.pilot.data.TvState
+import app.couchpad.pilot.data.Z906
 import app.couchpad.pilot.ui.appletv.HomeKey
 import app.couchpad.pilot.ui.appletv.TextDialog
 import app.couchpad.pilot.ui.appletv.Trackpad
@@ -45,6 +46,7 @@ import app.couchpad.pilot.ui.components.PowerButton
 import app.couchpad.pilot.ui.components.PowerStyle
 import app.couchpad.pilot.ui.components.RepeatKey
 import app.couchpad.pilot.ui.components.StatusDot
+import app.couchpad.pilot.ui.components.asChoices
 import app.couchpad.pilot.ui.components.tap
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.LocalLandscape
@@ -61,7 +63,10 @@ private const val KEY_HEIGHT = 56
 /** Do tylu wejść segmenty dzielą szerokość po równo; więcej — pasek przewijany. */
 private const val MAX_EVEN_SOURCES = 4
 
-private enum class RemoteDialog { Picture, Channels }
+private enum class RemoteDialog { Picture, Channels, AudioSource }
+
+/** Efekty Z906 krótko, w kolejności `Z906.effects` (makieta docs/ux/mockup-remote-volume.html, G2). */
+private val EffectShort = listOf("3D", "2.1", "4.1", "Brak")
 
 /**
  * Pilot (tylko aplikacja, makieta docs/mockups/remote-final.html): najczęstsze sterowanie
@@ -77,12 +82,13 @@ fun RemoteScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
     var keyboard by remember { mutableStateOf(false) }
     // Wejście wybrane, a jeszcze niepotwierdzone przez telewizor (obrys oczekujący).
     var requestedSource by remember { mutableStateOf<String?>(null) }
+    var requestedEffect by remember { mutableStateOf<String?>(null) }
     // Jak na ekranie Apple TV: klawiatura wysuwa się sama, gdy Apple TV pokaże pole tekstowe.
     LaunchedEffect(atv.keyboardActive) { if (atv.keyboardActive && prefs.keyboardAutoOpen) keyboard = true }
     val landscape = LocalLandscape.current
 
-    val tvStatus = if (!tv.power) "wyłączony" else listOf(tv.sourceLabel, tv.pictureLabel).filter { it.isNotEmpty() }
-        .joinToString(" · ").ifEmpty { "włączony" }
+    // Wejście i tryb obrazu widać w segmentach pod nagłówkiem — w nagłówku tylko stan.
+    val tvStatus = if (tv.power) "włączony" else "wyłączony"
     val sourcePending = state.isPending(Pending.Tv.source)
     val tvBlock: @Composable ColumnScope.() -> Unit = {
         BlockHeader(R.drawable.px_tv, "Telewizor", tvStatus, tv.power)
@@ -133,18 +139,40 @@ fun RemoteScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
             Modifier.fillMaxSize().padding(start = 12.u, end = 24.u, top = 14.u, bottom = 14.u),
             horizontalArrangement = Arrangement.spacedBy(12.u),
         ) {
-            Block(Modifier.weight(0.34f).fillMaxHeight(), content = tvBlock)
+            Block(Modifier.weight(0.30f).fillMaxHeight(), content = tvBlock)
             Block(Modifier.weight(0.48f).fillMaxHeight(), content = atvBlock)
-            Block(Modifier.weight(0.18f).fillMaxHeight()) {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Pixel(R.drawable.px_audio, 32.u)
-                    Spacer(Modifier.height(2.u))
-                    StatusDot(z.source.ifEmpty { "—" }, if (audioOn) C.ok else C.faint, size = 11)
+            // Głośność (G2): nagłówek jak TV i Apple TV, wejście z listą, efekty 2 × 2, −/+ w jednym rzędzie.
+            Block(Modifier.weight(0.22f).fillMaxHeight()) {
+                BlockHeader(
+                    R.drawable.px_audio, "Z906",
+                    when {
+                        !audioOn -> "wyłączony"
+                        z.decode -> "Decode 5.1"
+                        else -> "włączony"
+                    },
+                    audioOn,
+                )
+                Card(
+                    Modifier.fillMaxWidth().height(52.u), radius = 12,
+                    pending = state.isPending(Pending.Z906.source), onClick = { dialog = RemoteDialog.AudioSource },
+                ) {
+                    // Bez podpisu „Wejście”: wartość mówi sama za siebie.
+                    Row(Modifier.fillMaxSize().padding(horizontal = 12.u), verticalAlignment = Alignment.CenterVertically) {
+                        T(z.source.ifEmpty { "—" }, 15, FontWeight.Medium, modifier = Modifier.weight(1f))
+                        T("›", 18, color = C.dim)
+                    }
                 }
-                StepKey("+", Modifier.fillMaxWidth().weight(1f)) { repo.z906VolumeStep(1) }
+                Effects(z.effect, if (state.isPending(Pending.Z906.effect)) requestedEffect else null) {
+                    requestedEffect = it
+                    repo.z906Effect(it)
+                }
+                Spacer(Modifier.weight(1f))
                 T(volume, 34, FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
-                StepKey("−", Modifier.fillMaxWidth().weight(1f)) { repo.z906VolumeStep(-1) }
-                mute(Modifier.fillMaxWidth().height(52.u))
+                Row(Modifier.height(56.u), horizontalArrangement = Arrangement.spacedBy(6.u)) {
+                    StepKey("−", Modifier.weight(1f).fillMaxHeight()) { repo.z906VolumeStep(-1) }
+                    StepKey("+", Modifier.weight(1f).fillMaxHeight()) { repo.z906VolumeStep(1) }
+                }
+                mute(Modifier.fillMaxWidth().height(48.u))
             }
         }
     } else {
@@ -178,6 +206,9 @@ fun RemoteScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
         RemoteDialog.Channels -> OptionDialog(
             "Kanały", state.channels.map { Choice(it.id, "${it.number}  ${it.name}") }, null, close,
         ) { id -> state.channels.firstOrNull { it.id == id }?.let { repo.tvChannel(it.name, it.id) } }
+        RemoteDialog.AudioSource -> OptionDialog(
+            "Źródło dźwięku", Z906.sources.asChoices(), z.source, close, onSelect = repo::z906Source,
+        )
         null -> Unit
     }
     if (keyboard) TextDialog(prefs.keyboardLive, onDismiss = { keyboard = false }) { repo.appleTvText(it) }
@@ -313,6 +344,30 @@ private fun Channels(modifier: Modifier, onChannel: (String) -> Unit, onMore: ()
                 if (row.size < 3) {
                     tile(Modifier.weight(1f), { Pixel(R.drawable.px_fx_more, 26.u) }, onMore)
                     repeat(2 - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+    }
+}
+
+/** Cztery efekty Z906 jawnie, 2 × 2: bieżący w akcencie, wybrany czeka na potwierdzenie. */
+@Composable
+private fun Effects(current: String, requested: String?, onSelect: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.u)) {
+        Z906.effects.chunked(2).forEachIndexed { row, pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(6.u)) {
+                pair.forEachIndexed { col, effect ->
+                    val active = effect == current
+                    Card(
+                        Modifier.weight(1f).height(40.u), radius = 10,
+                        selected = active, pending = effect == requested,
+                        background = if (active) C.accentSoft else null,
+                        onClick = { if (!active) onSelect(effect) },
+                    ) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            T(EffectShort[row * 2 + col], 13, FontWeight.Medium, if (active) C.text else C.dim)
+                        }
+                    }
                 }
             }
         }
