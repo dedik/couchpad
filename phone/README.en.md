@@ -45,24 +45,39 @@ room, lamp, effects, bulb, air conditioning and settings; light theme in the `li
   ([ADR 0019](../docs/architecture/adr/0019-phone-oled-style.en.md)).
 - **Wi-Fi updates:** after `phone/tools/publish-update.sh` on the laptop every phone shows
   "Install version …" in *Settings → Phone*; it downloads the APK from Home Assistant, checks
-  the checksum and installs after confirmation in Android's dialog. The first time, the remote
-  needs permission to install apps ([ADR 0021](../docs/architecture/adr/0021-phone-wifi-updates.en.md)).
+  the checksum and installs it. On Android 12+ without a confirmation dialog (Samsung), on
+  Xiaomi (HyperOS) with one confirmation. The first time, the remote needs permission to
+  install apps; Play Protect or the vendor's scanner may ask for a decision on a new version.
+  The remote comes back by itself after an update only as the home screen
+  ([ADR 0021](../docs/architecture/adr/0021-phone-wifi-updates.en.md)).
 - **Settings 1:1:** MQTT (empty identifiers are discovered automatically), display
   (orientation, theme, brightness, night mode, screen timeout), sound, room and time,
   keyboard and trackpad, diagnostics.
 
 ## Build and install
 
-Requires JDK 17 (`brew install openjdk@17`) and the Android SDK with `platforms;android-34`,
-`build-tools;34.0.0`.
+Requires JDK 17 (`brew install openjdk@17`) and the Android SDK with `platforms;android-35`,
+`build-tools;34.0.0`. The version number is the commit count (`versionCode`, `0.3.<n>`).
 
 ```bash
 cd native
 export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
 echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 ./gradlew assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb push app/build/outputs/apk/debug/app-debug.apk /data/local/tmp/pilot.apk
+adb shell pm install -r -i app.couchpad.pilot /data/local/tmp/pilot.apk
+adb shell am start -n app.couchpad.pilot/.MainActivity
 ./gradlew testDebugUnitTest   # logic tests without a phone
+```
+
+`-i app.couchpad.pilot` keeps the remote as its own installer — a plain `adb install` resets it
+and the next Wi-Fi update shows the confirmation dialog again.
+
+Release for the phones at home over Wi-Fi (after a commit; configuration in `tools/update.env`
+outside git, template `tools/update.env.example`):
+
+```bash
+tools/publish-update.sh
 ```
 
 Broker details are entered on the phone (Settings → MQTT). They never reach the repository.

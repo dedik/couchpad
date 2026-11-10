@@ -290,4 +290,16 @@ Automatyzacja/bridge Home Assistanta publikuje snapshot po każdej zmianie TV, Z
 - Błąd transportu nie może blokować UI ani powodować wielokrotnych, niekontrolowanych prób wykonania akcji.
 - Ekran sterowania po wybudzeniu jest dostępny wyłącznie po otrzymaniu nowego snapshotu wygenerowanego w odpowiedzi na `remote.sync.request`. Przed nim pokazywany jest ekran łączenia, a nie stan z pamięci.
 
+## Aktualizacja aplikacji na Androida (poza kontraktem v1)
+
+Temat `multimedia_remote/app/android` (retained, QoS 1) nie należy do kontraktu pilota: czyta go
+wyłącznie aplikacja na Androida, panel go nie subskrybuje. Publikuje go laptop skryptem
+`phone/tools/publish-update.sh` przez `mqtt.publish` w Home Assistancie ([ADR 0021](adr/0021-phone-wifi-updates.md)).
+
+```json
+{"version_code": 64, "version_name": "0.3.64",
+ "url": "http://<ha>:8123/local/pilot/pilot-64.apk",
+ "sha256": "<64 znaki hex>", "size": 14971167}
+```
+
 Zmiana tematu, payloadu lub semantyki wymaga nowej wersji (`v2`) albo pełnej zgodności wstecznej i ADR.

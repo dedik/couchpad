@@ -48,8 +48,10 @@ JVM, ekrany w pakietach według zakładek, wspólne kontrolki w `ui/components`)
 cd native
 export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
 echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
-./gradlew assembleDebug && adb install -r app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleDebug && adb push app/build/outputs/apk/debug/app-debug.apk /data/local/tmp/pilot.apk
+adb shell pm install -r -i app.couchpad.pilot /data/local/tmp/pilot.apk   # zostaje instalatorem samego siebie
 adb shell am start -n app.couchpad.pilot/.MainActivity
+../tools/publish-update.sh   # wydanie przez Wi-Fi dla telefonów w domu (ADR 0021)
 ./gradlew testDebugUnitTest   # testy JVM: kodek MQTT, kontrakt, TV, Z906, reguły ekranu
 ```
 
@@ -73,8 +75,11 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
 - Aktualizacja przez Wi-Fi (2026-11-10, [ADR 0021](../../docs/architecture/adr/0021-phone-wifi-updates.md)):
   retained manifest `multimedia_remote/app/android`, APK w `www/pilot` HA, `AppUpdater`
   (pobranie, sha256, `PackageInstaller`), sekcja „Wersja aplikacji” na stronie Telefon,
-  `versionCode` = liczba commitów, publikacja `phone/tools/publish-update.sh`. Sprawdzone
-  na Xiaomi (kilka ekranów MIUI) i Samsungu.
+  `versionCode` = liczba commitów, publikacja `phone/tools/publish-update.sh`. Android 12+:
+  sesja z `USER_ACTION_NOT_REQUIRED` — Samsung (Android 14) instaluje bez okna; HyperOS 3
+  (Xiaomi, Android 16) cichą próbę odrzuca „Permission denied”, więc `AppUpdater` od razu
+  ponawia z oknem. `targetSdk`/`compileSdk` 35 (wymaga `platforms;android-35`).
+  Sprawdzone na obu do wersji 0.3.64.
   Pasek nawigacji systemu idzie teraz za kolorem tła stylu (wcześniej zawsze ciemny).
 
 ### Następne kroki
