@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -90,7 +91,7 @@ fun AppleTvScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) 
                     }
                 }
                 Box(Modifier.weight(0.55f).fillMaxHeight().padding(16.u), contentAlignment = Alignment.Center) {
-                    Trackpad(Modifier.fillMaxHeight(), prefs.trackpadStep, navigate)
+                    Trackpad(Modifier.fillMaxHeight().aspectRatio(1f), prefs.trackpadStep, navigate)
                 }
             }
         } else {
@@ -99,7 +100,7 @@ fun AppleTvScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) 
                 Arrangement.spacedBy(12.u, Alignment.CenterHorizontally), repo::appleTvLaunch,
             )
             Box(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 24.u, vertical = 16.u), contentAlignment = Alignment.Center) {
-                Trackpad(Modifier.fillMaxWidth(), prefs.trackpadStep, navigate)
+                Trackpad(Modifier.fillMaxWidth().aspectRatio(1f), prefs.trackpadStep, navigate)
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 24.u, vertical = 12.u), horizontalArrangement = Arrangement.spacedBy(12.u)) {
                 actions(Modifier.weight(1f))

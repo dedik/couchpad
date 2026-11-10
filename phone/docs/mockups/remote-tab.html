@@ -117,6 +117,70 @@ body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, 
 .iconbox { display:flex; gap:18px; align-items:center; margin-top:8px; }
 .iconbox div { display:flex; flex-direction:column; align-items:center; gap:6px; font-size:11px; }
 .iconbox svg { image-rendering:pixelated; }
+/* Gładzik Apple TV — m3-glass-trackpad (phone/docs/TRACKPAD_SPEC.md) */
+.pad { flex:1; min-height:0; min-width:0; display:flex; align-items:stretch; justify-content:stretch; background:none; border-radius:0; }
+.m3-glass-trackpad {
+  position:relative; flex:1; min-height:0; min-width:0;
+  border-radius:28px;
+  background: radial-gradient(circle at 50% 50%, rgba(255,115,0,.04) 0%, rgba(255,255,255,.02) 60%, transparent 100%),
+              linear-gradient(180deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.01) 100%),
+              #121316;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.12),
+              inset 0 -2px 6px rgba(0,0,0,.4),
+              0 8px 24px rgba(0,0,0,.35);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  user-select:none; cursor:pointer; overflow:hidden;
+  transition: all .2s cubic-bezier(.2,0,0,1);
+  container-type:inline-size;
+}
+:root[data-theme="light"] .m3-glass-trackpad {
+  background: radial-gradient(circle at 50% 50%, rgba(255,115,0,.06) 0%, rgba(0,0,0,.01) 70%, transparent 100%),
+              linear-gradient(180deg, #F0ECE4 0%, #E7E2DA 100%);
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.8),
+              inset 0 -2px 4px rgba(0,0,0,.05),
+              0 6px 18px rgba(0,0,0,.06);
+}
+.trackpad-arrow { position:absolute; display:block; color:rgba(255,255,255,.25); pointer-events:none; transition:color .15s ease; }
+:root[data-theme="light"] .trackpad-arrow { color:rgba(0,0,0,.25); }
+.trackpad-arrow svg { display:block; width:11px; height:7px; }
+.trackpad-arrow.top    { top:14px;    left:50%; transform:translateX(-50%); }
+.trackpad-arrow.bottom { bottom:32px; left:50%; transform:translateX(-50%) rotate(180deg); }
+.trackpad-arrow.left   { left:16px;   top:50%;  transform:translateY(-50%) rotate(-90deg); }
+.trackpad-arrow.right  { right:16px;  top:50%;  transform:translateY(-50%) rotate(90deg); }
+.trackpad-center-badge {
+  position:relative; width:46px; height:46px; border-radius:50%;
+  background: radial-gradient(circle at 35% 35%, #222328 0%, #17181c 100%);
+  border:1px solid rgba(255,115,0,.45);
+  box-shadow: 0 0 16px rgba(255,115,0,.22),
+              inset 0 1px 2px rgba(255,255,255,.15),
+              inset 0 -1px 2px rgba(0,0,0,.6);
+  display:flex; align-items:center; justify-content:center; color:#FF8800;
+  transition: transform .12s cubic-bezier(.2,0,0,1), box-shadow .15s ease;
+}
+:root[data-theme="light"] .trackpad-center-badge {
+  background: radial-gradient(circle at 35% 35%, #FFFFFF 0%, #EDE8E0 100%);
+  border:1.5px solid #FF7300;
+  box-shadow: 0 0 12px rgba(255,115,0,.25),
+              inset 0 1px 2px rgba(255,255,255,.9),
+              inset 0 -1px 2px rgba(0,0,0,.08);
+  color:#C95000;
+}
+.m3-glass-trackpad:active .trackpad-center-badge {
+  transform:scale(.92); border-color:#FF8800; box-shadow:0 0 24px rgba(255,115,0,.45);
+}
+.trackpad-caption {
+  position:absolute; bottom:12px; left:8px; right:8px;
+  font-size:10px; font-weight:500; letter-spacing:.3px; white-space:nowrap;
+  color:rgba(255,255,255,.4); text-align:center; pointer-events:none;
+}
+:root[data-theme="light"] .trackpad-caption { color:rgba(0,0,0,.45); }
+.trackpad-caption .short { display:none; }
+@container (max-width: 250px) {
+  .trackpad-caption .long { display:none; }
+  .trackpad-caption .short { display:inline; }
+}
 </style>
 </head>
 <body>
@@ -178,7 +242,7 @@ body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, 
         </div>
         <div class="card" style="flex:1">
           <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
-          <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+          <div class="pad"><div class="m3-glass-trackpad"><div class="trackpad-arrow top"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow bottom"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow left"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow right"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-center-badge"><div class="center-badge-glow"></div></div></div></div>
           <div class="row">
             <div class="key"><i data-lucide="chevron-left"></i>Menu</div>
             <div class="key"><i data-lucide="tv"></i>Home</div>
@@ -209,7 +273,7 @@ body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, 
           <span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC">Telewizor</span>
           <span class="on"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC">Apple TV</span>
         </div>
-        <div class="pad" style="background:var(--surface)"><span class="c" style="background:var(--surface2)">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i><span class="hint">przesuń · stuknij · przytrzymaj</span></div>
+        <div class="pad"><div class="m3-glass-trackpad"><div class="trackpad-arrow top"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow bottom"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow left"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow right"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-center-badge"><div class="center-badge-glow"></div></div></div></div>
         <div class="row">
           <div class="key"><i data-lucide="chevron-left"></i>Menu</div>
           <div class="key"><i data-lucide="tv"></i>Home</div>
@@ -275,7 +339,7 @@ body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, 
         </div>
         <div class="card" style="flex:1; box-shadow:inset 0 0 0 1px var(--accent)">
           <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
-          <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+          <div class="pad"><div class="m3-glass-trackpad"><div class="trackpad-arrow top"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow bottom"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow left"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow right"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-center-badge"><div class="center-badge-glow"></div></div></div></div>
           <div class="row">
             <div class="key"><i data-lucide="chevron-left"></i>Menu</div>
             <div class="key"><i data-lucide="tv"></i>Home</div>
@@ -308,7 +372,7 @@ body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, 
             </div>
             <div class="card" style="flex:1">
               <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
-              <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+              <div class="pad"><div class="m3-glass-trackpad"><div class="trackpad-arrow top"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow bottom"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow left"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow right"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-center-badge"><div class="center-badge-glow"></div></div></div></div>
               <div class="row"><div class="key"><i data-lucide="chevron-left"></i>Menu</div><div class="key"><i data-lucide="tv"></i>Home</div></div>
             </div>
           </div>
@@ -340,7 +404,7 @@ body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, 
         <div class="card" style="flex:1">
           <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
           <div style="flex:1; display:flex; gap:8px; min-height:0">
-            <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+            <div class="pad"><div class="m3-glass-trackpad"><div class="trackpad-arrow top"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow bottom"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow left"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-arrow right"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h1v1H3zM2 1h3v1H2zM1 2h5v1H1zM0 3h7v1H0z"/></svg></div><div class="trackpad-center-badge"><div class="center-badge-glow"></div></div></div></div>
             <div style="display:flex; flex-direction:column; gap:8px; width:74px"><div class="key"><i data-lucide="chevron-left"></i>Menu</div><div class="key"><i data-lucide="tv"></i>Home</div></div>
           </div>
         </div>

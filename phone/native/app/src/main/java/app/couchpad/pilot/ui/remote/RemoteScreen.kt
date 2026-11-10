@@ -115,7 +115,7 @@ fun RemoteScreen(state: PilotState, prefs: Preferences, repo: PilotRepository) {
             )
         }
         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-            Trackpad(Modifier.fillMaxHeight(), prefs.trackpadStep) { key, action -> repo.appleTvNavigate(key, action) }
+            Trackpad(Modifier.fillMaxSize(), prefs.trackpadStep) { key, action -> repo.appleTvNavigate(key, action) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.u)) {
             Key("Menu", Modifier.weight(1f), R.drawable.px_key_menu) { repo.appleTvNavigate("menu") }
