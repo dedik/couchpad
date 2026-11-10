@@ -250,7 +250,7 @@ private fun RowScope.Tile(
                 when {
                     pending -> Modifier.border(1.u, C.accentPending, shape)
                     selected -> Modifier.border(1.u, C.accent, shape)
-                    else -> Modifier
+                    else -> Modifier.border(1.u, C.edge, shape)
                 },
             )
             .tap(onClick = onClick),
@@ -265,7 +265,7 @@ private data class Status(val icon: Int, val caption: String, val value: String,
 private fun RowScope.StatusTile(s: Status) {
     val shape = RoundedCornerShape(14.u)
     Column(
-        Modifier.weight(1f).height(84.u).clip(shape).background(C.surface2).padding(6.u),
+        Modifier.weight(1f).height(84.u).clip(shape).background(C.surface2).border(1.u, C.edge, shape).padding(6.u),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.u, Alignment.CenterVertically),
     ) {

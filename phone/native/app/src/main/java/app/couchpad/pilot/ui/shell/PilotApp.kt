@@ -1,5 +1,6 @@
 package app.couchpad.pilot.ui.shell
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -28,6 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,6 +53,7 @@ import app.couchpad.pilot.ui.theme.DarkPalette
 import app.couchpad.pilot.ui.theme.Haptics
 import app.couchpad.pilot.ui.theme.LightPalette
 import app.couchpad.pilot.ui.theme.LocalLandscape
+import app.couchpad.pilot.ui.theme.OledPalette
 import app.couchpad.pilot.ui.theme.ProvideUnits
 import app.couchpad.pilot.ui.tv.TvScreen
 import kotlinx.coroutines.delay
@@ -98,7 +103,22 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
 
     // Styl, wygaszanie i jasność (ScreenPolicy).
     val hour = hourIn(prefs.zoneId, now)
-    C.palette = if (ScreenPolicy.dark(prefs, hour)) DarkPalette else LightPalette
+    val dark = ScreenPolicy.dark(prefs, hour)
+    C.palette = when {
+        !dark -> LightPalette
+        prefs.oled -> OledPalette
+        else -> DarkPalette
+    }
+    // Pasek nawigacji systemu w kolorze tła bieżącego stylu (wcześniej zawsze ciemny).
+    val activity = LocalContext.current as? Activity
+    val barColor = C.bg
+    LaunchedEffect(barColor, dark) {
+        activity?.window?.let { window ->
+            @Suppress("DEPRECATION")
+            window.navigationBarColor = barColor.toArgb()
+            WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = !dark
+        }
+    }
     val idle = now - lastTouch
     if (!asleep && ScreenPolicy.shouldSleep(prefs, idle)) asleep = true
     val dimmed = !asleep && ScreenPolicy.dimmed(prefs, idle)

@@ -52,7 +52,7 @@ fun Card(
     Box(
         modifier
             .clip(shape)
-            .background(background ?: if (pressed) C.surface2 else C.surface)
+            .background(background ?: if (pressed) C.pressed else C.surface)
             .border(1.u, if (selected) C.accent else if (pending) C.accentPending else C.line, shape)
             .then(if (onClick != null) Modifier.tap(interaction = interaction, onClick = onClick) else Modifier),
     ) { content() }
@@ -75,17 +75,23 @@ fun Button(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val shape = RoundedCornerShape(radius.u)
+    val soft = accent && C.softAccent
     val bg = when {
+        soft -> C.accent.copy(alpha = if (pressed) 0.32f else 0.16f)
         accent -> if (pressed) C.accentPressed else C.accent
         selected -> if (pressed) C.surface3 else C.surface2
-        else -> if (pressed) C.surface2 else C.surface
+        else -> if (pressed) C.pressed else C.surface
     }
     val border = when {
-        selected -> C.accent.copy(alpha = if (pending) 0.4f else 1f)
+        selected || soft -> C.accent.copy(alpha = if (pending) 0.4f else 1f)
         accent -> Color.Transparent
         else -> C.line
     }
-    val fg = if (accent) C.accentInk else C.text
+    val fg = when {
+        soft -> C.accent
+        accent -> C.accentInk
+        else -> C.text
+    }
     Box(
         modifier
             .clip(shape)

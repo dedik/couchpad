@@ -28,7 +28,7 @@
 
 ## Android app (`phone/`)
 
-- The panel is the reference: design screens, settings and texts for the firmware and the app mirrors them one to one in portrait and landscape. A UI change on the panel is also a task for the app (or an entry in `phone/docs/PROGRESS.md`).
+- The panel is the reference: design screens, settings and texts for the firmware and the app mirrors them one to one in portrait and landscape. Exception: the OLED style on the Phone page, app only ([ADR 0019](docs/architecture/adr/0019-phone-oled-style.en.md)) — draw cards and controls with palette tokens (`C.surface`, `C.line`/`C.edge`, `C.pressed`), never a hard-coded grey. A UI change on the panel is also a task for the app (or an entry in `phone/docs/PROGRESS.md`).
 - The app speaks the same MQTT contract as the panel and adds no topics of its own.
 - The firmware must not depend on `phone/`. The SDL port (`phone/android`, `compat/`, `platform/`) is a reference — do not develop it.
 - Check a change visible on screen on a phone (`adb`) and after every such change refresh the screenshots in all four variants (portrait/landscape × dark/light): `phone/tools/screenshots.sh portrait|landscape [light]`. The script also rebuilds the README overviews `phone/docs/screenshots/overview-*.png` — a UI change commit must include the new screenshots so main always shows the current look. If the change moves elements, fix the tap coordinates in the script (a stale tap can hit a button that sends a command). Do not enter MQTT broker details for the user or store them in the repository.

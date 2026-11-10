@@ -251,7 +251,7 @@ private fun BulbTile(bulb: LightMember, pending: Boolean, modifier: Modifier, on
     Column(
         modifier.clip(shape)
             .background(if (active) C.accentSoft else C.surface2)
-            .border(1.u, if (active || pending) pendingBorder(active, pending) else Color.Transparent, shape)
+            .border(1.u, if (active || pending) pendingBorder(active, pending) else C.edge, shape)
             .tap(onClick = onClick)
             .padding(8.u),
         horizontalAlignment = Alignment.CenterHorizontally,

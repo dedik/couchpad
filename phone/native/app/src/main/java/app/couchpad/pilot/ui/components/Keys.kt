@@ -108,16 +108,32 @@ fun DPad(
                 Modifier.fillMaxSize(0.42f).clip(CircleShape)
                     .background(
                         when {
+                            accentCenter && C.softAccent -> C.accent.copy(alpha = if (centerPressed) 0.32f else 0.16f)
                             accentCenter && centerPressed -> C.accentPressed
                             accentCenter -> C.accent
                             centerPressed -> C.surface3
                             else -> C.surface2
                         }
                     )
-                    .border(1.u, if (accentCenter) Color.Transparent else C.line, CircleShape),
+                    .border(
+                        1.u,
+                        when {
+                            accentCenter && C.softAccent -> C.accent
+                            accentCenter -> Color.Transparent
+                            else -> C.line
+                        },
+                        CircleShape,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
-                T(centerLabel, 16, FontWeight.Bold, if (accentCenter) C.accentInk else C.dim)
+                T(
+                    centerLabel, 16, FontWeight.Bold,
+                    when {
+                        accentCenter && C.softAccent -> C.accent
+                        accentCenter -> C.accentInk
+                        else -> C.dim
+                    },
+                )
             }
         }
     }

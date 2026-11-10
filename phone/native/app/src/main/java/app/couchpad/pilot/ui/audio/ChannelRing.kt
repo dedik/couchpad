@@ -67,7 +67,7 @@ internal fun ChannelRing(
         modifier
             .clip(shape)
             .background(C.surface2)
-            .then(if (pending) Modifier.border(1.u, C.accentPending, shape) else Modifier)
+            .border(1.u, if (pending) C.accentPending else C.edge, shape)
             .pointerInput(Unit) {
                 val px = travel.toPx()
                 detectVerticalDragGestures(
@@ -108,8 +108,11 @@ internal fun ChannelRing(
         // Łuk jest otwarty u dołu: podpis wchodzi w tę przerwę.
         T(label, 11, FontWeight.Medium, C.dim, modifier = Modifier.offset(y = (-10).u))
         Row(horizontalArrangement = Arrangement.spacedBy(10.u), modifier = Modifier.offset(y = (-4).u)) {
-            RoundButton(Icons.Rounded.Remove, size = 36, background = C.surface3, border = C.surface3) { onStep(-1) }
-            RoundButton(Icons.Rounded.Add, size = 36, background = C.surface3, border = C.surface3) { onStep(1) }
+            // Zwykle szare kółka bez obrysu; w OLED czarne z obrysem, jak reszta kontrolek.
+            val fill = if (C.outlined) C.surface2 else C.surface3
+            val edge = if (C.outlined) C.line else C.surface3
+            RoundButton(Icons.Rounded.Remove, size = 36, background = fill, border = edge) { onStep(-1) }
+            RoundButton(Icons.Rounded.Add, size = 36, background = fill, border = edge) { onStep(1) }
         }
     }
 }

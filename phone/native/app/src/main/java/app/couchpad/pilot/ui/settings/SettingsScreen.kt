@@ -145,7 +145,7 @@ private fun PageDetail(page: Page, state: PilotState, prefs: Preferences, repo: 
                 Page.Place -> PlacePage(prefs, repo::updatePreferences)
                 Page.Keyboard -> KeyboardPage(prefs, repo::updatePreferences)
                 Page.Diagnostics -> DiagnosticsPage(state)
-                Page.Phone -> PhonePage()
+                Page.Phone -> PhonePage(prefs, repo::updatePreferences)
                 Page.About -> AboutPage(repo)
             }
             Spacer(Modifier.height(24.u))

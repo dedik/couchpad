@@ -90,7 +90,7 @@ internal fun ArcTrack(
     alpha: Float = 1f,
     knob: Boolean = true,
     marker: Float? = null,
-    markerColor: Color = Color.White,
+    markerColor: Color = if (C.outlined) C.text else Color.White,
     onDragStart: (Float) -> Unit = {},
     onDrag: (Float) -> Unit = {},
     onDragEnd: () -> Unit = {},
@@ -103,6 +103,8 @@ internal fun ArcTrack(
     val end by rememberUpdatedState(onDragEnd)
     val cancel by rememberUpdatedState(onDragCancel)
     Box(modifier.aspectRatio(1f), contentAlignment = Alignment.Center) {
+        // Gałka: czysta biel, w OLED kolor tekstu (mniej poświaty na czerni).
+        val knobColor = if (C.outlined) C.text else Color.White
         Canvas(
             Modifier.fillMaxSize().pointerInput(draggable) {
                 if (!draggable) return@pointerInput
@@ -136,7 +138,7 @@ internal fun ArcTrack(
                 } else {
                     drawArc(color, ArcGeometry.START, sweep, false, topLeft, arc, alpha = alpha, style = cap)
                 }
-                if (knob) drawCircle(Color.White, stroke * 0.62f, at(fraction))
+                if (knob) drawCircle(knobColor, stroke * 0.62f, at(fraction))
             }
             // Znacznik na łuku (np. temperatura w pokoju): kropka z obwódką w kolorze tła.
             if (marker != null) {

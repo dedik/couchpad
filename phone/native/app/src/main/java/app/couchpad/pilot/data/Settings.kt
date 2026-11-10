@@ -45,4 +45,8 @@ data class Preferences(
     val keyboardAutoOpen: Boolean = true,
     val trackpadStep: Int = 26,
     val volumeLimit: Int = 100,
+    /**
+     * Ciemny styl w wariancie OLED (tylko telefon, strona Telefon; płytka ma ekran IPS).
+     */
+    val oled: Boolean = false,
 )
