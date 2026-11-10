@@ -146,6 +146,11 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    `tools/screenshots.sh` na 6 zakładek: nowa numeracja (02-remote, 03-tv…), stare pliki kasuje;
    `overview.py` w poziomie pomija 09-effects i 12-settings. Z dwoma telefonami przy adb
    ustawić `ANDROID_SERIAL` (współrzędne są dla M23). Zrzuty odświeżone.
+   **Start (2026-11-10):** na skrzyżowaniu kafelków duży okrągły przycisk Pilota
+   (`RemoteHub` w `ui/start/StartScreen.kt`: 176 u w pionie, 147 u w poziomie, obrys w akcencie,
+   obwódka 12 u w kolorze tła udaje wycięcie w narożnikach). Górny rząd kafelków ma tytuł i stan
+   u góry, żeby przycisk ich nie zasłaniał. Lewa część Startu bez zmian. Makieta
+   `docs/mockups/start-remote.html`; sprawdzone na M23 i Xiaomi w obu orientacjach, zrzuty odświeżone.
 
 ---
 
