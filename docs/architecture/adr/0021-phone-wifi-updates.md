@@ -30,8 +30,12 @@ na stałe: Xiaomi wyłącza je po restarcie i zmianie sieci, a i tak potrzebny j
   bez logowania, tylko w sieci domowej. Nazwa pliku zawiera numer wersji, więc żaden cache nie
   poda starego pliku; skrypt zostawia dwie ostatnie wersje.
 - **Instalacja** (`data/AppUpdater.kt`): pobranie do `cacheDir`, sprawdzenie sha256, sesja
-  `PackageInstaller`. Android zawsze pokazuje okno potwierdzenia — bez uprawnień właściciela
-  urządzenia nie da się tego ominąć i nie próbujemy. Przy pierwszej aktualizacji Android 8+
+  `PackageInstaller`. Na Androidzie 12+ sesja prosi o `USER_ACTION_NOT_REQUIRED`
+  (uprawnienie `UPDATE_PACKAGES_WITHOUT_USER_ACTION`): system instaluje bez okna, jeśli pilot
+  jest instalatorem z rekordu samego siebie. Tak jest po pierwszej aktualizacji przez Wi-Fi;
+  instalacja kablem zwykłym `adb install` to zeruje (wtedy `adb shell pm install -r -i
+  app.couchpad.pilot …`). Starsze systemy i pierwsza aktualizacja pokazują okno Androida.
+  Przy pierwszej aktualizacji Android 8+
   wymaga jednorazowej zgody „Instaluj nieznane aplikacje” dla pilota; strona Telefon prowadzi
   do tego ekranu i po powrocie sama sprawdza zgodę.
 - **Interfejs:** *Ustawienia → Telefon → Wersja aplikacji*. Bez nowszej wersji: „aktualna”.
@@ -51,9 +55,9 @@ na stałe: Xiaomi wyłącza je po restarcie i zmianie sieci, a i tak potrzebny j
 - Wszystkie wersje muszą być podpisane tym samym kluczem. Dziś to klucz debug z laptopa
   (`~/.android/debug.keystore`); jego utrata oznacza jednorazową reinstalację kablem na każdym
   telefonie (z utratą ustawień pilota).
-- Na Samsungu (One UI) aktualizacja to jedno dotknięcie „Zainstaluj” i potwierdzenie.
-  Na Xiaomi (HyperOS/MIUI) dochodzą ekrany MIUI (ostrzeżenie o nieznanym źródle, skan
-  bezpieczeństwa) — działa, ale wymaga kilku dotknięć. Sprawdzone 2026-11-10 na obu.
+- Pierwsza aktualizacja wymaga zgody i potwierdzeń: na Samsungu (One UI) jednego, na Xiaomi
+  (HyperOS/MIUI) kilku ekranów MIUI. Kolejne na Androidzie 12+ to jedno dotknięcie
+  „Zainstaluj wersję …” w pilocie. Sprawdzone 2026-11-10 na obu.
 - Pilot pokazuje się nad ekranem blokady (ADR 0010), a okna zgody i instalatora Androida
   już nie — telefon trzeba odblokować.
 - Po instalacji Android zabija proces pilota; jako ekran główny wraca sam po Home.
