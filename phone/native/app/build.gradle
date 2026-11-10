@@ -22,7 +22,7 @@ android {
         // Galaxy S5 ma Androida 6 (API 23).
         minSdk 23
         targetSdk 34
-        // Numer wersji rośnie z każdym commitem — aktualizacja przez Wi-Fi (ADR 0020)
+        // Numer wersji rośnie z każdym commitem — aktualizacja przez Wi-Fi (ADR 0021)
         // instaluje tylko APK o wyższym versionCode niż zainstalowany.
         versionCode gitCommitCount()
         versionName "0.3.${gitCommitCount()}"
