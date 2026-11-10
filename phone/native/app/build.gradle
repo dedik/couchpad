@@ -3,6 +3,16 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+/** Liczba commitów w repozytorium; poza gitem 3 (pierwsza wersja z aktualizacją). */
+def gitCommitCount() {
+    try {
+        def out = providers.exec { commandLine 'git', 'rev-list', '--count', 'HEAD' }.standardOutput.asText.get().trim()
+        return out.toInteger()
+    } catch (Exception ignored) {
+        return 3
+    }
+}
+
 android {
     namespace 'app.couchpad.pilot'
     compileSdk 34
@@ -12,8 +22,10 @@ android {
         // Galaxy S5 ma Androida 6 (API 23).
         minSdk 23
         targetSdk 34
-        versionCode 2
-        versionName '0.2-native'
+        // Numer wersji rośnie z każdym commitem — aktualizacja przez Wi-Fi (ADR 0020)
+        // instaluje tylko APK o wyższym versionCode niż zainstalowany.
+        versionCode gitCommitCount()
+        versionName "0.3.${gitCommitCount()}"
     }
 
     buildTypes {

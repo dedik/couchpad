@@ -11,3 +11,4 @@ native/.gradle/
 native/app/build/
 native/build/
 native/local.properties
+tools/update.env

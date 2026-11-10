@@ -34,6 +34,10 @@ class PilotRepository(private val store: SettingsStore) {
     /** Lampa → efekt → liczba wyborów w tym telefonie (kafle efektów, [EffectUsage]). */
     val effectUsage: StateFlow<Map<String, Map<String, Int>>> = _effectUsage.asStateFlow()
 
+    private val _release = MutableStateFlow<AppRelease?>(null)
+    /** Nowsza wersja aplikacji opublikowana na brokerze (ADR 0020); null — brak. */
+    val release: StateFlow<AppRelease?> = _release.asStateFlow()
+
     // Pisane z wątku UI, czytane z wątku klienta MQTT.
     @Volatile private var client: MqttClient? = null
     @Volatile private var settings = _broker.value
@@ -126,6 +130,7 @@ class PilotRepository(private val store: SettingsStore) {
                 c.subscribe("${s.z906Base}/availability")
             }
             subscribeTv(c, s)
+            c.subscribe(UPDATE_TOPIC)
             if (s.remoteId.isNotBlank()) {
                 for (leaf in listOf("state", "channels", "weather")) c.subscribe("${s.v1Base}/$leaf")
                 c.publish("${s.v1Base}/availability", "online", 1, retain = true)
@@ -147,6 +152,10 @@ class PilotRepository(private val store: SettingsStore) {
 
         override fun onMessage(topic: String, payload: ByteArray, retained: Boolean) {
             val text = String(payload, Charsets.UTF_8)
+            if (topic == UPDATE_TOPIC) {
+                _release.value = AppRelease.parse(text)?.takeIf { it.isNewer }
+                return
+            }
             val s = settings
             discover(s, topic)?.let { found ->
                 Log.i(TAG, "wykryto identyfikatory u brokera")
@@ -348,6 +357,8 @@ class PilotRepository(private val store: SettingsStore) {
 
     companion object {
         const val V1 = "multimedia_remote/v1"
+        /** Manifest aktualizacji aplikacji (retained), wspólny dla wszystkich telefonów. */
+        const val UPDATE_TOPIC = "multimedia_remote/app/android"
         private const val TAG = "repo"
 
         /**

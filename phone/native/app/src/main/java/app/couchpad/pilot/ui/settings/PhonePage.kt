@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -35,7 +36,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.runtime.collectAsState
+import app.couchpad.pilot.AppGraph
+import app.couchpad.pilot.BuildConfig
 import app.couchpad.pilot.data.Preferences
+import app.couchpad.pilot.data.UpdatePhase
 import app.couchpad.pilot.ui.components.Button
 import app.couchpad.pilot.ui.components.Card
 import app.couchpad.pilot.ui.theme.C
@@ -106,6 +111,7 @@ internal fun PhonePage(prefs: Preferences, update: Update) {
         runCatching { context.open(Settings.ACTION_HOME_SETTINGS) }.onFailure { context.open(Settings.ACTION_SETTINGS) }
     }
     Button("Ustawienia Androida", Modifier.fillMaxWidth()) { context.open(Settings.ACTION_SETTINGS) }
+    UpdateSection()
     Choose("Styl ciemny na tym telefonie", listOf("standard", "OLED"), if (prefs.oled) 1 else 0) { i ->
         update { it.copy(oled = i == 1) }
     }
@@ -123,6 +129,63 @@ internal fun PhonePage(prefs: Preferences, update: Update) {
                         Icon(Icons.Rounded.ChevronRight, null, tint = C.faint, modifier = Modifier.size(20.u))
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Wersja aplikacji i aktualizacja przez Wi-Fi (ADR 0020). Nowsza wersja przychodzi jako
+ * retained manifest z brokera; instalację i tak zatwierdza okno Androida.
+ */
+@Composable
+private fun UpdateSection() {
+    val context = LocalContext.current
+    val updater = AppGraph.updater
+    val release by AppGraph.repo.release.collectAsState()
+    val phase by updater.phase.collectAsState()
+    val current = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+    // Zgodę na instalację użytkownik daje w ustawieniach systemu — sprawdzamy po każdym powrocie.
+    var canInstall by remember { mutableStateOf(updater.canInstall()) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) canInstall = updater.canInstall()
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    val next = release
+
+    if (next == null) {
+        InfoRow("Wersja aplikacji", "$current · aktualna", ok = true)
+        return
+    }
+    InfoRow("Wersja aplikacji", current)
+    when (val p = phase) {
+        is UpdatePhase.Downloading -> {
+            val pct = p.progress?.let { " ${(it * 100).toInt()}%" } ?: "…"
+            Button("Pobieranie$pct", Modifier.fillMaxWidth(), pending = true) {}
+        }
+        UpdatePhase.Installing -> {
+            Button("Instalowanie…", Modifier.fillMaxWidth(), pending = true) {}
+            Note("Potwierdź w oknie Androida. Po instalacji pilot uruchomi się od nowa.")
+        }
+        is UpdatePhase.Failed -> {
+            Note("Aktualizacja nieudana: ${p.message}")
+            Button("Spróbuj ponownie", Modifier.fillMaxWidth(), accent = true) {
+                updater.dismissError()
+                updater.install(next)
+            }
+        }
+        UpdatePhase.Idle -> if (canInstall) {
+            Button("Zainstaluj wersję ${next.versionName}", Modifier.fillMaxWidth(), accent = true) {
+                updater.install(next)
+            }
+        } else {
+            Note("Pilot potrzebuje jednorazowej zgody na instalowanie aplikacji. Włącz ją i wróć tutaj.")
+            Button("Zezwól na instalację", Modifier.fillMaxWidth(), accent = true) {
+                runCatching { context.startActivity(updater.permissionIntent()) }
             }
         }
     }
