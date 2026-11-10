@@ -35,6 +35,9 @@ na stałe: Xiaomi wyłącza je po restarcie i zmianie sieci, a i tak potrzebny j
   jest instalatorem z rekordu samego siebie. Tak jest po pierwszej aktualizacji przez Wi-Fi;
   instalacja kablem zwykłym `adb install` to zeruje (wtedy `adb shell pm install -r -i
   app.couchpad.pilot …`). Starsze systemy i pierwsza aktualizacja pokazują okno Androida.
+  HyperOS (Xiaomi) cichą aktualizację odrzuca bez pytania (`PKMSImpl … assertCallerAndPackage
+  … Permission denied`, `INSTALL_FAILED_ABORTED`) niezależnie od `targetSdk` — wtedy
+  `AppUpdater` od razu ponawia instalację tym samym plikiem w zwykłym trybie, z oknem.
   Przy pierwszej aktualizacji Android 8+
   wymaga jednorazowej zgody „Instaluj nieznane aplikacje” dla pilota; strona Telefon prowadzi
   do tego ekranu i po powrocie sama sprawdza zgodę.
@@ -57,7 +60,10 @@ na stałe: Xiaomi wyłącza je po restarcie i zmianie sieci, a i tak potrzebny j
   telefonie (z utratą ustawień pilota).
 - Pierwsza aktualizacja wymaga zgody i potwierdzeń: na Samsungu (One UI) jednego, na Xiaomi
   (HyperOS/MIUI) kilku ekranów MIUI. Kolejne na Androidzie 12+ to jedno dotknięcie
-  „Zainstaluj wersję …” w pilocie. Sprawdzone 2026-11-10 na obu.
+  „Zainstaluj wersję …” w pilocie (Samsung, One UI na Androidzie 14); na Xiaomi (HyperOS 3,
+  Android 16) dotknięcie i potwierdzenie w oknie. Sprawdzone 2026-11-10 na obu.
+- Po aktualizacji pilot wraca sam tylko tam, gdzie jest ekranem głównym — Android nie pozwala
+  aplikacji uruchomić się po własnej aktualizacji, ale ekran główny przywraca.
 - Okno Androida da się pominąć, ale nie skanery systemu: każda wersja ma nową sumę, więc
   Google Play Protect („App scan recommended”) albo skaner producenta (MIUI) mogą zatrzymać
   aktualizację i poprosić o decyzję. Aplikacja tych ustawień nie zmienia.

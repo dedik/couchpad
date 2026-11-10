@@ -35,7 +35,10 @@ is still needed.
   (permission `UPDATE_PACKAGES_WITHOUT_USER_ACTION`): the system installs without a dialog if the
   remote is its own installer of record. That holds after the first Wi-Fi update; a cable
   install with plain `adb install` resets it (use `adb shell pm install -r -i
-  app.couchpad.pilot …`). Older systems and the first update show Android's dialog. On the
+  app.couchpad.pilot …`). Older systems and the first update show Android's dialog.
+  HyperOS (Xiaomi) rejects silent updates without asking (`PKMSImpl … assertCallerAndPackage
+  … Permission denied`, `INSTALL_FAILED_ABORTED`) regardless of `targetSdk` — `AppUpdater`
+  then immediately retries with the same file in the normal mode, with the dialog. On the
   first update Android 8+ requires a
   one-time "Install unknown apps" permission for the remote; the Phone page leads to that screen
   and re-checks the permission on return.
@@ -59,7 +62,10 @@ is still needed.
   (losing the remote's settings).
 - The first update needs the permission and confirmations: one on Samsung (One UI), several
   MIUI screens on Xiaomi (HyperOS/MIUI). Later ones on Android 12+ are a single
-  "Install version …" tap in the remote. Verified on both on 2026-11-10.
+  "Install version …" tap in the remote (Samsung, One UI on Android 14); on Xiaomi (HyperOS 3,
+  Android 16) a tap plus confirmation in the dialog. Verified on both on 2026-11-10.
+- After an update the remote comes back on its own only where it is the home screen — Android
+  does not let an app start itself after its own update, but it restores the home screen.
 - Android's dialog can be skipped, the system scanners cannot: every version has a new
   checksum, so Google Play Protect ("App scan recommended") or the vendor's scanner (MIUI) may
   stop an update and ask for a decision. The app does not change these settings.
