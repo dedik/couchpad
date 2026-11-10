@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zakładka Pilot — propozycje</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+:root {
+  --bg:#000; --surface:#15171C; --surface2:#1E2128; --surface3:#2A2E37; --line:#2C3039;
+  --text:#F3F5F9; --dim:#98A0AE; --faint:#626A78; --accent:#FF8000; --accentInk:#17120A;
+  --accentSoft:rgba(255,128,0,.16); --ok:#56D6A0; --danger:#FF5F5F; --page:#0B0C10;
+}
+:root[data-theme="light"] {
+  --bg:#EEF0F3; --surface:#FFFFFF; --surface2:#E4E7EC; --surface3:#CFD4DC; --line:#D9DDE4;
+  --text:#15171C; --dim:#586070; --faint:#878F9D; --accent:#FF8000; --accentInk:#1A1206;
+  --accentSoft:rgba(255,128,0,.16); --ok:#1C9A68; --danger:#E03A3A; --page:#D5D9DF;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page); color:var(--text); font-family:Ubuntu, system-ui, sans-serif; }
+.top { max-width:1600px; margin:0 auto; padding:24px 16px 8px; display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; justify-content:space-between; }
+.top h1 { font-size:22px; margin:0; font-weight:700; }
+.top p { margin:6px 0 0; color:var(--dim); font-size:14px; max-width:860px; line-height:1.5; }
+.top button { font:inherit; font-size:13px; background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:999px; padding:8px 14px; cursor:pointer; }
+.stage { max-width:1600px; margin:0 auto; padding:16px; display:flex; flex-wrap:wrap; gap:36px; align-items:flex-start; }
+.col { display:flex; flex-direction:column; gap:10px; }
+.col h2 { font-size:16px; margin:0; font-weight:700; }
+.col h2 em { font-style:normal; color:var(--accent); margin-right:6px; }
+.col .sub { font-size:12.5px; color:var(--dim); max-width:360px; line-height:1.45; margin:0; }
+.col .sub b { color:var(--text); font-weight:500; }
+
+.phone { width:360px; height:760px; border-radius:36px; background:var(--bg); border:8px solid #000; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+.phone.land { width:760px; height:360px; flex-direction:row; }
+.body { flex:1; display:flex; flex-direction:column; padding:0 14px 10px; gap:10px; min-height:0; }
+.land .body { padding:0 14px 12px 6px; }
+
+.tabs { height:62px; flex:none; display:flex; justify-content:space-around; align-items:center; padding:0 6px; }
+.land .tabs { height:auto; width:66px; flex-direction:column; padding:8px 0; }
+.tab { width:50px; height:44px; border-radius:14px; display:grid; place-items:center; }
+.tab.on { background:var(--accentSoft); }
+.tab img, .tab svg.px { width:30px; height:30px; image-rendering:pixelated; }
+
+.hdr { display:flex; align-items:center; gap:10px; padding:18px 4px 2px; }
+.hdr svg.px { width:30px; height:30px; }
+.hdr b { display:block; font-size:18px; font-weight:700; }
+.hdr small { display:block; font-size:10px; color:var(--dim); letter-spacing:.06em; margin-top:1px; }
+.chips { margin-left:auto; display:flex; gap:6px; }
+.chip { font-size:10.5px; color:var(--dim); border:1px solid var(--line); border-radius:999px; padding:4px 8px; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+.dot { width:6px; height:6px; border-radius:50%; background:var(--ok); }
+.dot.off { background:var(--faint); }
+
+.card { background:var(--surface); border-radius:20px; padding:10px 12px 12px; display:flex; flex-direction:column; gap:10px; min-height:0; }
+.ch { display:flex; align-items:center; gap:8px; }
+.ch img { width:24px; height:24px; image-rendering:pixelated; }
+.ch b { font-size:14px; font-weight:500; }
+.ch small { font-size:10.5px; color:var(--dim); display:flex; align-items:center; gap:5px; }
+.ch .r { margin-left:auto; display:flex; gap:6px; align-items:center; }
+.ch .chev { color:var(--faint); width:18px; height:18px; }
+
+.row { display:flex; gap:8px; }
+.key { flex:1; height:52px; border-radius:14px; background:var(--surface2); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:11px; color:var(--dim); }
+.key svg { width:20px; height:20px; color:var(--text); }
+.key.big { font-size:16px; color:var(--text); font-weight:500; }
+.key.acc { background:var(--accentSoft); box-shadow:inset 0 0 0 1px var(--accent); }
+.key.acc svg { color:var(--accent); }
+.key.sq { flex:none; width:52px; }
+.round { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:var(--surface2); flex:none; }
+.round svg { width:20px; height:20px; }
+.round.sm { width:34px; height:34px; } .round.sm svg { width:16px; height:16px; }
+.round.pw { background:var(--accent); color:var(--accentInk); }
+.round.pw.offs { background:transparent; box-shadow:inset 0 0 0 1.5px var(--faint); color:var(--faint); }
+
+/* gładzik Apple TV */
+.pad { flex:1; min-height:0; border-radius:18px; background:var(--surface2); position:relative; display:grid; place-items:center; }
+.pad .c { width:34%; aspect-ratio:1; border-radius:50%; background:var(--surface3); display:grid; place-items:center; font-size:11px; color:var(--dim); max-width:96px; }
+.pad i, .dp i { position:absolute; color:var(--faint); display:grid; }
+.pad i svg, .dp i svg { width:16px; height:16px; }
+.t { top:8px; left:50%; transform:translateX(-50%); } .b { bottom:8px; left:50%; transform:translateX(-50%); }
+.l { left:10px; top:50%; transform:translateY(-50%); } .rr { right:10px; top:50%; transform:translateY(-50%); }
+.hint { position:absolute; top:10px; right:12px; font-size:9.5px; color:var(--faint); }
+
+/* krzyżak TV */
+.dp { aspect-ratio:1; border-radius:50%; background:var(--surface2); position:relative; display:grid; place-items:center; flex:none; }
+.dp .ok { width:42%; aspect-ratio:1; border-radius:50%; background:var(--accent); color:var(--accentInk); display:grid; place-items:center; font-weight:700; font-size:13px; }
+.dp i { color:var(--dim); }
+
+/* głośność */
+.vol { display:flex; align-items:center; gap:10px; }
+.vol .num { flex:1; text-align:center; }
+.vol .num b { font-size:34px; font-weight:700; display:block; line-height:1; }
+.vol .num small { font-size:10px; color:var(--faint); letter-spacing:.06em; }
+.vol .key { flex:none; width:72px; height:58px; }
+.vol .key svg { width:26px; height:26px; }
+.bar { height:6px; border-radius:3px; background:var(--surface3); overflow:hidden; }
+.bar span { display:block; height:100%; width:30%; background:var(--accent); border-radius:3px; }
+
+.seg { display:flex; background:var(--surface); border-radius:16px; padding:4px; gap:4px; }
+.seg span { flex:1; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13.5px; color:var(--dim); font-weight:500; }
+.seg span img { width:22px; height:22px; image-rendering:pixelated; }
+.seg span.on { background:var(--accentSoft); color:var(--text); box-shadow:inset 0 0 0 1px var(--accent); }
+
+.slim { flex-direction:row; align-items:center; padding:10px 12px; }
+
+/* pionowy suwak/rocker głośności */
+.rocker { width:78px; flex:none; background:var(--surface); border-radius:20px; display:flex; flex-direction:column; align-items:center; padding:10px 0; gap:8px; }
+.rocker .key { width:58px; flex:1; max-height:120px; }
+.rocker .track { flex:1; width:10px; border-radius:5px; background:var(--surface3); position:relative; min-height:60px; }
+.rocker .track span { position:absolute; bottom:0; left:0; right:0; height:30%; background:var(--accent); border-radius:5px; }
+.rocker b { font-size:22px; font-weight:700; }
+.rocker small { font-size:9px; color:var(--faint); letter-spacing:.06em; margin-top:-6px; }
+
+.note { max-width:1600px; margin:0 auto; padding:8px 16px 40px; color:var(--dim); font-size:13px; line-height:1.55; }
+.note h3 { color:var(--text); font-size:15px; margin:18px 0 6px; }
+.note ul { margin:0; padding-left:18px; } .note li { margin:3px 0; }
+.note code { background:var(--surface2); padding:1px 5px; border-radius:5px; font-size:12px; color:var(--text); }
+.iconbox { display:flex; gap:18px; align-items:center; margin-top:8px; }
+.iconbox div { display:flex; flex-direction:column; align-items:center; gap:6px; font-size:11px; }
+.iconbox svg { image-rendering:pixelated; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>Zakładka „Pilot” — 4 propozycje</h1>
+    <p>Nowa zakładka na początku paska (ikona pilota, pixel-art). Jeden ekran, trzy bloki: <b>Telewizor</b>, <b>Apple TV</b>, <b>Głośność</b> (Z906). Tylko najważniejsze kontrolki — bez logotypów kanałów, aplikacji, poziomów kanałów, efektów. Pełne ekrany TV / Apple TV / Głośniki zostają bez zmian dla rzadszych akcji. Pierwsza wersja: tylko Android.</p>
+  </div>
+  <button onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'light' ? '' : 'light'">jasny / ciemny</button>
+</div>
+
+<!-- ikona pilota, pixel-art 16×16 -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="px-remote" viewBox="0 0 16 16" shape-rendering="crispEdges">
+      <rect x="5" y="0" width="6" height="16" fill="#3A3F4B"/>
+      <rect x="4" y="1" width="8" height="14" fill="#3A3F4B"/>
+      <rect x="5" y="1" width="6" height="14" fill="#555C6B"/>
+      <rect x="5" y="1" width="1" height="14" fill="#6E7687"/>
+      <rect x="7" y="2" width="2" height="1" fill="#FF5F5F"/>
+      <rect x="6" y="4" width="4" height="4" fill="#2A2E37"/>
+      <rect x="7" y="5" width="2" height="2" fill="#FF8000"/>
+      <rect x="6" y="9" width="1" height="1" fill="#C9CED8"/><rect x="9" y="9" width="1" height="1" fill="#C9CED8"/>
+      <rect x="6" y="11" width="1" height="1" fill="#C9CED8"/><rect x="9" y="11" width="1" height="1" fill="#C9CED8"/>
+      <rect x="6" y="13" width="1" height="1" fill="#C9CED8"/><rect x="9" y="13" width="1" height="1" fill="#C9CED8"/>
+      <rect x="7" y="10" width="2" height="3" fill="#2A2E37"/>
+    </symbol>
+  </defs>
+</svg>
+
+<template id="tabs">
+  <div class="tabs">
+    <span class="tab on"><svg class="px"><use href="#px-remote"/></svg></span>
+    <span class="tab"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC"></span>
+    <span class="tab"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"></span>
+    <span class="tab"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADT0lEQVR4nO1aMWgUURCdW5ZDxdMQcmYJJ6gXEUEJFoJYaKFiRKwECZ4iaHMWFmpSKFpZWERJkcIDQQTlCEoQbRRFMBYKSaGiEINJLKLieSHEpBGbldlkjtnNatz9M8kKPjh2+ezOvvf/n/kz/x/AP45UlIdX1DkuKGNq8mskTqko5AsnzsDo8DvQxMu+x5FE2FGMI/lq5QtoomFVI17cvxURSQAh29gEGqj6O+cwAJTne8eK+7G24x1xXxW1ZcV9sedGZ+yPStqyQQml0jV41j+qIlhVABJHIPlLHUe8+4udtyG/eY93P/L2SXIFlGbJ79q53ddOQloPtXtCJEVYIAxO/mnfC+9HeHTnCgwPDYp+z5I0xuc8El/jLPPacAppwdIMhTcfzKzaAwOvfe1uOpc8AT2BKEOjESSPSP38lFwf4I5L5HHuEyqf34MkLEljSBgjDQGJc/KZhjxIw5I0RuERRTS37K+14z2Rd7LLk72QjVCMT+dqInDaSBNXTyW4o2qRV3XihYKtYZTnQxwaCZ2tQZzIH/xRhMy+qzD98Cz0LinVFjtJIbY08WLxZK266oalAF0XAPAKp732bbuPiWamthR5Iv5h8M0fn6d1QSoztUEAQfLrN7aE1rqTE1WfkFa26C2KAD51kPzeAwVv52Jd8yavjbZggpsAXIibzhnlRpZE71PPh5HH3ue7DZz83evnTT8fXwDvfZo2QfL4TO+9+94IkMi6+uwcW65Bem00AhgqgxtdnDwBwycSp96f/j4BUrBMyHdfngmNvyNPFRlmqRg+w4i/en4LEpVK8BHBioxqAqqFuQ9IwEjAqXNdocTRsannifz4WH+ojS07jhoVOeIjQA5L04vIj30cgszK+jnPVwwrtNjrAOYzvJDnU4MclodJIo9+EBTiGKTbxiOAzslBQlDE6rUbPLJh5PG+Kb91cVdiHAVKzDh5vIZFHE5eqtixQABhOQ31PP9x8hK9L5LMYTaJo0Ai5ksPOHFHoNQUyUYpJcaUAMNicJEKhkrJGtnWKOQptyExRF6juLfFLYZsHSZyV6Lt/xmZPxxXYx7fxppCmmfF498qeNBdUPurwexB9EKQL4sL0P6/xFRE8rEEsFN0LZQVbScPvwA9cJirEVI/egAAAABJRU5ErkJggg=="></span>
+    <span class="tab"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADcUlEQVR4nOVZXUgUURQ+s8xLlIPtkw/K+lAQGBu9bUEs9JC0gdRDLNiPkIQRQRQEPexLsETYjwhBGkw/WNtriSlWZBKUJIltLBUr6ZqoBJmsLfQgGOe2M87s3Jm5M3tnHeuDZc/ee+bM99177u8C+ARSdc0KfhR7cq6g/vY9pCJhhbRin070+F+EpCF898lHlbSGfHPxQ0UAfIJX777C6Og4THz5RH4/uHkB8ovzR4rVKbPnBC9JKd2fX5w3vKc0NY6euUrIjzy/oyVuSd5TAUgwvTtM7PCbtE4E1u2K7jN99u3wM6roiqWQlnwocR7ObpIMLc6AZhYnwWvyueQNYsvpKej8lVdbVvHLfFtQnx35mVd8bHPfkx4wI49oDdc77YkUi5MInIDEHtXVkhaNdSehvy1h8Ilslsh3JwARkdG0vluIPFseWx2B5BvqggY/JIw9AcV0aqgLli1C5EleSRkaeW25IoIHRB5pg+RpKWMFTCc5PaWmVUUFKAORpeUxRazSSS5TRMBtyjhNG7Py1nA9mT7N/Lj2AMtM4waRYjq5gVDOHG+VHm7L5ZIFj4sAqwXKC8gORAisaYPgmTZ2GFndVgiux4BZy/NOG1o5qcOeAFixEiGwrq5ep43bdBJ5L1C8EdHsn2giqCel0jnei9nGabls0hOCHXk/QaaIMAjYsm07+BkHZqZ1InxzK8EKzYmNHDltbwvmsi/gxzyfra9TTE9OQex4UldWetw0zELFriHqpOqah+AD5PXXLLrjptlCpjjoBHwfSMFEdpr6QN9YDi7fu8VEyGWcVNm7UXxp/PZrgOUcJJtikOjtX31xZE/F47g70CznLKs3zH6G3Icxat3A0Di0tLczxfFMALYYzVaA5M3Sw0kczwQkug+S72TbY9VGHDvUsyZxREfeAPA7M0i1tcjOLHCJU9GLLS221gZdC/NUAE5xfZrxeTKx5PiFPOM4EjA48BKi8cO2PjtN6uLXr0EyfoI5TuP+vXwFsAbERYqWKkjeSZz/ZgwEYJ0jAP+iAMln/81KFrtikUb+1PA56Ip2EBGXZp9CU24jqesNFeztxh1QNTRO7KUrLVB18b5qow/u8ZnihArQBH9tLR/bMzE6+xld0Q6dCEMPvJ/IwjpAs3I+WPeDWPD7AIYSlJ6Jza4Wmf5kXkOox8s/nWlHjHD0ZUkAAAAASUVORK5CYII="></span>
+    <span class="tab"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAEIUlEQVR4nO1ZTUgVURS+z1wFPd3loyjCsKwgWghS0CIQwkXZLp9C4SJdRK3a1KJVQkhQ0caCKNAx21QuJBCihER6iwxKSywrCmuXCu3COLd7rufed+786xj4wTBv5s3P953/mRFiHetYx3+NXNwT89U1S3R74deP2NdKglxc8o1NHca+8ZG7ZSJWQ2QuzklA7M3UR739/NUnuT5/qkmThGNu3B8RA30DviKToiLpBZA8AohTy7e2t8oFAF6zvZIUlUEH4A05y9nkaViBtRGl0oTYuate7ZerohDCEykgFybWe29eEvvra6UIGv9oWT8AeUTfrQtwjTa1mYqAyjDk7X1hiK8GeacHOPKAznNXDPI0QTlg2ABmPkyVJXHeJzxje4ArkQibvMsTaHkgjSL+rTtAhE7iRnUf2BdXhNMDsOZKJVodyJ8+tk/cG3rLkkeAiGUBpqgZ9Z/yTFuc0GLLKFgDLgiJC2FjVxuO/PWrl+XiF0a2kFWrQhgqXNhwpAGHjpwwtjnLU8RtcoF9AOEiPzs55jyHigDyIaxejBpGbBLjb7+SieRJaTQwOznWz3mCYpw0O9d1IgmIWucJOKtJAQiX9RdM4t6KhVCYuOfw8tkjsXnL7qDDPJHVMJc1KqKeAHXeL65tBFk/X13Tn2RC9RVgjwp2k0qKxqYOsWPPQbnEFWHkANRhaOu0OgC4pEYvqGpjJCwASAVZ/+f39+mXUdVMiuheOs/TZkRFcIhBfuU6sT1V2uMBVhtAiIpTRn6W9BM0GiBMZw5MYjucXDUdiIclD4S5Dp6vrukvXdwocAmTF06FcHL72R7niUGzjR95sDaSbej+bVh/fnR5lK86HDylso3M75kg4mzjS76uyxPzXUJUbWspKwIcJy6knOM0hA5HMM4YjDGvyqUmL/F5SIcMLIjppw+MPuEKqUhJDM+1gCDvBCUsYP7rY0mew+LUC7me+zIn14XtBb2tQk7zDsxyFEGemnSl8BOCyQ9Wt6FFjJrnD167I9fNzXXsNYkAnRehHiBU/BlvFFyvFxEY67YAJC/D6OhJg7gNKgS9AaBeCDWNkuYW2CX95vqHLROiYZL/78yTDcb27eN/DPJA2rqH5JPay12E69WJbXXEoLI+CKAhigIO7N0k17TcKnixnwdwZnL8p62Dx8I27bAB8LjZCgDXsEtp0jfFRR8S9s2XbA8sqmozPDzNhhBanyJyFUoTdjgVVHkEARxsAa/fLdJwk9yz+KqiJ90SEUGFcJa3yOuKmMUjpYchViDkkbgrbBzXycQDMpS+9dYa+2idt4ljT8HfiatQGgDCBeWBrZ3L72DpPEQJ0wctWiQy8QCtSrTGY164EpZDZh4AUg3d+vtAW0DCOqeAzDxAULRnLPwjzBedtSBAMKANMrXPUWsSfwG9aqVdLDRG8QAAAABJRU5ErkJggg=="></span>
+  </div>
+</template>
+
+<div class="stage">
+
+  <!-- A -->
+  <div class="col">
+    <h2><em>A</em>Trzy kafle jeden pod drugim</h2>
+    <p class="sub">Najprostszy. Każdy blok ma własne klawisze, nic się nie przełącza. Gładzik Apple TV dostaje najwięcej miejsca, bo to najczęstsze sterowanie. <b>Plus:</b> zero trybów. <b>Minus:</b> TV bez krzyżaka (rzadko potrzebny przy Apple TV jako źródle).</p>
+    <div class="phone">
+      <div class="body">
+        <div class="hdr"><svg class="px"><use href="#px-remote"/></svg><div><b>Pilot</b><small>SALON</small></div></div>
+        <div class="card">
+          <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC"><div><b>Telewizor</b><small><span class="dot"></span>Apple TV</small></div><div class="r"><i data-lucide="chevron-right" class="chev"></i></div></div>
+          <div class="row">
+            <div class="key"><i data-lucide="log-in"></i>Źródło</div>
+            <div class="key"><i data-lucide="undo-2"></i>Cofnij</div>
+            <div class="key big">P −</div>
+            <div class="key big">P +</div>
+          </div>
+        </div>
+        <div class="card" style="flex:1">
+          <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
+          <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+          <div class="row">
+            <div class="key"><i data-lucide="chevron-left"></i>Menu</div>
+            <div class="key"><i data-lucide="tv"></i>Home</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="vol">
+            <div class="key"><i data-lucide="minus"></i></div>
+            <div class="num"><b>30</b><small>GŁOŚNOŚĆ</small></div>
+            <div class="key"><i data-lucide="plus"></i></div>
+            <span class="round"><i data-lucide="volume-2"></i></span>
+          </div>
+        </div>
+      </div>
+      <div data-tabs></div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="col">
+    <h2><em>B</em>Wspólny krzyżak, przełącznik TV / Apple TV</h2>
+    <p class="sub">Jak fizyczny pilot uniwersalny: dwa kafle u góry wybierają, czym steruje środek. Pod spodem klawisze zależne od wyboru, na dole zawsze głośność. <b>Plus:</b> duże pole sterowania dla obu. <b>Minus:</b> tryb — łatwo wysłać strzałkę nie tam.</p>
+    <div class="phone">
+      <div class="body">
+        <div class="hdr"><svg class="px"><use href="#px-remote"/></svg><div><b>Pilot</b><small>SALON</small></div>
+          <div class="chips"><span class="chip"><span class="dot"></span>TV</span><span class="chip"><span class="dot"></span>ATV</span></div></div>
+        <div class="seg">
+          <span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC">Telewizor</span>
+          <span class="on"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC">Apple TV</span>
+        </div>
+        <div class="pad" style="background:var(--surface)"><span class="c" style="background:var(--surface2)">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i><span class="hint">przesuń · stuknij · przytrzymaj</span></div>
+        <div class="row">
+          <div class="key"><i data-lucide="chevron-left"></i>Menu</div>
+          <div class="key"><i data-lucide="tv"></i>Home</div>
+          <div class="key"><i data-lucide="keyboard"></i>Tekst</div>
+        </div>
+        <div class="card">
+          <div class="vol">
+            <div class="key"><i data-lucide="minus"></i></div>
+            <div class="num"><b>30</b><small>GŁOŚNOŚĆ</small></div>
+            <div class="key"><i data-lucide="plus"></i></div>
+            <span class="round"><i data-lucide="volume-2"></i></span>
+          </div>
+        </div>
+      </div>
+      <div data-tabs></div>
+    </div>
+  </div>
+
+  <!-- B' -->
+  <div class="col">
+    <h2><em>B</em>…ten sam ekran, wybrany Telewizor</h2>
+    <p class="sub">Środek zamienia się w krzyżak TV z pomarańczowym OK; rząd klawiszy: Cofnij, P−, P+, Źródło. Wybór zapamiętany, a przy włączeniu Apple TV ustawia się sam na Apple TV.</p>
+    <div class="phone">
+      <div class="body">
+        <div class="hdr"><svg class="px"><use href="#px-remote"/></svg><div><b>Pilot</b><small>SALON</small></div>
+          <div class="chips"><span class="chip"><span class="dot"></span>TV</span><span class="chip"><span class="dot"></span>ATV</span></div></div>
+        <div class="seg">
+          <span class="on"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC">Telewizor</span>
+          <span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC">Apple TV</span>
+        </div>
+        <div style="flex:1; display:grid; place-items:center; min-height:0">
+          <div class="dp" style="width:250px"><span class="ok">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+        </div>
+        <div class="row">
+          <div class="key"><i data-lucide="undo-2"></i>Cofnij</div>
+          <div class="key big">P −</div>
+          <div class="key big">P +</div>
+          <div class="key"><i data-lucide="log-in"></i>Źródło</div>
+        </div>
+        <div class="card">
+          <div class="vol">
+            <div class="key"><i data-lucide="minus"></i></div>
+            <div class="num"><b>30</b><small>GŁOŚNOŚĆ</small></div>
+            <div class="key"><i data-lucide="plus"></i></div>
+            <span class="round"><i data-lucide="volume-2"></i></span>
+          </div>
+        </div>
+      </div>
+      <div data-tabs></div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="col">
+    <h2><em>C</em>Akordeon — jeden kafel rozwinięty</h2>
+    <p class="sub">Trzy kafle; stuknięcie w nagłówek rozwija kafel, pozostałe zwijają się do paska z 2 najważniejszymi klawiszami (TV: P−/P+, głośność: −/+). <b>Plus:</b> szybkie akcje zawsze pod kciukiem. <b>Minus:</b> więcej logiki, rozwinięcie zmienia układ.</p>
+    <div class="phone">
+      <div class="body">
+        <div class="hdr"><svg class="px"><use href="#px-remote"/></svg><div><b>Pilot</b><small>SALON</small></div></div>
+        <div class="card slim">
+          <div class="ch" style="flex:1"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC"><div><b>Telewizor</b><small><span class="dot"></span>Apple TV</small></div></div>
+          <div class="key big sq">P −</div><div class="key big sq">P +</div>
+        </div>
+        <div class="card" style="flex:1; box-shadow:inset 0 0 0 1px var(--accent)">
+          <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
+          <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+          <div class="row">
+            <div class="key"><i data-lucide="chevron-left"></i>Menu</div>
+            <div class="key"><i data-lucide="tv"></i>Home</div>
+            <div class="key"><i data-lucide="keyboard"></i>Tekst</div>
+          </div>
+        </div>
+        <div class="card slim">
+          <div class="ch" style="flex:1"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADT0lEQVR4nO1aMWgUURCdW5ZDxdMQcmYJJ6gXEUEJFoJYaKFiRKwECZ4iaHMWFmpSKFpZWERJkcIDQQTlCEoQbRRFMBYKSaGiEINJLKLieSHEpBGbldlkjtnNatz9M8kKPjh2+ezOvvf/n/kz/x/AP45UlIdX1DkuKGNq8mskTqko5AsnzsDo8DvQxMu+x5FE2FGMI/lq5QtoomFVI17cvxURSQAh29gEGqj6O+cwAJTne8eK+7G24x1xXxW1ZcV9sedGZ+yPStqyQQml0jV41j+qIlhVABJHIPlLHUe8+4udtyG/eY93P/L2SXIFlGbJ79q53ddOQloPtXtCJEVYIAxO/mnfC+9HeHTnCgwPDYp+z5I0xuc8El/jLPPacAppwdIMhTcfzKzaAwOvfe1uOpc8AT2BKEOjESSPSP38lFwf4I5L5HHuEyqf34MkLEljSBgjDQGJc/KZhjxIw5I0RuERRTS37K+14z2Rd7LLk72QjVCMT+dqInDaSBNXTyW4o2qRV3XihYKtYZTnQxwaCZ2tQZzIH/xRhMy+qzD98Cz0LinVFjtJIbY08WLxZK266oalAF0XAPAKp732bbuPiWamthR5Iv5h8M0fn6d1QSoztUEAQfLrN7aE1rqTE1WfkFa26C2KAD51kPzeAwVv52Jd8yavjbZggpsAXIibzhnlRpZE71PPh5HH3ue7DZz83evnTT8fXwDvfZo2QfL4TO+9+94IkMi6+uwcW65Bem00AhgqgxtdnDwBwycSp96f/j4BUrBMyHdfngmNvyNPFRlmqRg+w4i/en4LEpVK8BHBioxqAqqFuQ9IwEjAqXNdocTRsannifz4WH+ojS07jhoVOeIjQA5L04vIj30cgszK+jnPVwwrtNjrAOYzvJDnU4MclodJIo9+EBTiGKTbxiOAzslBQlDE6rUbPLJh5PG+Kb91cVdiHAVKzDh5vIZFHE5eqtixQABhOQ31PP9x8hK9L5LMYTaJo0Ai5ksPOHFHoNQUyUYpJcaUAMNicJEKhkrJGtnWKOQptyExRF6juLfFLYZsHSZyV6Lt/xmZPxxXYx7fxppCmmfF498qeNBdUPurwexB9EKQL4sL0P6/xFRE8rEEsFN0LZQVbScPvwA9cJirEVI/egAAAABJRU5ErkJggg=="><div><b>Głośność</b><small>30 · Optical 1</small></div></div>
+          <span class="round sm"><i data-lucide="volume-2"></i></span>
+          <div class="key sq"><i data-lucide="minus"></i></div><div class="key sq"><i data-lucide="plus"></i></div>
+        </div>
+      </div>
+      <div data-tabs></div>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="col">
+    <h2><em>D</em>Głośność jako pionowy rocker z boku</h2>
+    <p class="sub">Głośność to pas po prawej przez całą wysokość — pod kciukiem jak klawisz w fizycznym pilocie. Z lewej kafle TV (góra) i Apple TV (gładzik). <b>Plus:</b> najczęstsza akcja zawsze w tym samym miejscu. <b>Minus:</b> węższy gładzik.</p>
+    <div class="phone">
+      <div class="body">
+        <div class="hdr"><svg class="px"><use href="#px-remote"/></svg><div><b>Pilot</b><small>SALON</small></div></div>
+        <div style="flex:1; display:flex; gap:10px; min-height:0">
+          <div style="flex:1; display:flex; flex-direction:column; gap:10px; min-width:0">
+            <div class="card">
+              <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC"><div><b>Telewizor</b><small><span class="dot"></span>Apple TV</small></div></div>
+              <div class="row"><div class="key big">P −</div><div class="key big">P +</div></div>
+              <div class="row"><div class="key"><i data-lucide="undo-2"></i>Cofnij</div><div class="key"><i data-lucide="log-in"></i>Źródło</div></div>
+            </div>
+            <div class="card" style="flex:1">
+              <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
+              <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+              <div class="row"><div class="key"><i data-lucide="chevron-left"></i>Menu</div><div class="key"><i data-lucide="tv"></i>Home</div></div>
+            </div>
+          </div>
+          <div class="rocker">
+            <div class="key"><i data-lucide="plus"></i></div>
+            <b>30</b><small>VOL</small>
+            <div class="track"><span></span></div>
+            <div class="key"><i data-lucide="minus"></i></div>
+            <span class="round"><i data-lucide="volume-2"></i></span>
+          </div>
+        </div>
+      </div>
+      <div data-tabs></div>
+    </div>
+  </div>
+
+  <!-- A poziom -->
+  <div class="col">
+    <h2><em>A</em>w poziomie — trzy kolumny</h2>
+    <p class="sub">Każdy wariant w poziomie układa bloki obok siebie (zakładki w bocznym pasku, ADR 0013). Tu A: TV | Apple TV (szerszy) | Głośność.</p>
+    <div class="phone land">
+      <div data-tabs></div>
+      <div class="body" style="flex-direction:row; padding-top:14px">
+        <div class="card" style="width:170px">
+          <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADzElEQVR4nNVZW0gUURj+twz2IWcXoVjBEIw1fFAiQrALlk8VYUGluYaQRURRD0VSEj1a5Fuyb6JRrJWm5FYqPSiypZVbmRfWZbdyM/MWXoOEHibO7szs7Mxx5sxtd/vgMGdmz/z/953/nH/OOQugApTVRqMC/yMoq42m+7po+tZF3URQGuysU+poqeM+QNdzCHkD8GhLhibnnM3Lx1TbUSQgDIb86MQ8vF1YZp86tJAPeQMwtCtPlQhFApYXp02We60c+SxnK2hFyBsIX5FNLZ2hahKj0tg+rHouUFYbfeHmQ/pl7k7WhiMuAhiEnakVwZKnohktruRFZJSI4JOHKPHEkMcIcKggn3iQRCFpyeNE4IoR5E2gExAxZ/1j6Ot/L9nu3ZtXEBwbCadk0AEpoCMQ+a/BEdLmKAJNuguI1yKNstpcAIAKMXBRMwnJd1cXQbKiqKZbJMIkJB8MfIdkxrmWYIwI5Yu5BONaQVrMMJecxHeHzYaSqcpd5eqBH9xiDgt7Rho2CaRIkV+cnwMjUd0LUFOYKnpesn8VmnvM+qXRDu8g6IlDO7dz9UvuENQVZ3LEEbLPN0EJ852TEyIr4ERDLzQOLWnlLLLZUlmI/S37wElY6bwK6ZnpMBWakrWlaBKfzrNwRQ8ROKz4Is9JyCv6ErOkUTRYEXKRuZM3Fr0Zd8P15SpZP1M84p9GVwDArE8E+GRRnRVChHE317NSaO4xc2MeXQOzm2TfIRaA63GiuUFIng/SDEQ0hDwj0zFXRaCi5NHQ8CzI2/BsPMrV9/5+Ft/VqBC7+yoAoIIRA0Tky06Vwb78LKh1toHHLy8iKZcStc42CPp9RG01R2BPQbvo2ev+I6rtDQwMcuRnJscALBoFTPp4qRAASiv9MfcfgpGDKSlRTxq2YW2vF9yj4YKGDUv+uCXWt+oI8EnjCAshbFNaGa3X34hkrlR7PvZdbswTZugUEvIkpKXAf//sbTtT88PTTtAMWQFaySux1+mbxT4/mLNZvYBpXyR323JsoCdYu6RENWchnEMlonDvxyUCpKSEYkgIGxoBtN1DO6Y/DyaIDH0DsnZC1DGbGUMigLZ7aMdkFOp45A2bA0InRsEu3rSrF/Dio3G9rgWHd2SuvZhDh0Xo5CvZUds/j7iWs/eis0Z0aFS8dQMkI9xf/vLJhw+GsUfc/JOv8jNXYk6cA77P8Gt2xhCC5TK+hOTXnAPM2SP6A8+FDM7N/MS14cKoByhyX02kWQg1dKFekGmjF1xqfEmmUSYStNG9r8UX6d88DoN7HxLkK/H4Bxjn7UWZkxKLAAAAAElFTkSuQmCC"><div><b>Telewizor</b><small><span class="dot"></span>Apple TV</small></div></div>
+          <div class="row"><div class="key big">P −</div><div class="key big">P +</div></div>
+          <div class="row"><div class="key"><i data-lucide="undo-2"></i>Cofnij</div><div class="key"><i data-lucide="log-in"></i>Źródło</div></div>
+        </div>
+        <div class="card" style="flex:1">
+          <div class="ch"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACSUlEQVR4nO2ZMUvDQBTHX0OkuJQgCP0eglYdFLR+A5c6CIqz6CiCi7g4+A0KDhZ3p7YKdVBrQVAUpKhVEKRtioQOSnGoXGiOS5q7XJOzaTA/KFcuJfzfe/97l1wBQkJCQkJCQkL+LxGnH8SUeBt8pKlVmRplJ/FLq5swNTkOfrCztY6GNiuIiJN4v8ieHOljo15DVVgCgAx3BVji3VTj8qrkSjwPsijxvYoUIb4rACfbiBIpSjxC8svz1mpmXYjHAfixYMlqZl2K77JQ5fkBgoZMildrHzCIxJQ4KhEuE7kvMDcyHrRPFX9XRkZBBGfnl1AoVajX15eTeHOTRQi3znkNpFCqwHF639YR769lSCRXoJhP60HgLtQLhtCX8q2eLdp1L6i1D5iYXtDvRX4spDxZ6K36pY9GEHMzUyCS64ucqZp2iem5AqzsktUQUQUeXFmIBQrCzlZ/hSz6hqJtJDwA5EmaPUjxIlqqxmFDOYhZ9xyAUQWacBHZf38t284vru3Bc/nRewUMkaJ34ka9hoX2pQsh0caHl8LGN9zkdrvmDfG+tlEeZg+GYWxh2zRHvPuaeLnPQ/H0kHovbKGnxzvwiwZFvPFIwepGegCdJzt8/hONDkE/aLV+9JEQj04eTG83ifllPguhIGhZ+EuaZvE9Y+1CmaZWzfTrNK7pUTy1jXYslYL+kGFdRIsYrQOalVj7gOusiETlWcSDTIJ3EQcVCQKOBAFHggBSzKdxC3b8h8YPYkq8jY5O7CDFo045kAEgaJupdfP7BQPYFl1Hvsm/AAAAAElFTkSuQmCC"><div><b>Apple TV</b><small><span class="dot"></span>YouTube</small></div><div class="r"><span class="round sm pw"><i data-lucide="power"></i></span></div></div>
+          <div style="flex:1; display:flex; gap:8px; min-height:0">
+            <div class="pad"><span class="c">OK</span><i class="t"><i data-lucide="chevron-up"></i></i><i class="b"><i data-lucide="chevron-down"></i></i><i class="l"><i data-lucide="chevron-left"></i></i><i class="rr"><i data-lucide="chevron-right"></i></i></div>
+            <div style="display:flex; flex-direction:column; gap:8px; width:74px"><div class="key"><i data-lucide="chevron-left"></i>Menu</div><div class="key"><i data-lucide="tv"></i>Home</div></div>
+          </div>
+        </div>
+        <div class="card" style="width:120px; align-items:center">
+          <div class="ch"><b>Głośność</b></div>
+          <div class="key" style="width:84px; flex:1"><i data-lucide="plus"></i></div>
+          <div class="vol"><div class="num"><b>30</b></div></div>
+          <div class="key" style="width:84px; flex:1"><i data-lucide="minus"></i></div>
+          <span class="round sm"><i data-lucide="volume-2"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <h3>Co jest na ekranie (wspólne dla wariantów)</h3>
+  <ul>
+    <li><b>Telewizor:</b> P− / P+, Cofnij, Źródło (okno z listą wejść). Zasilanie tylko jako stan (Wake-on-LAN wyłączony). Nagłówek kafla prowadzi do pełnego ekranu TV.</li>
+    <li><b>Apple TV:</b> gładzik (przesunięcie = strzałka, stuknięcie = OK, przytrzymanie = menu kontekstowe), Menu, Home (przytrzymanie = przełącznik aplikacji), opcjonalnie Tekst. Zasilanie w nagłówku.</li>
+    <li><b>Głośność (Z906):</b> − / + o jeden poziom wzmacniacza, wartość, wyciszenie. Bez tarczy, kanałów, źródła i efektu.</li>
+    <li>Wszystkie akcje istnieją już w kontrakcie MQTT — nowych tematów nie trzeba. Play/Pause dla Apple TV <b>nie ma</b> w kontrakcie (<code>appletv.navigate</code> zna tylko strzałki, select, menu, home), więc go nie rysuję.</li>
+  </ul>
+  <h3>Ikona zakładki — propozycja pixel-art 16×16</h3>
+  <div class="iconbox">
+    <div><svg width="96" height="96"><use href="#px-remote"/></svg>96 px</div>
+    <div><svg width="48" height="48"><use href="#px-remote"/></svg>48 px</div>
+    <div><svg width="30" height="30"><use href="#px-remote"/></svg>w pasku</div>
+  </div>
+</div>
+
+<script>
+const tpl = document.getElementById('tabs').innerHTML;
+document.querySelectorAll('[data-tabs]').forEach(el => el.outerHTML = tpl);
+lucide.createIcons();
+</script>
+</body>
+</html>

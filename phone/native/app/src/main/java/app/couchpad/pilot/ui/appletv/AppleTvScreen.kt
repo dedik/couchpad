@@ -129,7 +129,7 @@ private fun AppRow(atv: AppleTvState, modifier: Modifier, arrangement: Arrangeme
 
 /** Tekst na Apple TV: klawiatura telefonu, wysyłka na żywo (appletv.keyboard.set). */
 @Composable
-private fun TextDialog(live: Boolean, onDismiss: () -> Unit, onText: (String) -> Unit) {
+internal fun TextDialog(live: Boolean, onDismiss: () -> Unit, onText: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     val send by rememberUpdatedState(onText)
     val focus = remember { FocusRequester() }

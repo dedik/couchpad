@@ -16,7 +16,7 @@ import sys
 from PIL import Image
 
 GAP = 16
-LAYOUT = {"portrait": (6, 300, ()), "landscape": (3, 640, ("08-", "11-"))}
+LAYOUT = {"portrait": (6, 300, ()), "landscape": (3, 640, ("09-", "12-"))}
 
 
 def main() -> int:

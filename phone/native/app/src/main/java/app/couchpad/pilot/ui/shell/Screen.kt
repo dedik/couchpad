@@ -5,6 +5,7 @@ import app.couchpad.pilot.R
 /** Ekrany najwyższego poziomu; ikona to pixel-art zakładki. */
 enum class Screen(val icon: Int) {
     Start(R.drawable.px_home),
+    Remote(R.drawable.px_remote),
     Tv(R.drawable.px_tv),
     AppleTv(R.drawable.px_appletv),
     Audio(R.drawable.px_audio),
@@ -12,11 +13,14 @@ enum class Screen(val icon: Int) {
     Settings(R.drawable.px_settings);
 
     /** Ekran sterowania urządzeniem: pokazuje się dopiero po świeżym stanie (ADR 0005). */
-    val needsFreshState get() = this in setOf(Tv, AppleTv, Audio, Home)
+    val needsFreshState get() = this in setOf(Remote, Tv, AppleTv, Audio, Home)
 
     companion object {
-        /** Zakładki w kolejności z płytki; Start nie ma zakładki. */
-        val tabs = listOf(Tv, AppleTv, Audio, Home, Settings)
+        /**
+         * Zakładki w kolejności z płytki; Start nie ma zakładki. Pilot (tylko aplikacja)
+         * stoi pierwszy: TV, Apple TV i głośność na jednym ekranie.
+         */
+        val tabs = listOf(Remote, Tv, AppleTv, Audio, Home, Settings)
     }
 }
 

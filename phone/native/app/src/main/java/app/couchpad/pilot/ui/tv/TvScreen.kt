@@ -44,8 +44,8 @@ import app.couchpad.pilot.ui.theme.LocalLandscape
 import app.couchpad.pilot.ui.theme.Logo
 import app.couchpad.pilot.ui.theme.u
 
-/** Skróty kanałów: nazwa dopasowywana w bridge'u bez wielkości liter i spacji. */
-private val Shortcuts = listOf(
+/** Skróty kanałów: nazwa dopasowywana w bridge'u bez wielkości liter i spacji. Także na zakładce Pilot. */
+internal val Shortcuts = listOf(
     "Polsat" to R.drawable.logo_polsat,
     "TVN" to R.drawable.logo_tvn,
     "TVP1" to R.drawable.logo_tvp1,

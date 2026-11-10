@@ -45,6 +45,7 @@ import app.couchpad.pilot.ui.components.EdgeDrawer
 import app.couchpad.pilot.ui.components.doubleTap
 import app.couchpad.pilot.ui.components.tap
 import app.couchpad.pilot.ui.home.HomeScreen
+import app.couchpad.pilot.ui.remote.RemoteScreen
 import app.couchpad.pilot.ui.hourIn
 import app.couchpad.pilot.ui.settings.SettingsScreen
 import app.couchpad.pilot.ui.start.StartScreen
@@ -217,6 +218,7 @@ private fun ScreenContent(
 ) {
     when (screen) {
         Screen.Start -> StartScreen(state, prefs, now, onRetry = repo::wake, open = onOpen)
+        Screen.Remote -> RemoteScreen(state, prefs, repo)
         Screen.Tv -> TvScreen(state, prefs, repo)
         Screen.AppleTv -> AppleTvScreen(state, prefs, repo)
         Screen.Audio -> AudioScreen(state, prefs, repo)
