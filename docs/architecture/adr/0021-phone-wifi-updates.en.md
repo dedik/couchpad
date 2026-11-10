@@ -31,8 +31,12 @@ is still needed.
   `/local/pilot/`), without login, on the home network only. The file name contains the version
   number, so no cache serves a stale file; the script keeps the last two versions.
 - **Installation** (`data/AppUpdater.kt`): download to `cacheDir`, sha256 check, a
-  `PackageInstaller` session. Android always shows a confirmation dialog — without device-owner
-  rights it cannot be bypassed, and we do not try. On the first update Android 8+ requires a
+  `PackageInstaller` session. On Android 12+ the session asks for `USER_ACTION_NOT_REQUIRED`
+  (permission `UPDATE_PACKAGES_WITHOUT_USER_ACTION`): the system installs without a dialog if the
+  remote is its own installer of record. That holds after the first Wi-Fi update; a cable
+  install with plain `adb install` resets it (use `adb shell pm install -r -i
+  app.couchpad.pilot …`). Older systems and the first update show Android's dialog. On the
+  first update Android 8+ requires a
   one-time "Install unknown apps" permission for the remote; the Phone page leads to that screen
   and re-checks the permission on return.
 - **UI:** *Settings → Phone → App version*. Without a newer version: "aktualna" (up to date).
@@ -53,9 +57,9 @@ is still needed.
 - All versions must be signed with the same key. Today that is the laptop's debug key
   (`~/.android/debug.keystore`); losing it means a one-time cable reinstall on every phone
   (losing the remote's settings).
-- On Samsung (One UI) an update is one "Install" tap plus confirmation. On Xiaomi
-  (HyperOS/MIUI) extra MIUI screens appear (unknown-source warning, security scan) — it works,
-  but takes several taps. Verified on both on 2026-11-10.
+- The first update needs the permission and confirmations: one on Samsung (One UI), several
+  MIUI screens on Xiaomi (HyperOS/MIUI). Later ones on Android 12+ are a single
+  "Install version …" tap in the remote. Verified on both on 2026-11-10.
 - The remote shows over the lock screen (ADR 0010), but Android's permission and installer
   dialogs do not — the phone has to be unlocked.
 - After installation Android kills the remote's process; as the home screen it comes back on
