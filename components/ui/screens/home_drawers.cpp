@@ -158,8 +158,6 @@ void build_drawers(Context& context) {
     }
 
     // Lewa szuflada: zakładki jak w pasku powłoki; Dom zaznaczony.
-    static const lv_image_dsc_t* const kTabIcons[kScreenCount] = {
-        &icon_tv, &icon_appletv, &icon_audio, &icon_home, &icon_settings};
     screen.drawer_tabs = make_box(screen.root);
     lv_obj_add_flag(screen.drawer_tabs, LV_OBJ_FLAG_FLOATING);
     lv_obj_add_flag(screen.drawer_tabs, LV_OBJ_FLAG_CLICKABLE);
@@ -185,7 +183,7 @@ void build_drawers(Context& context) {
         lv_obj_set_flex_flow(tab, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(tab, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_t* icon = lv_image_create(tab);
-        lv_image_set_src(icon, kTabIcons[i]);
+        lv_image_set_src(icon, tab_icon(static_cast<ScreenId>(i)));
         lv_obj_add_event_cb(tab, on_drawer_tab, LV_EVENT_CLICKED, &context);
     }
 

@@ -140,6 +140,7 @@ void dispatch(Context& context, const domain::UiIntent& intent) {
 
 void render(Context& context) {
     render_shell(context);
+    render_remote(context);
     render_tv(context);
     render_appletv(context);
     render_audio(context);

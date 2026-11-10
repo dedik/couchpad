@@ -108,7 +108,7 @@ inline constexpr int32_t kTouch = 68;
 // Prawdziwe dopiero po starcie wyświetlacza; zmiana orientacji to restart.
 bool landscape();
 inline constexpr int32_t kRail = 88;          // szerokość bocznego paska zakładek
-inline constexpr int32_t kRailTab = 80;       // wysokość zakładki w pasku
+inline constexpr int32_t kRailTab = 72;       // wysokość zakładki w pasku (6 × 72 + 5 × 8 = 472 ≤ 480)
 inline constexpr int32_t kGutterWide = 20;    // margines treści w poziomie
 
 // Obszar treści po odjęciu nagłówka, paska zakładek i marginesów (pion).

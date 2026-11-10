@@ -125,8 +125,11 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
    w telefonie po ostatnich poprawkach nikt jeszcze nie oglądał.
 8. ~~Lampa w kuchni~~ (2026-11-09) — bez zmian w aplikacji: bridge podaje drugą pozycję `lights`
    (`room: kuchnia`, `id: lampa_kuchnia`), a aplikacja szuka świateł po pomieszczeniu.
-9. Zakładka **Pilot** (2026-11-10) — **tylko w aplikacji, panel jej nie ma** (świadome
-   odstępstwo od 1:1 na życzenie użytkownika; przy przenoszeniu na płytkę potrzebny ADR).
+9. Zakładka **Pilot** (2026-11-10, [ADR 0020](../../docs/architecture/adr/0020-remote-tab.md)) —
+   powstała najpierw w aplikacji; tego samego dnia przeniesiona na panel (`screen_remote.cpp`,
+   warianty L3 i P2 z `docs/ux/mockup-remote-panel.html` — na panelu klawisze 68 px, w poziomie
+   zakładki w szufladzie). Kolumna głośności w poziomie (G2, `docs/ux/mockup-remote-volume.html`):
+   nagłówek Z906, wejście z listą, efekty 2 × 2, −/+ w jednym rzędzie — panel i aplikacja.
    Pierwsza w pasku (`Screen.Remote`, `ui/remote/RemoteScreen.kt`), bez nagłówka ekranu.
    Makieta: `docs/mockups/remote-final.html` (wcześniejsze warianty: `remote-tab.html`,
    `remote-tv-block.html`). Trzy bloki:
