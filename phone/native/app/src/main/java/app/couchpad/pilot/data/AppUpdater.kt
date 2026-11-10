@@ -62,8 +62,9 @@ sealed interface UpdatePhase {
 
 /**
  * Aktualizacja aplikacji przez Wi-Fi (ADR 0021): pobranie APK z adresu z manifestu,
- * sprawdzenie sha256 i instalacja przez [PackageInstaller]. Android i tak prosi o
- * potwierdzenie — bez uprawnień właściciela urządzenia nie da się tego ominąć.
+ * sprawdzenie sha256 i instalacja przez [PackageInstaller]. Na Androidzie 12+ kolejne
+ * aktualizacje idą bez potwierdzenia; starsze systemy i pierwsza aktualizacja po instalacji
+ * kablem pokazują okno Androida.
  */
 class AppUpdater(context: Context) {
     private val app = context.applicationContext
@@ -151,7 +152,15 @@ class AppUpdater(context: Context) {
     private fun commit(file: File) {
         val installer = app.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-            .apply { setAppPackageName(app.packageName) }
+            .apply {
+                setAppPackageName(app.packageName)
+                // Android 12+: aplikacja, która sama siebie zainstalowała (instalator z rekordu),
+                // aktualizuje się bez okna potwierdzenia. Pierwsza aktualizacja po instalacji
+                // kablem i tak pokaże okno — dopiero ona robi z pilota instalatora z rekordu.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+                }
+            }
         val id = installer.createSession(params)
         installer.openSession(id).use { session ->
             file.inputStream().use { input ->
