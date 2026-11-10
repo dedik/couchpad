@@ -29,6 +29,6 @@
 ## Aplikacja na Androida (`phone/`)
 
 - Wzorcem jest panel: ekrany, ustawienia i teksty projektuj dla firmware'u, a aplikacja odwzorowuje je 1:1 w pionie i w poziomie. Wyjątek: styl OLED na stronie Telefon, tylko w aplikacji ([ADR 0019](docs/architecture/adr/0019-phone-oled-style.md)) — karty i kontrolki rysuj tokenami palety (`C.surface`, `C.line`/`C.edge`, `C.pressed`), bez szarości na sztywno. Zmiana UI panelu to zadanie także dla aplikacji (albo wpis w `phone/docs/PROGRESS.md`).
-- Aplikacja mówi tym samym kontraktem MQTT co panel i nie dodaje własnych tematów.
+- Aplikacja mówi tym samym kontraktem MQTT co panel i nie dodaje własnych tematów. Wyjątek: retained manifest aktualizacji `multimedia_remote/app/android`, który aplikacja tylko czyta ([ADR 0021](docs/architecture/adr/0021-phone-wifi-updates.md)).
 - Firmware nie może zależeć od `phone/`. Port SDL (`phone/android`, `compat/`, `platform/`) to referencja — nie rozwijaj go.
 - Zmianę widoczną na ekranie sprawdź na telefonie (`adb`) i po każdej takiej zmianie odśwież zrzuty we wszystkich czterech wariantach (pion/poziom × ciemny/jasny): `phone/tools/screenshots.sh portrait|landscape [light]`. Skrypt składa też zbiorcze `phone/docs/screenshots/overview-*.png` z README — commit ze zmianą UI ma zawierać nowe zrzuty, żeby main pokazywał aktualny wygląd. Gdy zmiana przesuwa elementy, popraw współrzędne tapnięć w skrypcie (stary tap może trafić w przycisk, który wysyła polecenie). Danych brokera MQTT nie wpisuj za użytkownika i nie zapisuj w repozytorium.

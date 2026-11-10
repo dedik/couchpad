@@ -97,7 +97,7 @@ class AppUpdater(context: Context) {
             }
             result.exceptionOrNull()?.let {
                 Log.w(TAG, "aktualizacja nieudana", it)
-                _phase.value = UpdatePhase.Failed(it.message ?: it.javaClass.simpleName)
+                finish(UpdatePhase.Failed(it.message ?: it.javaClass.simpleName))
             }
         }
     }
@@ -149,7 +149,11 @@ class AppUpdater(context: Context) {
         }
     }
 
-    private fun commit(file: File) {
+    /** Pobrany APK czekający na wynik sesji — do ponowienia z oknem, gdy cicha próba odpadnie. */
+    @Volatile private var pendingFile: File? = null
+    @Volatile private var silentAttempt = false
+
+    private fun commit(file: File, silent: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val installer = app.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
             .apply {
@@ -157,10 +161,11 @@ class AppUpdater(context: Context) {
                 // Android 12+: aplikacja, która sama siebie zainstalowała (instalator z rekordu),
                 // aktualizuje się bez okna potwierdzenia. Pierwsza aktualizacja po instalacji
                 // kablem i tak pokaże okno — dopiero ona robi z pilota instalatora z rekordu.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-                }
+                // HyperOS (Xiaomi) cichą aktualizację odrzuca — wtedy onResult ponawia z oknem.
+                if (silent) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
             }
+        pendingFile = file
+        silentAttempt = silent
         val id = installer.createSession(params)
         installer.openSession(id).use { session ->
             file.inputStream().use { input ->
@@ -176,7 +181,12 @@ class AppUpdater(context: Context) {
                 (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0)
             session.commit(PendingIntent.getBroadcast(app, id, intent, flags).intentSender)
         }
-        file.delete()
+    }
+
+    private fun finish(phase: UpdatePhase) {
+        pendingFile?.delete()
+        pendingFile = null
+        _phase.value = phase
     }
 
     @Volatile private var receiverRegistered = false
@@ -192,16 +202,34 @@ class AppUpdater(context: Context) {
     private fun onResult(intent: Intent) {
         when (val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
+                // Okno już się pokazuje: anulowanie to decyzja użytkownika, nie powód do ponowienia.
+                silentAttempt = false
                 @Suppress("DEPRECATION")
                 val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return
                 app.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
             // Po udanej instalacji proces zwykle już nie żyje; gdyby żył — wracamy do spoczynku.
-            PackageInstaller.STATUS_SUCCESS -> _phase.value = UpdatePhase.Idle
-            PackageInstaller.STATUS_FAILURE_ABORTED -> _phase.value = UpdatePhase.Idle
+            PackageInstaller.STATUS_SUCCESS -> finish(UpdatePhase.Idle)
             else -> {
-                val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-                _phase.value = UpdatePhase.Failed(msg ?: "Instalacja nieudana ($status)")
+                val file = pendingFile
+                // Cichą próbę system może odrzucić bez pytania (HyperOS: „Permission denied”).
+                // Ten sam plik idzie wtedy jeszcze raz, już z oknem potwierdzenia.
+                if (silentAttempt && file != null && file.exists()) {
+                    Log.i(TAG, "cicha aktualizacja odrzucona ($status), ponawiam z potwierdzeniem")
+                    scope.launch {
+                        runCatching { commit(file, silent = false) }.onFailure {
+                            finish(UpdatePhase.Failed(it.message ?: it.javaClass.simpleName))
+                        }
+                    }
+                    return
+                }
+                // Anulowane okno to decyzja użytkownika, nie błąd.
+                if (status == PackageInstaller.STATUS_FAILURE_ABORTED) {
+                    finish(UpdatePhase.Idle)
+                } else {
+                    val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+                    finish(UpdatePhase.Failed(msg ?: "Instalacja nieudana ($status)"))
+                }
             }
         }
     }
