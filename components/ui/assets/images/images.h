@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 
+LV_IMAGE_DECLARE(icon_remote);
 LV_IMAGE_DECLARE(icon_tv);
 LV_IMAGE_DECLARE(icon_appletv);
 LV_IMAGE_DECLARE(icon_audio);
@@ -106,6 +107,16 @@ LV_IMAGE_DECLARE(icon_trv_battery_ok);
 LV_IMAGE_DECLARE(icon_trv_battery_low);
 LV_IMAGE_DECLARE(icon_trv_next);
 LV_IMAGE_DECLARE(icon_trv_delta);
+LV_IMAGE_DECLARE(icon_remote_hub);
+LV_IMAGE_DECLARE(icon_key_source);
+LV_IMAGE_DECLARE(icon_key_back);
+LV_IMAGE_DECLARE(icon_key_menu);
+LV_IMAGE_DECLARE(icon_key_home);
+LV_IMAGE_DECLARE(icon_key_keyboard);
+LV_IMAGE_DECLARE(icon_key_volume);
+LV_IMAGE_DECLARE(icon_key_mute);
+LV_IMAGE_DECLARE(icon_tv_small);
+LV_IMAGE_DECLARE(icon_appletv_small);
 LV_IMAGE_DECLARE(ring_heat);
 LV_IMAGE_DECLARE(logo_polsat);
 LV_IMAGE_DECLARE(logo_tvn);

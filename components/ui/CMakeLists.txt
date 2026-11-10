@@ -6,6 +6,7 @@ file(GLOB UI_IMAGES "assets/images/*.c")
 idf_component_register(
     SRCS "ui.cpp" "theme.cpp" "shell.cpp"
          "widgets.cpp" "widgets_controls.cpp" "widgets_nav.cpp" "widgets_editor.cpp"
+         "screens/screen_remote.cpp"
          "screens/screen_tv.cpp"
          "screens/screen_appletv.cpp"
          "screens/screen_audio.cpp"

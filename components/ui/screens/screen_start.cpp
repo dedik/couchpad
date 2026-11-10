@@ -411,8 +411,13 @@ void build_tile(Context& context, lv_obj_t* grid, std::size_t i, int32_t tile_w,
     tile.state = widgets::make_text(row, theme::font_r13(), theme::faint());
     lv_obj_set_flex_grow(tile.state, 1);
     lv_label_set_long_mode(tile.state, LV_LABEL_LONG_DOT);
+    // Górny rząd: nazwa i stan u góry, ikona pod spodem — środek siatki zostaje wolny na
+    // przycisk Pilota (ADR 0020) i nic nie ginie pod nim.
+    if (i < 2) {
+        lv_obj_move_to_index(texts, 0);
+    }
 
-    // Kafelki są jedynymi dziećmi siatki, więc ich kolejność to indeks w `kTiles`.
+    // Kafelki są pierwszymi dziećmi siatki, więc ich kolejność to indeks w `kTiles`.
     lv_obj_add_event_cb(
         tile.root,
         [](lv_event_t* event) {
@@ -421,6 +426,43 @@ void build_tile(Context& context, lv_obj_t* grid, std::size_t i, int32_t tile_w,
                     static_cast<std::size_t>(lv_obj_get_index(target)));
         },
         LV_EVENT_CLICKED, &context);
+}
+
+// Przycisk Pilota (ADR 0020) na skrzyżowaniu kafelków: koło z obrysem w akcencie i ikoną
+// pilota. Obwódka w kolorze tła wycina łuk w narożnikach kafelków.
+constexpr int32_t kHub = 132;
+constexpr int32_t kHubHalo = 12;
+
+void on_hub(void* raw) {
+    auto& context = *static_cast<Context*>(raw);
+    show_start(context, false);
+    show_screen(context, ScreenId::Remote);
+}
+
+void build_hub(Context& context, lv_obj_t* grid) {
+    lv_obj_t* halo = widgets::make_box(grid);
+    lv_obj_add_flag(halo, LV_OBJ_FLAG_FLOATING);
+    lv_obj_set_size(halo, kHub + 2 * kHubHalo, kHub + 2 * kHubHalo);
+    lv_obj_set_style_radius(halo, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(halo, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(halo, theme::bg(), LV_PART_MAIN);
+    lv_obj_center(halo);
+
+    lv_obj_t* hub = widgets::make_bare_button(halo);
+    lv_obj_set_size(hub, kHub, kHub);
+    lv_obj_center(hub);
+    lv_obj_set_style_radius(hub, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(hub, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(hub, theme::surface2(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(hub, theme::surface3(), LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(hub, 2, LV_PART_MAIN);
+    lv_obj_set_style_border_color(hub, theme::accent(), LV_PART_MAIN);
+    lv_obj_t* icon = lv_image_create(hub);
+    lv_image_set_src(icon, &icon_remote_hub);
+    lv_obj_center(icon);
+    lv_obj_add_event_cb(
+        hub, [](lv_event_t* event) { on_hub(lv_event_get_user_data(event)); }, LV_EVENT_CLICKED,
+        &context);
 }
 
 // Stopka: stan łącza z domem i Ponów po błędzie.
@@ -525,6 +567,7 @@ void build_start(Context& context) {
     for (std::size_t i = 0; i < 4; ++i) {
         build_tile(context, grid, i, tile_w, tile_h);
     }
+    build_hub(context, grid);
 
     // Stopka: w pionie pod siatką.
     if (foot == nullptr) {

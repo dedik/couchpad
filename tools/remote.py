@@ -33,9 +33,10 @@ from PIL import Image
 TIMEOUT_S = 15.0
 
 # Środki zakładek na ekranie 480 x 800 (components/ui/shell.cpp, theme.hpp): pasek
-# ma 80 px, pięć zakładek po 86 px z marginesem 16 px. Zakładka tylko przełącza ekran,
-# niczego nie wysyła do urządzeń — `tour` dotyka wyłącznie paska.
-TABS = {"tv": 59, "appletv": 150, "audio": 240, "home": 330, "more": 421}
+# ma 80 px, sześć zakładek po ok. 71 px z odstępem 4 px i marginesem 16 px (Pilot
+# pierwszy, ADR 0020). Zakładka tylko przełącza ekran, niczego nie wysyła do urządzeń —
+# `tour` dotyka wyłącznie paska.
+TABS = {"remote": 52, "tv": 127, "appletv": 202, "audio": 278, "home": 353, "more": 428}
 TAB_Y = 760
 # Budzenie: na ekranie startowym w tym miejscu jest napis o połączeniu, na pozostałych
 # zakładka Głośniki. Ani jedno, ani drugie niczego nie przełącza w domu.
@@ -50,6 +51,7 @@ START_TILE_TV = (120, 300)
 TOUR = [
     ("01-start", None),
     ("02-tv", "tv"),
+    ("15-remote", "remote"),
     ("03-appletv", "appletv"),
     ("04-audio", "audio"),
     ("05-home", "home"),

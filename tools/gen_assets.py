@@ -42,11 +42,18 @@ LOGOS = {
     "wppilot": 22,   # napis, nie znak — wysokość jak TVP
 }
 
-TAB_ICONS = ["tv", "appletv", "audio", "home", "settings"]
+TAB_ICONS = ["remote", "tv", "appletv", "audio", "home", "settings"]
 PIXEL_SCALE = 1
 # Kafelki ekranu startowego: te same obrazy, każdy piksel na 2 x 2 piksele ekranu.
 LARGE_ICONS = ["tv", "appletv", "audio", "home"]
 LARGE_SCALE = 2
+# Zakładka Pilot (tools/draw_remote_icons.py): koło na skrzyżowaniu kafelków startu ma ikonę
+# 72 px — siatka 48 w skali 1,5 (NEAREST: co drugi piksel źródła podwojony). Klawisze pilota
+# na siatce 24 w 1 x. Ikony wejść TV w segmentach (24 px) to telewizor i Apple TV z zakładek
+# zmniejszone o połowę uśrednianiem 2 × 2 — pixel art w skali 0,5 zostaje czytelny.
+HUB_ICON = ("remote", 1.5, "icon_remote_hub")
+KEY_ICONS = ["source", "back", "menu", "home", "keyboard", "volume", "mute"]
+SMALL_ICONS = ["tv", "appletv"]
 # Pogoda na ekranie startowym (ADR 0011): siatka 32 x 32 w skali 2 x, 64 px obok zegara.
 WEATHER_ICONS = ["sunny", "night", "partly", "partly_night", "cloudy", "rain", "snow", "storm", "fog", "wind"]
 WEATHER_SCALE = 2
@@ -229,9 +236,21 @@ def main() -> int:
     jobs += [(f"dev_{icon}", 1, f"icon_dev_{icon}") for icon in DEVICE_ICONS]
     jobs += [(f"sensor_{icon}", 2, f"icon_sensor_{icon}_large") for icon in SENSOR_ICONS]
     jobs += [(f"trv_{icon}", 1, f"icon_trv_{icon}") for icon in TRV_ICONS]
+    jobs += [HUB_ICON]
+    jobs += [(f"key_{icon}", 1, f"icon_key_{icon}") for icon in KEY_ICONS]
     for icon, scale, name in jobs:
         source = Image.open(MOCKUP / "assets" / "pixel" / f"{icon}.png").convert("RGBA")
-        image = source.resize((source.width * scale, source.height * scale), Image.NEAREST)
+        image = source.resize((round(source.width * scale), round(source.height * scale)), Image.NEAREST)
+        (OUT / f"{name}.c").write_text(emit_i8(name, image))
+        names.append(name)
+        print(f"  {name}  {image.width}x{image.height}  I8")
+
+    for icon in SMALL_ICONS:
+        source = Image.open(MOCKUP / "assets" / "pixel" / f"{icon}.png").convert("RGBA")
+        image = source.resize((source.width // 2, source.height // 2), Image.BOX)
+        # Uśrednianie daje półprzezroczyste krawędzie i nowe barwy — paleta I8 musi się zmieścić.
+        image = image.quantize(colors=200, method=Image.Quantize.FASTOCTREE).convert("RGBA")
+        name = f"icon_{icon}_small"
         (OUT / f"{name}.c").write_text(emit_i8(name, image))
         names.append(name)
         print(f"  {name}  {image.width}x{image.height}  I8")

@@ -13,7 +13,8 @@
 
 namespace ui {
 
-enum class ScreenId : uint8_t { Tv, AppleTv, Audio, Home, More, kCount };
+// Pilot (ADR 0020) stoi pierwszy: najczęstsze sterowanie TV, Apple TV i Z906 na jednym ekranie.
+enum class ScreenId : uint8_t { Remote, Tv, AppleTv, Audio, Home, More, kCount };
 inline constexpr std::size_t kScreenCount = static_cast<std::size_t>(ScreenId::kCount);
 
 struct Context;
@@ -74,6 +75,59 @@ struct AppleTvScreen {
     // na TV zniknie albo jeszcze się nie pojawiło.
     bool keyboard_manual = false;
     int64_t last_step_ms = 0;
+};
+
+// ---------- Pilot (ADR 0020) ----------
+// Trzy bloki: Telewizor (wejścia, tryb obrazu, Cofnij, P±; w poziomie także skróty kanałów),
+// Apple TV (gładzik, Menu, Home, Klawiatura) i głośność Z906. Bez nagłówka powłoki, a w poziomie
+// także bez paska zakładek — wysuwa go szuflada od lewej krawędzi, jak w głębi Domu.
+struct RemoteScreen {
+    lv_obj_t* section = nullptr;
+    lv_obj_t* tv_card = nullptr;
+    lv_obj_t* atv_card = nullptr;
+    lv_obj_t* volume_card = nullptr;
+    lv_obj_t* tv_status = nullptr;      // tylko poziom (pion nie ma nagłówka bloku TV)
+
+    // Wejście TV: segment z ikoną i nazwą. `option` — indeks w `source_options`.
+    struct Source {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* icon = nullptr;
+        lv_obj_t* label = nullptr;
+        Context* context = nullptr;
+        std::size_t option = 0;
+    };
+    Source sources[domain::kMaxOptions];
+
+    // Tryb obrazu jedną linią: ‹ nazwa ›, kropki — pozycja na liście.
+    lv_obj_t* picture = nullptr;
+    lv_obj_t* picture_label = nullptr;
+    lv_obj_t* picture_dots[domain::kMaxOptions]{};
+
+    lv_obj_t* atv_status = nullptr;
+    lv_obj_t* atv_power = nullptr;
+
+    lv_obj_t* audio_status = nullptr;
+    // Poziom: wejście Z906 z bieżącą wartością (stuknięcie — lista) i cztery efekty jawnie.
+    lv_obj_t* audio_input = nullptr;
+    lv_obj_t* audio_input_value = nullptr;
+    struct Effect {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* label = nullptr;
+        Context* context = nullptr;
+        std::size_t index = 0;   // w domain::z906_effects()
+    };
+    Effect effects[4];
+    lv_obj_t* volume = nullptr;
+    lv_obj_t* mute = nullptr;
+    lv_obj_t* mute_icon = nullptr;
+
+    // Poziom: szuflada z zakładkami przy lewej krawędzi.
+    lv_obj_t* edge = nullptr;
+    lv_obj_t* scrim = nullptr;
+    lv_obj_t* drawer = nullptr;
+    bool drawer_open = false;
+    bool swiping = false;
+    int32_t swipe_x = 0;
 };
 
 // ---------- Ekran dźwięku ----------
@@ -494,6 +548,7 @@ struct Context {
     storage::RoomName room;
 
     Shell shell;
+    RemoteScreen remote;
     TvScreen tv;
     WifiScreen wifi;
     MqttScreen mqtt;
@@ -539,7 +594,22 @@ void show_header_slot(const Context& context, lv_obj_t* slot, ScreenId owner, bo
 void build_shell(Context& context);
 void render_shell(Context& context);
 
+// Ikona zakładki ekranu (pasek powłoki i szuflady w poziomie).
+const lv_image_dsc_t* tab_icon(ScreenId screen);
+
 // Ekrany.
+void build_remote(Context& context, lv_obj_t* parent);
+void render_remote(Context& context);
+// Sterowanie współdzielone z Pilotem (ADR 0020): te same zamiary co na pełnych ekranach.
+void tv_open_picture_picker(Context& context);
+void tv_open_channel_menu(Context& context);
+void tv_channel_shortcut(Context& context, std::size_t index);  // 0…3: Polsat, TVN, TVP1, TVP2
+void tv_send_key(Context& context, domain::NavKey key);
+void tv_step_channel(Context& context, bool up);
+void z906_step_volume(Context& context, int32_t levels);
+void z906_open_source_picker(Context& context);
+void appletv_send_key(Context& context, domain::NavKey key, domain::Press press);
+void appletv_open_keyboard(Context& context);
 void build_tv(Context& context, lv_obj_t* parent);
 void render_tv(Context& context);
 void build_appletv(Context& context, lv_obj_t* parent);

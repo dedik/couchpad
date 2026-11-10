@@ -234,6 +234,12 @@ void build_levels(Context& context, lv_obj_t* parent) {
 
 }  // namespace
 
+void z906_open_source_picker(Context& context) {
+    if (context.controller->state().z906_fresh()) {
+        open_picker(context, domain::ControlId::ZSource, "Źródło dźwięku");
+    }
+}
+
 void build_audio(Context& context, lv_obj_t* parent) {
     AudioScreen& screen = context.audio;
     screen.section = widgets::make_section(parent);

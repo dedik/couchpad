@@ -337,6 +337,24 @@ void build_tv_pages(Context& context) {
 
 }  // namespace
 
+void tv_open_picture_picker(Context& context) {
+    if (context.controller->state().tv_fresh()) {
+        open_picker(context, domain::ControlId::TvPicture, "Tryb obrazu");
+    }
+}
+
+void tv_open_channel_menu(Context& context) { on_channel(&context, kChannelMenuTile); }
+
+void tv_channel_shortcut(Context& context, std::size_t index) {
+    if (index < kChannelMenuTile) {
+        on_channel(&context, index);
+    }
+}
+
+void tv_send_key(Context& context, domain::NavKey key) { on_key(&context, key); }
+void tv_step_channel(Context& context, bool up) { step_channel(context, up); }
+void z906_step_volume(Context& context, int32_t levels) { step_volume(context, levels); }
+
 void build_tv(Context& context, lv_obj_t* parent) {
     TvScreen& screen = context.tv;
     screen.section = widgets::make_section(parent);

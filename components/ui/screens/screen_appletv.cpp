@@ -127,8 +127,9 @@ void sync_keyboard(Context& context) {
         return;
     }
 
-    if (active && auto_open && !screen.keyboard_seen && !screen.keyboard_open &&
-        context.screen == ScreenId::AppleTv) {
+    // Pilot (ADR 0020) ma ten sam gładzik, więc pole tekstowe otwiera klawiaturę także tam.
+    const bool here = context.screen == ScreenId::AppleTv || context.screen == ScreenId::Remote;
+    if (active && auto_open && !screen.keyboard_seen && !screen.keyboard_open && here) {
         open_keyboard(context);
     } else if (!active && screen.keyboard_open) {
         screen.keyboard_open = false;
@@ -141,6 +142,12 @@ void sync_keyboard(Context& context) {
 }
 
 }  // namespace
+
+void appletv_send_key(Context& context, domain::NavKey key, domain::Press press) {
+    send_key(context, key, press);
+}
+
+void appletv_open_keyboard(Context& context) { on_keyboard_button(&context); }
 
 namespace {
 

@@ -17,6 +17,8 @@ struct ScreenDef {
 };
 
 const ScreenDef kScreens[kScreenCount] = {
+    // Pilot nie ma nagłówka (ADR 0020) — nazwa i znak tylko dla porządku.
+    {"Pilot", "SALON", LV_SYMBOL_VIDEO, &icon_remote, false},
     {"LG OLED", "SALON", LV_SYMBOL_VIDEO, &icon_tv, true},
     {"Apple TV", "SALON", LV_SYMBOL_PLAY, &icon_appletv, true},
     {"Z906", "SALON", LV_SYMBOL_AUDIO, &icon_audio, true},
@@ -326,6 +328,7 @@ void build_shell(Context& context) {
     }
     build_wake(context);
 
+    build_remote(context, shell.pages[static_cast<std::size_t>(ScreenId::Remote)]);
     build_tv(context, shell.pages[static_cast<std::size_t>(ScreenId::Tv)]);
     build_appletv(context, shell.pages[static_cast<std::size_t>(ScreenId::AppleTv)]);
     build_audio(context, shell.pages[static_cast<std::size_t>(ScreenId::Audio)]);
@@ -337,15 +340,25 @@ void build_shell(Context& context) {
     dock_settings_pages(context);
 }
 
-namespace {
-
-}  // namespace
+const lv_image_dsc_t* tab_icon(ScreenId screen) {
+    const auto index = static_cast<std::size_t>(screen);
+    return index < kScreenCount ? kScreens[index].tab_icon : nullptr;
+}
 
 void render_shell(Context& context) {
     Shell& shell = context.shell;
     const auto& state = *context.controller;
     const std::size_t index = static_cast<std::size_t>(context.screen);
     const ScreenDef& def = kScreens[index];
+
+    // Pilot (ADR 0020) zajmuje cały ekran: bez nagłówka, a w poziomie także bez paska
+    // zakładek — ten wysuwa się z lewej szuflady, a pas chwytu (28 px) odsuwa treść.
+    const bool remote = context.screen == ScreenId::Remote;
+    widgets::set_visible(shell.topbar, !remote);
+    if (theme::landscape()) {
+        widgets::set_visible(shell.tabbar, !remote);
+        lv_obj_set_style_pad_left(shell.content, remote ? 28 : gutter(), LV_PART_MAIN);
+    }
 
     lv_label_set_text(shell.ident_icon, def.symbol);
     lv_label_set_text(shell.ident_name, def.name);
