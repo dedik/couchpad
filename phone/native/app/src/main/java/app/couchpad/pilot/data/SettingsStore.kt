@@ -61,6 +61,7 @@ class SettingsStore(context: Context) {
             trackpadStep = prefs.getInt("trackpad_step", d.trackpadStep),
             volumeLimit = prefs.getInt("volume_limit", d.volumeLimit),
             oled = prefs.getBoolean("oled", d.oled),
+            sleepOverlay = prefs.getBoolean("sleep_overlay", d.sleepOverlay),
         )
     }
 
@@ -80,6 +81,7 @@ class SettingsStore(context: Context) {
             .putInt("trackpad_step", p.trackpadStep)
             .putInt("volume_limit", p.volumeLimit)
             .putBoolean("oled", p.oled)
+            .putBoolean("sleep_overlay", p.sleepOverlay)
             .apply()
     }
 

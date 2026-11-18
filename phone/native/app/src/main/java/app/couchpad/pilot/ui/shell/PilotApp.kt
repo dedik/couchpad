@@ -34,7 +34,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.couchpad.pilot.data.PilotRepository
 import app.couchpad.pilot.data.PilotState
 import app.couchpad.pilot.data.Preferences
@@ -91,11 +94,15 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
         if (screen != Screen.Home) immersive = false
         tabsDrawer = false
     }
-    LaunchedEffect(Unit) {
-        while (true) {
-            now = System.currentTimeMillis()
-            repo.expirePending()
-            delay(250)
+    // Zegar tylko przy widocznym pilocie: przy zgaszonym ekranie nie budzi procesora.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                now = System.currentTimeMillis()
+                repo.expirePending()
+                delay(250)
+            }
         }
     }
     LaunchedEffect(state.link.freshSince) {
@@ -121,13 +128,17 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
         }
     }
     val idle = now - lastTouch
-    if (!asleep && ScreenPolicy.shouldSleep(prefs, idle)) asleep = true
-    val dimmed = !asleep && ScreenPolicy.dimmed(prefs, idle)
-    val level = ScreenPolicy.brightness(prefs, hour, asleep, dimmed)
+    val overlaySleep = prefs.sleepOverlay
+    if (overlaySleep && !asleep && ScreenPolicy.shouldSleep(prefs, idle)) asleep = true
+    val dimmed = !(overlaySleep && asleep) && ScreenPolicy.dimmed(prefs, idle)
+    val level = ScreenPolicy.brightness(prefs, hour, overlaySleep && asleep, dimmed)
     LaunchedEffect(level) { display.brightness(level) }
-    // Ekran pozostaje włączony (w uśpieniu wygaszony do 0% czarną nakładką),
-    // dzięki czemu digitizer reaguje na podwójne puknięcie bez użycia przycisku zasilania.
-    LaunchedEffect(Unit) { display.keepScreenOn(true) }
+    // Uśpienie systemowe: pilot puszcza ekran i Android gasi go jak zwykle; budzi systemowy
+    // dwuklik albo przycisk, a onStart wraca na Start. Zasłona: ekran zostaje włączony, żeby
+    // dwuklik złapał sam pilot (telefony bez dwukliku przy zgaszonym ekranie).
+    val systemTimeout = remember(lastTouch, prefs) { display.systemTimeoutMs() }
+    val holdScreen = overlaySleep || ScreenPolicy.holdScreen(prefs, idle, systemTimeout)
+    LaunchedEffect(holdScreen) { display.keepScreenOn(holdScreen) }
     LaunchedEffect(prefs.orientation) { display.orientation(prefs.orientation) }
 
     // Wstecz cofa do ekranu startowego; na nim niczego nie zamyka — pilot jest ekranem głównym.
@@ -189,7 +200,7 @@ fun PilotApp(repo: PilotRepository, display: DisplayControl, homeSignal: StateFl
             }
             // Listy wyboru nad całym ekranem, pod zasłoną uśpienia.
             overlay.Content()
-            if (asleep) {
+            if (overlaySleep && asleep) {
                 // Uśpiony pilot: czarna zasłona wygaszona do 0% z aktywnym ekranem.
                 // Podwójne stuknięcie budzi pilota na ekranie startowym (ADR 0010),
                 // przywraca zadaną jasność i odświeża stan w tle (ADR 0005).

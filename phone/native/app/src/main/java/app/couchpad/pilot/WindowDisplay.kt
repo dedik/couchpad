@@ -3,6 +3,7 @@ package app.couchpad.pilot
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.os.Build
+import android.provider.Settings
 import android.view.Surface
 import android.view.WindowManager
 import app.couchpad.pilot.ui.shell.DisplayControl
@@ -15,6 +16,9 @@ class WindowDisplay(private val activity: Activity) : DisplayControl {
         if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
+
+    override fun systemTimeoutMs(): Long =
+        Settings.System.getLong(activity.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, 30_000L)
 
     override fun brightness(percent: Int) {
         val attrs = window.attributes

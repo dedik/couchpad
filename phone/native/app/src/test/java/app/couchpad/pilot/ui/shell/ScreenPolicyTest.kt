@@ -39,6 +39,17 @@ class ScreenPolicyTest {
     }
 
     @Test
+    fun `system sleep releases the screen early by the system timeout`() {
+        val twoMin = Preferences(timeout = 3) // 2 min
+        assertTrue(ScreenPolicy.holdScreen(twoMin, 89_000, systemTimeoutMs = 30_000))
+        assertFalse(ScreenPolicy.holdScreen(twoMin, 91_000, systemTimeoutMs = 30_000))
+        // Pilot krócej niż system: ekranem od razu rządzi Android.
+        assertFalse(ScreenPolicy.holdScreen(Preferences(timeout = 0), 0, systemTimeoutMs = 30_000))
+        val never = Preferences(timeout = Options.timeouts.indexOf(0L))
+        assertTrue(ScreenPolicy.holdScreen(never, Long.MAX_VALUE / 2, systemTimeoutMs = 30_000))
+    }
+
+    @Test
     fun `hour window`() {
         assertFalse(Options.hourIn(0 to 0, 0))
         assertTrue(Options.hourIn(9 to 17, 9))

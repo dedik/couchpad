@@ -49,4 +49,11 @@ data class Preferences(
      * Ciemny styl w wariancie OLED (tylko telefon, strona Telefon; płytka ma ekran IPS).
      */
     val oled: Boolean = false,
+    /**
+     * Uśpienie (tylko telefon, strona Telefon). false: po bezczynności pilot oddaje ekran
+     * systemowi, który go gasi, a budzi systemowy dwuklik albo przycisk. true: ekran zostaje
+     * włączony pod czarną zasłoną, a dwuklik łapie sam pilot — dla telefonów bez dwukliku
+     * przy zgaszonym ekranie.
+     */
+    val sleepOverlay: Boolean = false,
 )

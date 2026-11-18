@@ -116,6 +116,13 @@ internal fun PhonePage(prefs: Preferences, update: Update) {
         update { it.copy(oled = i == 1) }
     }
     Note("OLED: karty prawie czarne z obrysem, mniej pełnego pomarańczu i łagodniejszy tekst. Dla ekranów OLED/AMOLED; na LCD zostaw standard.")
+    Choose("Uśpienie", listOf("systemowe", "zasłona"), if (prefs.sleepOverlay) 1 else 0) { i ->
+        update { it.copy(sleepOverlay = i == 1) }
+    }
+    Note(
+        if (prefs.sleepOverlay) "Zasłona: ekran zostaje włączony pod czarną zasłoną, dwuklik budzi pilota. Dla telefonów bez dwukliku przy zgaszonym ekranie; zużywa więcej baterii."
+        else "Systemowe: po czasie wygaszania (Ekran) Android gasi ekran, budzi dwuklik albo przycisk. Gaśnie po dłuższym z dwóch czasów — pilota i Androida."
+    )
     Group("Aplikacje") {
         Column(verticalArrangement = Arrangement.spacedBy(8.u)) {
             for (app in apps) {

@@ -27,6 +27,8 @@ enum class Screen(val icon: Int) {
 /** Sterowanie ekranem telefonu — odpowiednik `board` na płytce. */
 interface DisplayControl {
     fun keepScreenOn(on: Boolean)
+    /** Wygaszanie ekranu z ustawień Androida, ms. */
+    fun systemTimeoutMs(): Long
     fun brightness(percent: Int)
     fun orientation(index: Int)
 }

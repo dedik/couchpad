@@ -72,6 +72,16 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
   zwykle bez obrysu); szarość tylko na wciśnięciu (`C.pressed`) i torach łuków. Neutralne
   szarości, tekst i gałki łuków ~75% bieli, `faint` z kontrastem ≥ 4,5:1, a duże pola akcentu (OK,
   szerokie przyciski) jako miękkie tło z obrysem (`Palette.softAccent`).
+- Uśpienie (2026-11-18, tylko telefon): strona Telefon, „Uśpienie: systemowe / zasłona”
+  (`Preferences.sleepOverlay`, domyślnie systemowe). Systemowe: pilot zdejmuje
+  `FLAG_KEEP_SCREEN_ON` i Android gasi ekran; budzi systemowy dwuklik (M23:
+  `double_tap_to_wake`) albo przycisk, `onStart` wraca na Start. Zwolnienie blokady ekranu
+  Android liczy jak dotyk, więc pilot puszcza ekran o czas wygaszania systemu wcześniej
+  (`ScreenPolicy.holdScreen`) — ekran gaśnie po dłuższym z dwóch czasów, nie po sumie.
+  Zasłona (dawne zachowanie): ekran stale włączony, czarna zasłona z jasnością 0% i dwuklik
+  w aplikacji — dla telefonów bez dwukliku przy zgaszonym ekranie (Galaxy S5); na LCD
+  podświetlenie dalej świeci. Zegar UI (250 ms) chodzi tylko przy widocznym pilocie.
+  Na M23 sprawdzone: ekran gaśnie po ~30 s, po wybudzeniu pilot na Starcie bez ekranu blokady.
 - Aktualizacja przez Wi-Fi (2026-11-10, [ADR 0021](../../docs/architecture/adr/0021-phone-wifi-updates.md)):
   retained manifest `multimedia_remote/app/android`, APK w `www/pilot` HA, `AppUpdater`
   (pobranie, sha256, `PackageInstaller`), sekcja „Wersja aplikacji” na stronie Telefon,
