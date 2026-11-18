@@ -49,6 +49,7 @@ void doze(Context& context) {
     // klatkę. Wchodzi przed warstwą snu — obie leżą w lv_layer_sys, a wierzch
     // musi należeć do warstwy, inaczej dotyk w ciemno trafiłby w kafelek.
     show_start(context, true);
+    context.network->set_signal_watch(false);  // w uśpieniu bez RPC do koprocesora
     // Warstwa wchodzi przed zgaszeniem, żeby dotyk w ciemno nie nacisnął niczego.
     lv_obj_remove_flag(context.sleep_blocker, LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(context.sleep_blocker);

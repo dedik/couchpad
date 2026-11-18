@@ -91,6 +91,14 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
   ponawia z oknem. `targetSdk`/`compileSdk` 35 (wymaga `platforms;android-35`).
   Sprawdzone na obu do wersji 0.3.64.
   Pasek nawigacji systemu idzie teraz za kolorem tła stylu (wcześniej zawsze ciemny).
+- Pigułka stanu na Starcie (2026-11-18, 1:1 z płytką, makieta `docs/ux/mockup-status`,
+  wariant B): nad zegarem siła Wi-Fi (3 łuki, progi RSSI −60/−70 dBm) i bateria telefonu
+  z procentem (`ui/start/DeviceStatus.kt`). Bateria ze sticky `ACTION_BATTERY_CHANGED`,
+  RSSI z `NetworkCapabilities.signalStrength` (API 29+) albo `WifiManager` (starsze,
+  `ACCESS_WIFI_STATE`, bez lokalizacji). Kolor tylko dla uwagi: słaby sygnał akcent, brak
+  sieci i bateria ≤ 15% czerwień, ładowanie zieleń. Odczyt tylko, gdy Start jest widoczny.
+  Płytka: RSSI odświeżane co 10 s w zadaniu Wi-Fi tylko przy widocznym Starcie; baterii
+  jeszcze nie ma, więc „USB” z wtyczką (rysowanie baterii gotowe w `screen_start.cpp`).
 
 ### Następne kroki
 

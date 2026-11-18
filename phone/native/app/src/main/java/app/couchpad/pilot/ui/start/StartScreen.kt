@@ -69,6 +69,7 @@ fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () ->
     val dateLine = formatIn("EEEE, d MMMM", prefs.zoneId, date) + " · " + prefs.roomName.uppercase()
     val clock = formatIn("H:mm", prefs.zoneId, date)
     val weather = state.weather.takeIf { it.current(now) }
+    val device = rememberDeviceStatus()
 
     if (LocalLandscape.current) {
         // Poziom: zegar, pogoda i stan z lewej, kafelki 2 × 2 z prawej (ADR 0013).
@@ -79,6 +80,8 @@ fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () ->
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
+                    StatusPill(device)
+                    Spacer(Modifier.height(10.u))
                     T(clock, 80, FontWeight.Bold)
                     T(dateLine, 13, color = C.dim)
                 }
@@ -91,8 +94,10 @@ fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () ->
     } else {
         Column(Modifier.fillMaxSize().padding(horizontal = 24.u)) {
             Spacer(Modifier.height(20.u))
-            Row(verticalAlignment = Alignment.Top) {
+            Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
+                    StatusPill(device)
+                    Spacer(Modifier.height(8.u))
                     T(clock, 72, FontWeight.Bold)
                     T(dateLine, 13, color = C.dim)
                 }

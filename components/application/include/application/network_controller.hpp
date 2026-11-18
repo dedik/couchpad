@@ -34,6 +34,8 @@ public:
     std::size_t access_point_count() const { return wifi_.access_point_count(); }
     const transport::Ssid& current_ssid() const { return wifi_.current_ssid(); }
     int8_t current_rssi() const { return wifi_.current_rssi(); }
+    // Odświeżanie RSSI w tle — tylko gdy siłę sygnału widać na ekranie.
+    void set_signal_watch(bool on) { wifi_.set_signal_watch(on); }
     bool scanning() const { return wifi_.phase() == transport::WifiPhase::Scanning; }
     // Sieć zapamiętana w NVS, nawet gdy w tej chwili nie ma połączenia.
     const transport::Ssid& remembered_ssid() const { return remembered_; }

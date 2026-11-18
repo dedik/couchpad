@@ -5,6 +5,7 @@
 
 #include "esp_event.h"
 #include "esp_heap_caps.h"
+#include "esp_timer.h"
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
@@ -22,6 +23,7 @@ constexpr EventBits_t kScanDone = BIT2;
 
 constexpr int kConnectTimeoutMs = 20000;
 constexpr int kScanTimeoutMs = 15000;
+constexpr int64_t kSignalRefreshMs = 10000;
 
 // Powód rozłączenia tłumaczymy na coś, co da się pokazać na ekranie.
 WifiError error_from_reason(uint8_t reason) {
@@ -290,6 +292,7 @@ void WifiService::handle(const Request& request) {
         case Request::Kind::Disconnect:
             esp_wifi_disconnect();
             connected_ = false;
+            current_rssi_ = 0;
             current_ssid_.clear();
             publish(WifiPhase::Idle);
             break;
@@ -347,6 +350,26 @@ void WifiService::run() {
         if ((xEventGroupClearBits(signals_, kDisconnected) & kDisconnected) != 0) {
             note_disconnect();
         }
+        refresh_rssi();
+    }
+}
+
+void WifiService::refresh_rssi() {
+    if (!signal_watch_) {
+        next_rssi_ms_ = 0;  // po włączeniu odświeżamy od razu, nie po 10 s
+        return;
+    }
+    if (!connected_) {
+        return;
+    }
+    const int64_t now = esp_timer_get_time() / 1000;
+    if (now < next_rssi_ms_) {
+        return;
+    }
+    next_rssi_ms_ = now + kSignalRefreshMs;
+    wifi_ap_record_t record = {};
+    if (esp_wifi_sta_get_ap_info(&record) == ESP_OK && connected_) {
+        current_rssi_ = record.rssi;
     }
 }
 

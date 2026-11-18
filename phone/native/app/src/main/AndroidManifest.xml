@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- RSSI dla pigułki stanu na ekranie startowym (bez lokalizacji: SSID nie jest potrzebny). -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Aktualizacja przez Wi-Fi (ADR 0021): instalacja pobranego APK, zawsze z potwierdzeniem. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />

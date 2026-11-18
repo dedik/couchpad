@@ -58,6 +58,10 @@ public:
     void scan();
     void connect(const Ssid& ssid, const Password& password);
     void disconnect();
+    // Siła sygnału na ekranie startowym: gdy włączone, zadanie robocze odświeża RSSI
+    // co kSignalRefreshMs (jedno RPC do koprocesora). Wyłączone w uśpieniu i na innych
+    // ekranach — wtedy RSSI zostaje z chwili połączenia.
+    void set_signal_watch(bool on) { signal_watch_ = on; }
 
     // Odbiór zdarzeń — wyłącznie z zadania UI.
     bool poll(WifiEvent& out);
@@ -102,7 +106,10 @@ private:
     WifiPhase phase_ = WifiPhase::Off;
     WifiError error_ = WifiError::None;
     Ssid current_ssid_;
-    int8_t current_rssi_ = 0;
+    volatile int8_t current_rssi_ = 0;
+    volatile bool signal_watch_ = false;
+    int64_t next_rssi_ms_ = 0;
+    void refresh_rssi();
 };
 
 }  // namespace transport

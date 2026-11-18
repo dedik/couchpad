@@ -12,12 +12,12 @@
 namespace ui {
 namespace {
 
-constexpr int32_t kHeadHeight = 148;
+constexpr int32_t kHeadHeight = 182;  // z pigułką stanu nad zegarem
 constexpr int32_t kFootHeight = 56;
 constexpr int32_t kTileGap = theme::kS3;
 constexpr int32_t kTileW = (theme::kContentW - kTileGap) / 2;                  // 210
 constexpr int32_t kTileH = (800 - kHeadHeight - kFootHeight - theme::kS3 - theme::kS5 -
-                            kTileGap) / 2;                                    // 276
+                            kTileGap) / 2;                                    // 259
 
 struct TileDef {
     const lv_image_dsc_t* icon;
@@ -298,6 +298,191 @@ void render_clock(Context& context) {
     }
 }
 
+
+// ---------- pigułka stanu: Wi-Fi i zasilanie ----------
+// Makieta docs/ux/mockup-status (wariant B). Kolor dostaje tylko stan wymagający
+// uwagi: słaby sygnał (akcent), brak sieci i bateria ≤ 15% (czerwień), ładowanie (zieleń).
+
+constexpr int32_t kStatusH = 28;
+constexpr int32_t kWifiW = 22;
+constexpr int32_t kWifiH = 16;
+constexpr int32_t kWifiCx = kWifiW / 2;
+constexpr int32_t kWifiCy = 14;
+constexpr int32_t kWifiRadius[3] = {5, 9, 13};
+constexpr int32_t kBatteryW = 22;
+constexpr int32_t kBatteryH = 12;
+constexpr int32_t kBatteryFillMax = 14;
+constexpr int kBatteryLow = 15;
+
+// Odczyt zasilania. Płytka nie ma jeszcze ogniwa ani potwierdzonego pomiaru napięcia
+// (docs/hardware/verified-board-map.md), więc dziś zawsze „USB”. Gdy pomiar powstanie
+// w `board`, wystarczy go tu podać — rysowanie baterii jest gotowe.
+struct PowerReading {
+    bool battery = false;
+    uint8_t percent = 0;
+    bool charging = false;
+};
+
+PowerReading read_power() { return {}; }
+
+lv_obj_t* make_arc(lv_obj_t* parent, int32_t radius) {
+    lv_obj_t* arc = lv_arc_create(parent);
+    lv_obj_remove_style_all(arc);
+    lv_obj_remove_flag(arc, LV_OBJ_FLAG_CLICKABLE);
+    // Grubość 2 px rysuje się do środka obiektu, więc promień liczymy do środka kreski.
+    const int32_t outer = radius + 1;
+    lv_obj_set_size(arc, 2 * outer, 2 * outer);
+    lv_obj_set_pos(arc, kWifiCx - outer, kWifiCy - outer);
+    lv_arc_set_bg_angles(arc, 225, 315);
+    lv_arc_set_angles(arc, 225, 225);
+    lv_obj_set_style_arc_width(arc, 2, LV_PART_MAIN);
+    lv_obj_set_style_arc_rounded(arc, true, LV_PART_MAIN);
+    lv_obj_set_style_arc_opa(arc, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_arc_width(arc, 0, LV_PART_INDICATOR);
+    return arc;
+}
+
+lv_obj_t* make_line(lv_obj_t* parent, lv_point_precise_t* points, uint32_t count, int32_t width) {
+    lv_obj_t* line = lv_line_create(parent);
+    lv_obj_remove_style_all(line);
+    lv_line_set_points(line, points, count);
+    lv_obj_set_style_line_width(line, width, LV_PART_MAIN);
+    lv_obj_set_style_line_rounded(line, true, LV_PART_MAIN);
+    return line;
+}
+
+lv_obj_t* make_rect(lv_obj_t* parent, int32_t x, int32_t y, int32_t w, int32_t h, int32_t radius) {
+    lv_obj_t* rect = widgets::make_box(parent);
+    lv_obj_set_pos(rect, x, y);
+    lv_obj_set_size(rect, w, h);
+    lv_obj_set_style_radius(rect, radius, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(rect, LV_OPA_COVER, LV_PART_MAIN);
+    return rect;
+}
+
+void build_status(StartScreen& screen, lv_obj_t* parent) {
+    StartScreen::Status& status = screen.status;
+    status.root = widgets::make_box(parent);
+    lv_obj_set_size(status.root, LV_SIZE_CONTENT, kStatusH);
+    lv_obj_add_style(status.root, &theme::styles().card, LV_PART_MAIN);
+    lv_obj_set_style_radius(status.root, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_pad_hor(status.root, theme::kS3, LV_PART_MAIN);
+    lv_obj_set_style_pad_ver(status.root, 0, LV_PART_MAIN);
+    theme::make_row(status.root, theme::kS2);
+
+    // Wi-Fi: trzy łuki nad kropką, przy braku sieci przekreślone.
+    status.wifi = widgets::make_box(status.root);
+    lv_obj_set_size(status.wifi, kWifiW, kWifiH);
+    lv_obj_add_flag(status.wifi, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+    for (int i = 0; i < 3; ++i) {
+        status.wifi_arcs[i] = make_arc(status.wifi, kWifiRadius[i]);
+    }
+    status.wifi_dot = make_rect(status.wifi, kWifiCx - 2, kWifiCy - 2, 4, 4, LV_RADIUS_CIRCLE);
+    status.slash_points[0] = {2, 0};
+    status.slash_points[1] = {kWifiW - 2, kWifiH};
+    status.wifi_slash = make_line(status.wifi, status.slash_points, 2, 2);
+    status.wifi_text = widgets::make_text(status.root, theme::font_m13(), theme::danger());
+    lv_label_set_text(status.wifi_text, "brak sieci");
+
+    lv_obj_t* sep = widgets::make_box(status.root);
+    lv_obj_set_size(sep, 1, 14);
+    lv_obj_set_style_bg_opa(sep, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(sep, theme::line(), LV_PART_MAIN);
+
+    // Bateria: obrys z końcówką, wypełnienie wg procentu, błyskawica przy ładowaniu.
+    status.battery = widgets::make_box(status.root);
+    lv_obj_set_size(status.battery, kBatteryW, kBatteryH);
+    lv_obj_t* shell = widgets::make_box(status.battery);
+    lv_obj_set_size(shell, kBatteryW - 3, kBatteryH);
+    lv_obj_set_style_radius(shell, 3, LV_PART_MAIN);
+    lv_obj_set_style_border_width(shell, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_opa(shell, LV_OPA_60, LV_PART_MAIN);
+    lv_obj_t* nib = make_rect(status.battery, kBatteryW - 2, 4, 2, 4, 1);
+    lv_obj_set_style_bg_opa(nib, LV_OPA_60, LV_PART_MAIN);
+    status.battery_fill = make_rect(status.battery, 2, 2, kBatteryFillMax, kBatteryH - 4, 1);
+    status.bolt_points[0] = {11, 1};
+    status.bolt_points[1] = {7, 6};
+    status.bolt_points[2] = {12, 6};
+    status.bolt_points[3] = {8, 11};
+    status.battery_bolt = make_line(status.battery, status.bolt_points, 4, 2);
+
+    // Wtyczka USB: dwa bolce, korpus i przewód.
+    status.plug = widgets::make_box(status.root);
+    lv_obj_set_size(status.plug, 12, 16);
+    make_rect(status.plug, 3, 0, 2, 4, 1);
+    make_rect(status.plug, 7, 0, 2, 4, 1);
+    make_rect(status.plug, 1, 4, 10, 7, 3);
+    make_rect(status.plug, 5, 10, 2, 6, 1);
+
+    status.power_text = widgets::make_text(status.root, theme::font_m13(), theme::dim());
+}
+
+// Poziom sygnału z RSSI; 0 = brak połączenia.
+int wifi_level(const application::NetworkController& network) {
+    const int rssi = network.current_rssi();
+    if (rssi == 0) {
+        return 0;  // RSSI zerujemy przy rozłączeniu
+    }
+    if (rssi >= -60) return 3;
+    if (rssi >= -70) return 2;
+    return 1;
+}
+
+void set_icon_color(lv_obj_t* box, lv_color_t color) {
+    const uint32_t count = lv_obj_get_child_count(box);
+    for (uint32_t i = 0; i < count; ++i) {
+        lv_obj_t* child = lv_obj_get_child(box, static_cast<int32_t>(i));
+        lv_obj_set_style_bg_color(child, color, LV_PART_MAIN);
+        lv_obj_set_style_border_color(child, color, LV_PART_MAIN);
+        lv_obj_set_style_arc_color(child, color, LV_PART_MAIN);
+        lv_obj_set_style_line_color(child, color, LV_PART_MAIN);
+    }
+}
+
+void render_status(Context& context) {
+    StartScreen::Status& status = context.start.status;
+    const application::NetworkController& network = *context.network;
+    const int level = wifi_level(network);
+    const transport::WifiPhase phase = network.phase();
+    // Łączenie to nie awaria: przygaszone łuki, bez czerwieni i napisu.
+    const bool joining = level == 0 && (phase == transport::WifiPhase::Connecting ||
+                                        phase == transport::WifiPhase::Scanning);
+    const bool offline = level == 0 && !joining;
+
+    const lv_color_t wifi_color = offline      ? theme::danger()
+                                  : level == 1 ? theme::accent()
+                                               : theme::dim();
+    set_icon_color(status.wifi, wifi_color);
+    for (int i = 0; i < 3; ++i) {
+        const bool lit = !offline && !joining && level >= i + 1;
+        lv_obj_set_style_arc_opa(status.wifi_arcs[i], lit ? LV_OPA_COVER : LV_OPA_30, LV_PART_MAIN);
+    }
+    lv_obj_set_style_bg_opa(status.wifi_dot, joining ? LV_OPA_30 : LV_OPA_COVER, LV_PART_MAIN);
+    widgets::set_visible(status.wifi_slash, offline);
+    widgets::set_visible(status.wifi_text, offline);
+
+    const PowerReading power = read_power();
+    widgets::set_visible(status.battery, power.battery);
+    widgets::set_visible(status.plug, !power.battery);
+    lv_color_t power_color = theme::dim();
+    if (power.battery) {
+        const int percent = power.percent > 100 ? 100 : power.percent;
+        power_color = power.charging          ? theme::ok()
+                      : percent <= kBatteryLow ? theme::danger()
+                                               : theme::dim();
+        set_icon_color(status.battery, power_color);
+        const int32_t fill = percent * kBatteryFillMax / 100;
+        lv_obj_set_width(status.battery_fill, fill < 2 ? 2 : fill);
+        lv_obj_set_style_line_color(status.battery_bolt, theme::surface(), LV_PART_MAIN);
+        widgets::set_visible(status.battery_bolt, power.charging);
+        lv_label_set_text_fmt(status.power_text, "%d%%", percent);
+    } else {
+        set_icon_color(status.plug, power_color);
+        lv_label_set_text(status.power_text, "USB");
+    }
+    lv_obj_set_style_text_color(status.power_text, power_color, LV_PART_MAIN);
+}
+
 }  // namespace
 
 namespace {
@@ -540,6 +725,8 @@ void build_start(Context& context) {
         lv_obj_set_flex_grow(clock, 1);
         theme::make_column(clock, theme::kS2);
     }
+    build_status(screen, clock);
+    lv_obj_set_style_margin_bottom(screen.status.root, wide ? theme::kS2 : theme::kS1, LV_PART_MAIN);
     screen.time = widgets::make_text(clock, wide ? theme::font_b96num() : theme::font_b64num(), theme::text());
     screen.date = widgets::make_text(clock, wide ? theme::font_r15() : theme::font_r13(), theme::dim());
 
@@ -585,6 +772,7 @@ void show_start(Context& context, bool visible) {
         return;
     }
     screen.open = visible;
+    context.network->set_signal_watch(visible && !context.asleep);
     if (visible) {
         close_overlays(context);
         screen.shown_minute = -1;
@@ -604,6 +792,7 @@ void render_start(Context& context) {
     }
     render_clock(context);
     render_weather(context);
+    render_status(context);
 
     const domain::AppState& state = context.controller->state();
     Summary summary{};

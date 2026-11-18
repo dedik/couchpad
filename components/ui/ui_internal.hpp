@@ -228,6 +228,23 @@ struct StartScreen {
     lv_obj_t* indoor_temp = nullptr;
     lv_obj_t* indoor_note = nullptr;
     uint32_t shown_weather = 0;    // rewizja pogody na ekranie; 0 = nic
+    // Pigułka stanu nad zegarem: siła Wi-Fi i zasilanie (bateria albo USB).
+    struct Status {
+        lv_obj_t* root = nullptr;
+        lv_obj_t* wifi = nullptr;           // pole ikony: trzy łuki, kropka, przekreślenie
+        lv_obj_t* wifi_arcs[3] = {};        // od najmniejszego
+        lv_obj_t* wifi_dot = nullptr;
+        lv_obj_t* wifi_slash = nullptr;
+        lv_obj_t* wifi_text = nullptr;      // „brak sieci”
+        lv_obj_t* battery = nullptr;        // obrys, końcówka, wypełnienie, błyskawica
+        lv_obj_t* battery_fill = nullptr;
+        lv_obj_t* battery_bolt = nullptr;
+        lv_obj_t* plug = nullptr;           // zasilanie z USB, bez baterii
+        lv_obj_t* power_text = nullptr;     // „78%” albo „USB”
+        lv_point_precise_t slash_points[2] = {};
+        lv_point_precise_t bolt_points[4] = {};
+    };
+    Status status;
     struct Tile {
         lv_obj_t* root = nullptr;
         lv_obj_t* dot = nullptr;

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilot — bateria i sygnał</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap">
+<style>
+/* Makieta: stan baterii i sygnału nad godziną na ekranie startowym.
+   Tokeny 1:1 z mockup-pulpit/pulpit.css (i theme.cpp).
+   ESP: piksele panelu (480×800 / 800×480). Telefon: dp (412×918 / 918×412). */
+:root {
+  --bg: #0a0b0e; --surface: #14161b; --surface-2: #1c1f26; --surface-3: #282c35; --line: #30353f;
+  --text: #f3f5f9; --dim: #98a0ae; --faint: #626a78;
+  --accent: #f2a93b; --ok: #56d6a0; --danger: #ff5f5f; --warn: #f2a93b;
+  --font: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
+  --page: #050608; --page-text: #c9ced8; --panel: #101217; --panel-line: #23262d;
+}
+.dev[data-theme="light"] {
+  --bg: #eef0f3; --surface: #ffffff; --surface-2: #e4e7ec; --surface-3: #cfd4dc; --line: #d9dde4;
+  --text: #15171c; --dim: #586070; --faint: #878f9d;
+  --accent: #e08a12; --ok: #1c9a68; --danger: #e03a3a; --warn: #e08a12;
+}
+.dev[data-phone] { --bg: #000; --surface: #15171c; }
+.dev[data-phone][data-theme="light"] { --bg: #eef0f3; --surface: #fff; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--page); color: var(--page-text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+
+.wrap { max-width: 1480px; margin: 0 auto; padding: 24px 16px 48px; }
+.top h1 { margin: 0 0 4px; font-size: 22px; color: #f3f5f9; }
+.top p { margin: 0 0 16px; color: #8a92a0; font-size: 14px; max-width: 900px; line-height: 1.5; }
+
+.ctrl { position: sticky; top: 0; z-index: 10; background: rgba(5,6,8,.92); backdrop-filter: blur(8px);
+  display: flex; flex-wrap: wrap; gap: 10px 22px; padding: 12px 0 14px; border-bottom: 1px solid var(--panel-line); margin-bottom: 22px; }
+.grp { display: flex; flex-direction: column; gap: 6px; }
+.grp > span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6c7482; }
+.seg { display: flex; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 10px; padding: 3px; flex-wrap: wrap; }
+.seg button { padding: 7px 12px; border-radius: 7px; font-size: 13px; color: #98a0ae; }
+.seg button[aria-pressed="true"] { background: #23262d; color: #f3f5f9; box-shadow: inset 0 0 0 1px #f2a93b; }
+
+.row { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; margin-bottom: 32px; }
+.cap { font-size: 13px; color: #8a92a0; margin: 0 0 8px; }
+.cap b { color: #e6e9ef; font-weight: 500; }
+.fit { overflow: hidden; }
+.dev { position: relative; background: var(--bg); color: var(--text); border-radius: 18px; overflow: hidden;
+  box-shadow: 0 0 0 1px #1d2027, 0 20px 50px rgba(0,0,0,.5); transform-origin: top left; }
+.dev[data-phone] { border-radius: 28px; }
+
+.notes { flex: 1 1 340px; min-width: 300px; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px; padding: 18px 20px; font-size: 14px; line-height: 1.55; }
+.notes h3 { margin: 0 0 8px; font-size: 15px; color: #f3f5f9; }
+.notes h3 + ul { margin-top: 0; }
+.notes ul { padding-left: 18px; margin: 0 0 14px; }
+.notes code { background: #1b1e24; padding: 1px 5px; border-radius: 5px; font-size: 12.5px; color: #e6c48a; }
+.notes .warn { color: #f2a93b; }
+table.lv { border-collapse: collapse; font-size: 13px; margin: 4px 0 14px; width: 100%; }
+table.lv td { border-top: 1px solid var(--panel-line); padding: 5px 6px; vertical-align: middle; }
+table.lv td:first-child { width: 120px; }
+
+/* ---------- Ekran startowy ---------- */
+.px { image-rendering: pixelated; }
+.start { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; }
+.lcol { display: flex; flex-direction: column; }
+.clock { font-weight: 700; line-height: .9; letter-spacing: -.02em; }
+.date { color: var(--dim); }
+.wx { display: flex; flex-direction: column; align-items: flex-end; }
+.wx .t { display: flex; align-items: center; }
+.wx .t b { font-weight: 700; }
+.wx .d { color: var(--dim); }
+.pill { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; }
+.pill .k { color: var(--faint); letter-spacing: .12em; text-transform: uppercase; }
+.pill b { font-weight: 700; }
+.pill .h { color: var(--dim); }
+.grid { position: relative; flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.card { position: relative; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
+.card h2 { margin: 0; font-weight: 700; line-height: 1.1; }
+.card .s { color: var(--dim); display: flex; align-items: center; gap: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .s i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+.card .s i.off { background: var(--faint); opacity: .6; }
+.card .ic { flex: 1; display: grid; place-items: center; }
+.card.bottom { flex-direction: column-reverse; }
+.card.bottom .txt { order: -1; }
+.hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); border-radius: 50%; background: var(--bg); display: grid; place-items: center; }
+.hub > div { border-radius: 50%; background: var(--surface-2); border: 2px solid #ff8a00; display: grid; place-items: center; width: 100%; height: 100%; }
+.foot { display: flex; align-items: center; justify-content: space-between; }
+.conn { display: flex; align-items: center; gap: 10px; color: var(--dim); }
+.conn i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.conn.bad i { background: var(--danger); }
+.gear { border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; color: var(--text); }
+.wcards { display: grid; grid-template-columns: 1fr 1fr; }
+.wcard { background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; }
+.wcard .k { color: var(--faint); letter-spacing: .1em; text-transform: uppercase; font-weight: 500; }
+.wcard .v { display: flex; align-items: center; }
+.wcard .v b { font-weight: 700; }
+.wcard .d { color: var(--dim); }
+
+/* ---------- NOWE: pasek stanu ---------- */
+.sb { display: inline-flex; align-items: center; color: var(--dim); font-weight: 500; white-space: nowrap; }
+.sb .it { display: inline-flex; align-items: center; gap: 5px; }
+.sb .sep { width: 1px; align-self: stretch; background: var(--line); margin: 2px 0; }
+.sb.pillv { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; }
+.sb .low { color: var(--danger); }
+.sb .chg { color: var(--ok); }
+.sb .off { color: var(--danger); }
+.sb .weak { color: var(--warn); }
+.sb svg { display: block; }
+.mark { outline: 1.5px dashed rgba(242,169,59,.75); outline-offset: 4px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Bateria i sygnał na ekranie startowym</h1>
+    <p>Nowy pasek stanu nad godziną: ikona Wi‑Fi (siła sygnału) i bateria z procentem. Panel ESP i telefon, pion i poziom. Przełączniki u góry zmieniają stan, wariant wyglądu i motyw. Nowy element jest obrysowany przerywaną linią (wyłącz w „Podświetl”).</p>
+  </div>
+
+  <div class="ctrl">
+    <div class="grp"><span>Wariant</span><div class="seg" data-k="variant">
+      <button data-v="line" aria-pressed="true">A · linia</button><button data-v="pill">B · pigułka</button></div></div>
+    <div class="grp"><span>Sygnał</span><div class="seg" data-k="wifi">
+      <button data-v="3" aria-pressed="true">silny</button><button data-v="2">średni</button><button data-v="1">słaby</button><button data-v="0">brak</button></div></div>
+    <div class="grp"><span>Bateria</span><div class="seg" data-k="bat">
+      <button data-v="full" aria-pressed="true">78%</button><button data-v="low">12%</button><button data-v="chg">ładowanie</button><button data-v="usb">ESP: tylko USB</button></div></div>
+    <div class="grp"><span>Motyw</span><div class="seg" data-k="theme">
+      <button data-v="dark" aria-pressed="true">ciemny</button><button data-v="light">jasny</button></div></div>
+    <div class="grp"><span>Podświetl</span><div class="seg" data-k="mark">
+      <button data-v="1" aria-pressed="true">tak</button><button data-v="0">nie</button></div></div>
+  </div>
+
+  <div class="row">
+    <div><p class="cap"><b>ESP · pion</b> 480×800</p><div class="fit" data-w="480" data-h="800"><div class="dev" id="espP"></div></div></div>
+    <div><p class="cap"><b>Telefon · pion</b> 412×918 dp</p><div class="fit" data-w="412" data-h="918"><div class="dev" data-phone id="phP"></div></div></div>
+    <div class="notes">
+      <h3>Co pokazuje pasek</h3>
+      <table class="lv" id="legend"></table>
+      <h3>Zasady</h3>
+      <ul>
+        <li>Wyrównany do lewej krawędzi godziny (pion) / wyśrodkowany nad godziną (poziom). Godzina i data przesuwają się o ~22 px w dół, kafle tracą tyle samo wysokości.</li>
+        <li>Spokojny, przygaszony kolor (<code>--dim</code>). Kolor dostaje tylko stan wymagający uwagi: słaby sygnał, brak sieci, bateria ≤ 15%. Ładowanie — zielone.</li>
+        <li>Wi‑Fi: 3 łuki, poziomy z RSSI: ≥ −60 dBm = 3, ≥ −70 = 2, ≥ −80 = 1, rozłączone = przekreślona ikona.</li>
+        <li>Pasek dotyczy łączności urządzenia z siecią. Stan połączenia z domem (MQTT) dalej pokazuje stopka „Połączono z domem”.</li>
+        <li>Tylko ekran startowy — reszta ekranów ma nagłówki i zakładki, tam nie dokładamy.</li>
+      </ul>
+      <h3>Skąd dane</h3>
+      <ul>
+        <li><b>ESP, sygnał:</b> gotowe — <code>WifiService::current_rssi()</code> / <code>NetworkController</code>. Odświeżanie co ~10 s przy włączonym ekranie, w uśpieniu nic.</li>
+        <li><b>ESP, bateria:</b> <span class="warn">ogniwa jeszcze nie ma</span> — makieta pokazuje docelowy wygląd. Przy podłączaniu trzeba potwierdzić na płytce pomiar napięcia (dzielnik na ADC P4 albo fuel gauge — w <code>verified-board-map.md</code> go nie ma). Do tego czasu stan „tylko USB”: ikona wtyczki, bez procentów.</li>
+        <li><b>Telefon, bateria:</b> sticky <code>ACTION_BATTERY_CHANGED</code> (poziom + stan ładowania), bez uprawnień.</li>
+        <li><b>Telefon, sygnał:</b> <code>NetworkCallback</code> → <code>WifiInfo.rssi</code> z <code>transportInfo</code>; SSID nie jest potrzebny, więc bez uprawnienia lokalizacji. Na danych komórkowych: ikona zasięgu z <code>SignalStrength.level</code>.</li>
+        <li>Bez nowych tematów MQTT — oba źródła są lokalne.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="row">
+    <div><p class="cap"><b>ESP · poziom</b> 800×480</p><div class="fit" data-w="800" data-h="480"><div class="dev" id="espL"></div></div></div>
+    <div><p class="cap"><b>Telefon · poziom</b> 918×412 dp</p><div class="fit" data-w="918" data-h="412"><div class="dev" data-phone id="phL"></div></div></div>
+  </div>
+</div>
+
+<script>
+const A = '../mockup-pulpit/assets/pixel/';
+const S = { variant: 'line', wifi: '3', bat: 'full', theme: 'dark', mark: '1' };
+
+/* ---- ikony ---- */
+function wifiSvg(level, size) {
+  const on = 'currentColor', offc = 'currentColor';
+  const op = n => level >= n ? 1 : .25;
+  if (level === 0) return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <path d="M2 8.8a15 15 0 0 1 20 0" opacity=".35"/><path d="M5 12.6a10 10 0 0 1 14 0" opacity=".35"/><path d="M8.5 16.4a5 5 0 0 1 7 0" opacity=".35"/>
+    <circle cx="12" cy="20" r="1.3" fill="currentColor" stroke="none" opacity=".35"/><path d="M3 3l18 18"/></svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <path d="M2 8.8a15 15 0 0 1 20 0" opacity="${op(3)}"/><path d="M5 12.6a10 10 0 0 1 14 0" opacity="${op(2)}"/>
+    <path d="M8.5 16.4a5 5 0 0 1 7 0" opacity="${op(1)}"/><circle cx="12" cy="20" r="1.4" fill="currentColor" stroke="none"/></svg>`;
+}
+function batSvg(pct, charging, size) {
+  const w = size * 1.55, h = size;
+  const fillW = Math.max(1.5, 15 * pct / 100);
+  const bolt = charging ? `<path d="M13.2 3.2 9.6 8.6h3l-1.6 4.2 4-5.6h-3z" fill="var(--bg)" stroke="var(--bg)" stroke-width=".6" stroke-linejoin="round"/>` : '';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 24 15.5" fill="none">
+    <rect x="1" y="1.5" width="19" height="12.5" rx="3" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+    <rect x="21.2" y="5.5" width="1.9" height="4.5" rx="1" fill="currentColor" opacity=".55"/>
+    <rect x="3" y="3.5" width="${fillW}" height="8.5" rx="1.6" fill="currentColor"/>${bolt}</svg>`;
+}
+function plugSvg(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0z"/><path d="M12 17v5"/></svg>`;
+}
+function gearSvg(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+    <circle cx="12" cy="12" r="7.2" stroke-width="3.6" stroke-dasharray="3.2 2.45"/><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/>
+    <circle cx="12" cy="12" r="1.8" fill="var(--surface-2)" stroke="none"/></svg>`;
+}
+
+/* ---- pasek stanu ---- */
+function statusBar(dev, z) {
+  const lvl = +S.wifi;
+  const isPhone = dev.phone;
+  const icon = Math.round(17 * z), fs = Math.round(14 * z);
+  const wcls = lvl === 0 ? 'off' : lvl === 1 ? 'weak' : '';
+  let wifiLabel = '';
+  if (lvl === 0) wifiLabel = `<span>brak sieci</span>`;
+  const wifi = `<span class="it ${wcls}">${wifiSvg(lvl, icon)}${wifiLabel}</span>`;
+  let bat;
+  const b = S.bat;
+  if (b === 'usb' && !isPhone) bat = `<span class="it">${plugSvg(icon)}<span>USB</span></span>`;
+  else {
+    const usb = b === 'usb';            // telefon nie ma trybu „tylko USB” → pokaż ładowanie
+    const pct = b === 'low' ? 12 : b === 'chg' || usb ? 54 : 78;
+    const chg = b === 'chg' || usb;
+    const cls = chg ? 'chg' : pct <= 15 ? 'low' : '';
+    bat = `<span class="it ${cls}">${batSvg(pct, chg, Math.round(12 * z))}<span>${pct}%</span></span>`;
+  }
+  const pill = S.variant === 'pill';
+  const gap = Math.round((pill ? 10 : 14) * z);
+  const pad = pill ? `padding:${Math.round(4 * z)}px ${Math.round(12 * z)}px;` : '';
+  const sep = pill ? `<span class="sep"></span>` : '';
+  return `<div class="sb ${pill ? 'pillv' : ''} ${S.mark === '1' ? 'mark' : ''}" style="font-size:${fs}px;gap:${gap}px;${pad}">${wifi}${sep}${bat}</div>`;
+}
+
+/* ---- dane ekranu ---- */
+const CARDS = [
+  { t: 'Telewizor', s: 'Apple TV · Filmmaker', img: 'tv.png' },
+  { t: 'Apple TV', s: 'YouTube', img: 'appletv.png' },
+  { t: 'Głośniki', s: 'głośność 33 · Optical 1', img: 'audio.png', bottom: true },
+  { t: 'Dom', s: 'klima wyłączona · światła zgaszone', img: 'home.png', bottom: true, off: true },
+];
+function connFoot(z) {
+  const bad = S.wifi === '0';
+  return `<div class="conn ${bad ? 'bad' : ''}" style="font-size:${Math.round(13 * z)}px"><i></i>${bad ? 'Brak połączenia z domem' : 'Połączono z domem'}</div>`;
+}
+function cardHtml(c, z, iconPx, titlePx, pad, radius) {
+  const txt = `<div class="txt"><h2 style="font-size:${titlePx}px">${c.t}</h2><div class="s" style="font-size:${Math.round(13 * z)}px;margin-top:${Math.round(8 * z)}px"><i class="${c.off ? 'off' : ''}"></i>${c.s}</div></div>`;
+  const ic = `<div class="ic"><img class="px" src="${A + c.img}" width="${iconPx}" height="${iconPx}" alt=""></div>`;
+  return `<div class="card" style="padding:${pad}px;border-radius:${radius}px">${c.bottom ? ic + txt : txt + ic}</div>`;
+}
+
+/* ---- pion ---- */
+function portrait(el, dev) {
+  const W = dev.w, H = dev.h, z = dev.z;
+  const P = Math.round(24 * z);
+  const sb = statusBar(dev, z);
+  const head = `
+    <div class="head" style="padding:0 ${P}px">
+      <div class="lcol">
+        <div style="margin-bottom:${Math.round(10 * z)}px">${sb}</div>
+        <div class="clock" style="font-size:${Math.round((dev.phone ? 78 : 66) * z)}px">9:17</div>
+        <div class="date" style="font-size:${Math.round(13 * z)}px;margin-top:${Math.round(14 * z)}px">sobota, 7 listopada · SALON</div>
+      </div>
+      <div class="wx">
+        <div class="t" style="gap:${Math.round(18 * z)}px"><img class="px" src="${A}weather_sunny.png" width="${Math.round(52 * z)}" height="${Math.round(52 * z)}" alt="">
+          <div style="text-align:right"><b style="font-size:${Math.round(24 * z)}px">1°C</b><div class="d" style="font-size:${Math.round(13 * z)}px;margin-top:${Math.round(4 * z)}px">słonecznie</div></div></div>
+        <div class="pill" style="gap:${Math.round(9 * z)}px;padding:${Math.round(6 * z)}px ${Math.round(14 * z)}px;margin-top:${Math.round(10 * z)}px;font-size:${Math.round(13 * z)}px">
+          <span class="k" style="font-size:${Math.round(11 * z)}px">W domu</span><b style="font-size:${Math.round(15 * z)}px">23,8°</b><span class="h">38%</span></div>
+      </div>
+    </div>`;
+  const gap = Math.round(12 * z), rad = Math.round(22 * z);
+  const cards = CARDS.map(c => cardHtml(c, z, Math.round((dev.phone ? 84 : 96) * z), Math.round(26 * z), Math.round(20 * z), rad)).join('');
+  const hub = dev.hub ? `<div class="hub" style="width:${Math.round(178 * z)}px;height:${Math.round(178 * z)}px;padding:${Math.round(10 * z)}px"><div><img class="px" src="${A}remote.png" width="${Math.round(76 * z)}" height="${Math.round(76 * z)}" alt=""></div></div>` : '';
+  const gear = dev.phone ? `<div class="gear" style="width:${Math.round(42 * z)}px;height:${Math.round(42 * z)}px">${gearSvg(Math.round(20 * z))}</div>` : '';
+  el.innerHTML = `<div class="start" style="padding:${Math.round((dev.phone ? 40 : 16) * z)}px 0 ${Math.round((dev.phone ? 18 : 14) * z)}px">
+    ${head}
+    <div class="grid" style="gap:${gap}px;margin:${Math.round(22 * z)}px ${P}px ${Math.round(14 * z)}px">${cards}${hub}</div>
+    <div class="foot" style="padding:0 ${P}px;min-height:${Math.round(42 * z)}px">${connFoot(z)}${gear}</div></div>`;
+}
+
+/* ---- poziom ---- */
+function landscape(el, dev) {
+  const z = dev.z, P = Math.round(24 * z);
+  const sb = statusBar(dev, z);
+  const wc = (k, img, v, d) => `<div class="wcard" style="padding:${Math.round(12 * z)}px;border-radius:${Math.round(16 * z)}px;gap:${Math.round(6 * z)}px">
+    <div class="k" style="font-size:${Math.round(11 * z)}px">${k}</div>
+    <div class="v" style="gap:${Math.round(10 * z)}px"><img class="px" src="${A + img}" width="${Math.round(40 * z)}" height="${Math.round(40 * z)}" alt=""><b style="font-size:${Math.round(25 * z)}px">${v}</b></div>
+    <div class="d" style="font-size:${Math.round(11.5 * z)}px">${d}</div></div>`;
+  const gear = dev.phone ? `<div class="gear" style="width:${Math.round(42 * z)}px;height:${Math.round(42 * z)}px">${gearSvg(Math.round(20 * z))}</div>` : '';
+  const left = `<div style="width:${Math.round(dev.leftW)}px;display:flex;flex-direction:column">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+        <div style="margin-bottom:${Math.round(14 * z)}px">${sb}</div>
+        <div class="clock" style="font-size:${Math.round(100 * z)}px">3:08</div>
+        <div class="date" style="font-size:${Math.round(14 * z)}px;margin-top:${Math.round(12 * z)}px">wtorek, 10 listopada · SALON</div>
+      </div>
+      <div class="wcards" style="gap:${Math.round(10 * z)}px">${wc('Na zewnątrz', 'weather_partly_night.png', '−2°C', 'częściowe zachmurzenie')}${wc('W domu', 'home.png', '23,0°', 'wilgotność 43%')}</div>
+      <div class="foot" style="margin-top:${Math.round(12 * z)}px;min-height:${Math.round(40 * z)}px">${connFoot(z)}${gear}</div>
+    </div>`;
+  const cards = CARDS.map(c => cardHtml(c, z, Math.round(82 * z), Math.round(25 * z), Math.round(18 * z), Math.round(20 * z))).join('');
+  const hub = `<div class="hub" style="width:${Math.round(150 * z)}px;height:${Math.round(150 * z)}px;padding:${Math.round(9 * z)}px"><div><img class="px" src="${A}remote.png" width="${Math.round(64 * z)}" height="${Math.round(64 * z)}" alt=""></div></div>`;
+  el.innerHTML = `<div class="start" style="flex-direction:row;padding:${Math.round(dev.phone ? 18 : 24) * z}px ${P}px;gap:${Math.round(24 * z)}px">
+    ${left}<div class="grid" style="gap:${Math.round(12 * z)}px">${cards}${hub}</div></div>`;
+}
+
+const DEVS = {
+  espP: { w: 480, h: 800, z: 1, phone: false, hub: false, fn: portrait },
+  phP:  { w: 412, h: 918, z: 1, phone: true, hub: true, fn: portrait },
+  espL: { w: 800, h: 480, z: 1, phone: false, leftW: 300, fn: landscape },
+  phL:  { w: 918, h: 412, z: .9, phone: true, leftW: 360, fn: landscape },
+};
+
+function legend() {
+  const z = 1.1, row = (html, t) => `<tr><td><div class="dev" style="display:inline-block;padding:6px 10px;border-radius:10px;box-shadow:none" data-theme="${S.theme}">${html}</div></td><td>${t}</td></tr>`;
+  const save = { ...S };
+  const mk = (w, b, ph) => { S.wifi = w; S.bat = b; S.mark = '0'; const h = statusBar({ phone: ph }, z); return h; };
+  const rows = [
+    row(mk('3', 'full'), 'normalnie — wszystko przygaszone'),
+    row(mk('1', 'full'), 'słaby sygnał (≤ −80 dBm) — łuki w kolorze akcentu'),
+    row(mk('0', 'full'), 'brak Wi‑Fi — przekreślona ikona i napis'),
+    row(mk('3', 'low'), 'bateria ≤ 15% — czerwona'),
+    row(mk('3', 'chg'), 'ładowanie — zielona z błyskawicą'),
+    row(mk('3', 'usb'), 'ESP bez pomiaru baterii — tylko wtyczka'),
+  ];
+  Object.assign(S, save);
+  document.getElementById('legend').innerHTML = rows.join('');
+}
+
+function render() {
+  for (const [id, d] of Object.entries(DEVS)) {
+    const el = document.getElementById(id);
+    el.dataset.theme = S.theme;
+    el.style.width = d.w + 'px'; el.style.height = d.h + 'px';
+    d.fn(el, d);
+  }
+  legend();
+  fit();
+}
+function fit() {
+  document.querySelectorAll('.fit').forEach(f => {
+    const w = +f.dataset.w, h = +f.dataset.h;
+    const avail = Math.min(w, f.parentElement.parentElement.clientWidth - 4);
+    const s = Math.min(1, avail / w);
+    f.style.width = w * s + 'px'; f.style.height = h * s + 'px';
+    f.firstElementChild.style.transform = `scale(${s})`;
+  });
+}
+document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  S[seg.dataset.k] = b.dataset.v; render();
+}));
+addEventListener('resize', fit);
+render();
+</script>
+</body>
+</html>
