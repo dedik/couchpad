@@ -228,7 +228,7 @@ private fun ScreenContent(
     onImmersive: (Boolean) -> Unit,
 ) {
     when (screen) {
-        Screen.Start -> StartScreen(state, prefs, now, onRetry = repo::wake, open = onOpen)
+        Screen.Start -> StartScreen(state, prefs, now, repo, onRetry = repo::wake, open = onOpen)
         Screen.Remote -> RemoteScreen(state, prefs, repo)
         Screen.Tv -> TvScreen(state, prefs, repo)
         Screen.AppleTv -> AppleTvScreen(state, prefs, repo)

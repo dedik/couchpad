@@ -6,6 +6,8 @@
 - **Status:** przyjęta
 - **Uzupełnia:** [ADR 0005](0005-fresh-state-after-wake.md)
 
+> Zmienione przez [ADR 0022](0022-start-tiles-power.md): kafelki bez zdania stanu, z przyciskiem zasilania.
+
 ## Problem
 
 ADR 0005 każe po wybudzeniu pokazać wyłącznie nowy, potwierdzony stan. Dotąd znaczyło to

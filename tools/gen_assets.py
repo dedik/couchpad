@@ -47,6 +47,8 @@ PIXEL_SCALE = 1
 # Kafelki ekranu startowego: te same obrazy, każdy piksel na 2 x 2 piksele ekranu.
 LARGE_ICONS = ["tv", "appletv", "audio", "home"]
 LARGE_SCALE = 2
+# Pion: kafelki bez podpisów (makieta docs/ux/mockup-tile-power) mają ikonę 144 px — 3 x.
+XL_SCALE = 3
 # Zakładka Pilot (tools/draw_remote_icons.py): koło na skrzyżowaniu kafelków startu ma ikonę
 # 72 px — siatka 48 w skali 1,5 (NEAREST: co drugi piksel źródła podwojony). Klawisze pilota
 # na siatce 24 w 1 x. Ikony wejść TV w segmentach (24 px) to telewizor i Apple TV z zakładek
@@ -224,6 +226,7 @@ def main() -> int:
     # --- ikony zakładek i kafelków startowych ---------------------------------
     jobs = [(icon, PIXEL_SCALE, f"icon_{icon}") for icon in TAB_ICONS]
     jobs += [(icon, LARGE_SCALE, f"icon_{icon}_large") for icon in LARGE_ICONS]
+    jobs += [(icon, XL_SCALE, f"icon_{icon}_xl") for icon in LARGE_ICONS]
     jobs += [(f"weather_{icon}", WEATHER_SCALE, f"icon_weather_{icon}") for icon in WEATHER_ICONS]
     jobs += [(f"room_{room}", 1, f"icon_room_{room}") for room in ROOM_ICONS]
     jobs += [(f"room_{room}", 2, f"icon_room_{room}_large") for room in ROOM_ICONS]

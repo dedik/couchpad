@@ -25,21 +25,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import app.couchpad.pilot.R
 import app.couchpad.pilot.data.LinkPhase
+import app.couchpad.pilot.data.Pending
+import app.couchpad.pilot.data.PilotRepository
 import app.couchpad.pilot.data.LinkState
 import app.couchpad.pilot.data.PilotState
 import app.couchpad.pilot.data.Preferences
 import app.couchpad.pilot.data.zoneId
 import app.couchpad.pilot.ui.components.Button
 import app.couchpad.pilot.ui.components.Card
+import app.couchpad.pilot.ui.components.PowerButton
+import app.couchpad.pilot.ui.components.PowerStyle
 import app.couchpad.pilot.ui.components.RoundButton
 import app.couchpad.pilot.ui.components.StatusDot
 import app.couchpad.pilot.ui.components.tap
 import app.couchpad.pilot.ui.formatIn
-import app.couchpad.pilot.ui.oneDecimal
 import app.couchpad.pilot.ui.shell.Screen
 import app.couchpad.pilot.ui.theme.C
 import app.couchpad.pilot.ui.theme.LocalLandscape
@@ -48,24 +54,49 @@ import app.couchpad.pilot.ui.theme.T
 import app.couchpad.pilot.ui.theme.u
 import java.util.Date
 
-/** Kafelek urządzenia na ekranie startowym. */
-private data class DeviceTile(val icon: Int, val title: String, val status: String, val ok: Boolean, val screen: Screen)
+/**
+ * Kafelek urządzenia na ekranie startowym: sama ikona, bez podpisu (makieta
+ * docs/ux/mockup-tile-power). [power] == null — bez przycisku zasilania (Dom).
+ * Nazwa zostaje dla TalkBacka.
+ */
+private data class DeviceTile(
+    val icon: Int,
+    val title: String,
+    val screen: Screen,
+    val power: Boolean? = null,
+    val ready: Boolean = false,
+    val pending: Boolean = false,
+    val onPower: (Boolean) -> Unit = {},
+)
 
-private fun deviceTiles(s: PilotState): List<DeviceTile> {
+private fun deviceTiles(s: PilotState, repo: PilotRepository): List<DeviceTile> {
     val fresh = s.link.fresh
+    val tv = s.tv
+    val atv = s.home.appleTv
+    val z = s.z906
     return listOf(
-        DeviceTile(R.drawable.px_tv, "Telewizor", tvStatus(s), s.tv.available && fresh, Screen.Tv),
-        DeviceTile(R.drawable.px_appletv, "Apple TV", appleStatus(s), s.home.appleTv.available && fresh, Screen.AppleTv),
-        DeviceTile(R.drawable.px_audio, "Głośniki", audioStatus(s), s.z906.available && fresh, Screen.Audio),
-        DeviceTile(R.drawable.px_home, "Dom", homeStatus(s), s.home.known, Screen.Home),
+        // Zasilanie TV jak w nagłówku ekranu TV: tylko stan, bez polecenia — włączenie
+        // z czuwania wymaga Wake-on-LAN, który na telewizorze jest wyłączony (ADR 0008).
+        DeviceTile(R.drawable.px_tv, "TV", Screen.Tv, power = tv.power, ready = fresh && tv.known && tv.available),
+        DeviceTile(
+            R.drawable.px_appletv, "Apple TV", Screen.AppleTv, power = atv.power,
+            ready = fresh && s.home.known && atv.available, pending = s.isPending(Pending.AppleTv.power),
+            onPower = repo::appleTvPower,
+        ),
+        DeviceTile(
+            R.drawable.px_audio, "Głośniki", Screen.Audio, power = z.power == true,
+            ready = fresh && z.known && z.available, pending = s.isPending(Pending.Z906.power),
+            onPower = repo::z906Power,
+        ),
+        DeviceTile(R.drawable.px_home, "Dom", Screen.Home),
     )
 }
 
 /** Ekran startowy: zegar, pogoda, cztery urządzenia i stan łącza z domem. */
 @Composable
-fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () -> Unit, open: (Screen) -> Unit) {
+fun StartScreen(state: PilotState, prefs: Preferences, now: Long, repo: PilotRepository, onRetry: () -> Unit, open: (Screen) -> Unit) {
     val date = Date(now)
-    val tiles = deviceTiles(state)
+    val tiles = deviceTiles(state, repo)
     val dateLine = formatIn("EEEE, d MMMM", prefs.zoneId, date) + " · " + prefs.roomName.uppercase()
     val clock = formatIn("H:mm", prefs.zoneId, date)
     val weather = state.weather.takeIf { it.current(now) }
@@ -89,7 +120,7 @@ fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () ->
                 Spacer(Modifier.height(14.u))
                 LinkRow(state.link, compact = true, onRetry) { open(Screen.Settings) }
             }
-            TileGrid(tiles, Modifier.weight(0.58f).fillMaxHeight(), iconSize = 72, open)
+            TileGrid(tiles, Modifier.weight(0.58f).fillMaxHeight(), iconSize = 96, compact = true, open)
         }
     } else {
         Column(Modifier.fillMaxSize().padding(horizontal = 24.u)) {
@@ -104,7 +135,7 @@ fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () ->
                 if (weather != null) WeatherBlock(weather)
             }
             Spacer(Modifier.height(24.u))
-            TileGrid(tiles, Modifier.weight(1f), iconSize = 96, open)
+            TileGrid(tiles, Modifier.weight(1f), iconSize = 120, compact = false, open)
             Box(Modifier.fillMaxWidth().height(84.u), contentAlignment = Alignment.CenterStart) {
                 LinkRow(state.link, compact = false, onRetry) { open(Screen.Settings) }
             }
@@ -119,16 +150,16 @@ fun StartScreen(state: PilotState, prefs: Preferences, now: Long, onRetry: () ->
  * zasłaniał napisów.
  */
 @Composable
-private fun TileGrid(tiles: List<DeviceTile>, modifier: Modifier, iconSize: Int, open: (Screen) -> Unit) {
+private fun TileGrid(tiles: List<DeviceTile>, modifier: Modifier, iconSize: Int, compact: Boolean, open: (Screen) -> Unit) {
     Box(modifier, contentAlignment = Alignment.Center) {
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.u)) {
-            tiles.chunked(2).forEachIndexed { index, row ->
+            tiles.chunked(2).forEach { row ->
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.u)) {
-                    for (tile in row) DeviceTileCard(tile, Modifier.weight(1f), iconSize, titleOnTop = index == 0) { open(tile.screen) }
+                    for (tile in row) DeviceTileCard(tile, Modifier.weight(1f), iconSize, compact) { open(tile.screen) }
                 }
             }
         }
-        RemoteHub(if (iconSize < 96) 147 else 176) { open(Screen.Remote) }
+        RemoteHub(if (compact) 147 else 176) { open(Screen.Remote) }
     }
 }
 
@@ -152,20 +183,17 @@ private fun RemoteHub(size: Int, onClick: () -> Unit) {
 }
 
 @Composable
-private fun DeviceTileCard(tile: DeviceTile, modifier: Modifier, iconSize: Int, titleOnTop: Boolean, onClick: () -> Unit) {
-    val compact = iconSize < 96
-    Card(modifier.fillMaxHeight(), radius = 24, onClick = onClick) {
-        Column(Modifier.fillMaxSize().padding(if (compact) 14.u else 20.u)) {
-            val text: @Composable () -> Unit = {
-                T(tile.title, if (compact) 22 else 26, FontWeight.Bold)
-                Spacer(Modifier.height(8.u))
-                StatusDot(tile.status, if (tile.ok) C.accent else C.danger, size = 13)
+private fun DeviceTileCard(tile: DeviceTile, modifier: Modifier, iconSize: Int, compact: Boolean, onClick: () -> Unit) {
+    Card(modifier.fillMaxHeight().semantics { contentDescription = tile.title }, radius = 24, onClick = onClick) {
+        Box(Modifier.fillMaxSize().padding(if (compact) 12.u else 14.u)) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Pixel(tile.icon, iconSize.u) }
+            tile.power?.let { on ->
+                // Przed świeżym stanem przycisk jest przygaszony i nic nie wysyła (ADR 0005).
+                PowerButton(
+                    on, Modifier.align(Alignment.TopStart).alpha(if (tile.ready) 1f else 0.3f),
+                    size = 40, pending = tile.pending, style = PowerStyle.Solid,
+                ) { if (tile.ready) tile.onPower(it) }
             }
-            if (titleOnTop) text()
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Pixel(tile.icon, iconSize.u)
-            }
-            if (!titleOnTop) text()
         }
     }
 }
@@ -198,37 +226,4 @@ private fun LinkRow(link: LinkState, compact: Boolean, onRetry: () -> Unit, onSe
         }
         RoundButton(Icons.Rounded.Settings, size = buttonSize, onClick = onSettings)
     }
-}
-
-private fun tvStatus(s: PilotState): String {
-    val tv = s.tv
-    if (!tv.known || !tv.available) return "brak połączenia"
-    if (!tv.power) return "wyłączony"
-    return listOf(tv.sourceLabel, tv.pictureLabel).filter { it.isNotEmpty() }.joinToString(" · ").ifEmpty { "włączony" }
-}
-
-private fun appleStatus(s: PilotState): String {
-    val a = s.home.appleTv
-    if (!s.home.known || !a.available) return "brak połączenia"
-    if (!a.power) return "uśpione"
-    return a.appLabel ?: "ekran główny"
-}
-
-private fun audioStatus(s: PilotState): String {
-    val z = s.z906
-    if (!z.known || !z.available) return "brak połączenia"
-    if (z.power == false) return "wyłączone"
-    return listOfNotNull(z.volume?.let { "głośność $it" }, z.source.ifEmpty { null }).joinToString(" · ")
-}
-
-private fun homeStatus(s: PilotState): String {
-    if (!s.home.known) return "brak połączenia"
-    val lit = s.home.lights.count { it.on }
-    val climate = s.home.climate
-    val parts = mutableListOf<String>()
-    if (climate.available) {
-        parts += if (!climate.on) "klima wyłączona" else "klima ${climate.target?.let { oneDecimal(it) + "°" } ?: ""}"
-    }
-    parts += if (lit == 0) "światła zgaszone" else "światła: $lit"
-    return parts.joinToString(" · ")
 }

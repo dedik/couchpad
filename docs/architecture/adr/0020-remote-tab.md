@@ -6,6 +6,8 @@
 - **Status:** przyjęta
 - **Uzupełnia:** [ADR 0010](0010-start-screen-after-wake.md), [ADR 0013](0013-landscape-orientation.md), [ADR 0016](0016-android-app.md)
 
+> Górny rząd kafelków startu bez tekstu od [ADR 0022](0022-start-tiles-power.md).
+
 ## Problem
 
 Głównym zadaniem urządzenia jest pilot do telewizora, Apple TV i głośników, a codzienne

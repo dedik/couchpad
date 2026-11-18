@@ -247,8 +247,7 @@ struct StartScreen {
     Status status;
     struct Tile {
         lv_obj_t* root = nullptr;
-        lv_obj_t* dot = nullptr;
-        lv_obj_t* state = nullptr;
+        lv_obj_t* power = nullptr;  // nullptr — kafelek bez zasilania (Dom)
     };
     Tile tiles[4];
     lv_obj_t* link_dot = nullptr;

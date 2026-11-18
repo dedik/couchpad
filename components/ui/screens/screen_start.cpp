@@ -19,17 +19,20 @@ constexpr int32_t kTileW = (theme::kContentW - kTileGap) / 2;                  /
 constexpr int32_t kTileH = (800 - kHeadHeight - kFootHeight - theme::kS3 - theme::kS5 -
                             kTileGap) / 2;                                    // 259
 
+// Kafelki bez podpisów (makieta docs/ux/mockup-tile-power): sama ikona, a urządzenia
+// z zasilaniem mają w lewym górnym rogu przycisk jak w nagłówku ekranu urządzenia.
 struct TileDef {
-    const lv_image_dsc_t* icon;
-    const char* name;
+    const lv_image_dsc_t* icon;     // poziom, 96 px
+    const lv_image_dsc_t* icon_xl;  // pion, 144 px
     ScreenId screen;
+    domain::ControlId power;        // None — bez przycisku (Dom)
 };
 
 const TileDef kTiles[4] = {
-    {&icon_tv_large, "Telewizor", ScreenId::Tv},
-    {&icon_appletv_large, "Apple TV", ScreenId::AppleTv},
-    {&icon_audio_large, "Głośniki", ScreenId::Audio},
-    {&icon_home_large, "Dom", ScreenId::Home},
+    {&icon_tv_large, &icon_tv_xl, ScreenId::Tv, domain::ControlId::TvPower},
+    {&icon_appletv_large, &icon_appletv_xl, ScreenId::AppleTv, domain::ControlId::AtvPower},
+    {&icon_audio_large, &icon_audio_xl, ScreenId::Audio, domain::ControlId::ZPower},
+    {&icon_home_large, &icon_home_xl, ScreenId::Home, domain::ControlId::None},
 };
 
 const char* const kDays[] = {"niedziela", "poniedziałek", "wtorek", "środa",
@@ -107,104 +110,45 @@ void on_tile(void* raw, std::size_t index) {
     show_screen(context, kTiles[index].screen);
 }
 
+// Zasilanie z kafelka: to samo polecenie co przycisk w nagłówku ekranu urządzenia.
+// Stan oczekujący pokazuje obwódka, potwierdza go dopiero snapshot (ADR 0005).
+struct PowerBinding {
+    Context* context;
+    std::size_t index;
+};
+PowerBinding g_power_bindings[4];
+
+bool power_on(const domain::DeviceSnapshot& snapshot, domain::ControlId control) {
+    switch (control) {
+        case domain::ControlId::TvPower: return snapshot.tv.power == domain::Power::On;
+        case domain::ControlId::AtvPower: return snapshot.appletv.power == domain::Power::On;
+        default: return snapshot.z906.power == domain::Power::On;
+    }
+}
+
+bool power_fresh(const domain::AppState& state, domain::ControlId control) {
+    switch (control) {
+        case domain::ControlId::TvPower: return state.tv_fresh();
+        case domain::ControlId::AtvPower: return state.appletv_fresh();
+        default: return state.z906_fresh();
+    }
+}
+
+void on_tile_power(void* raw) {
+    auto& binding = *static_cast<PowerBinding*>(raw);
+    Context& context = *binding.context;
+    const domain::ControlId control = kTiles[binding.index].power;
+    domain::UiIntent intent = make_intent(domain::IntentKind::SetPower);
+    intent.control = control;
+    intent.flag = !power_on(context.controller->state().snapshot(), control);
+    dispatch(context, intent);
+}
+
 void on_retry(void* raw) {
     auto& context = *static_cast<Context*>(raw);
     domain::UiIntent refresh;
     refresh.kind = domain::IntentKind::RequestSync;
     dispatch(context, refresh);
-}
-
-// ---------- jedno zdanie stanu na kafelek ----------
-
-struct Summary {
-    char text[48];
-    enum class Tone : uint8_t { Off, On, Wait, Stale } tone;
-};
-
-void summarize(const domain::AppState& state, ScreenId screen, Summary& out) {
-    const domain::DeviceSnapshot& snapshot = state.snapshot();
-    // ADR 0005: przed świeżym snapshotem nie mówimy nic o urządzeniach.
-    if (state.phase() != domain::LinkPhase::Ready) {
-        const bool error = state.phase() == domain::LinkPhase::Error;
-        lv_snprintf(out.text, sizeof(out.text), "%s", error ? "brak połączenia" : "łączenie…");
-        out.tone = error ? Summary::Tone::Stale : Summary::Tone::Wait;
-        return;
-    }
-
-    bool fresh = false;
-    switch (screen) {
-        case ScreenId::Tv: fresh = snapshot.tv.available; break;
-        case ScreenId::AppleTv: fresh = snapshot.appletv.available; break;
-        case ScreenId::Audio: fresh = snapshot.z906.available; break;
-        default: fresh = snapshot.climate.available; break;
-    }
-    if (!fresh) {
-        lv_snprintf(out.text, sizeof(out.text), "brak świeżego stanu");
-        out.tone = Summary::Tone::Stale;
-        return;
-    }
-
-    out.tone = Summary::Tone::On;
-    switch (screen) {
-        case ScreenId::Tv: {
-            const domain::TvState& tv = snapshot.tv;
-            if (tv.power != domain::Power::On) {
-                lv_snprintf(out.text, sizeof(out.text), "wyłączony");
-                out.tone = Summary::Tone::Off;
-            } else if (!tv.picture_mode.empty()) {
-                lv_snprintf(out.text, sizeof(out.text), "%s · %s", tv.source.c_str(),
-                            tv.picture_mode.c_str());
-            } else {
-                lv_snprintf(out.text, sizeof(out.text), "%s", tv.source.c_str());
-            }
-            return;
-        }
-        case ScreenId::AppleTv: {
-            const domain::AppleTvState& atv = snapshot.appletv;
-            if (atv.power != domain::Power::On) {
-                lv_snprintf(out.text, sizeof(out.text), "uśpiony");
-                out.tone = Summary::Tone::Off;
-                return;
-            }
-            const char* app = "ekran główny";
-            for (std::size_t i = 0; i < atv.app_count; ++i) {
-                if (!atv.app_id.empty() && atv.apps[i].id == atv.app_id) {
-                    app = atv.apps[i].label.c_str();
-                }
-            }
-            lv_snprintf(out.text, sizeof(out.text), "%s", app);
-            return;
-        }
-        case ScreenId::Audio: {
-            const domain::Z906State& z906 = snapshot.z906;
-            if (z906.power != domain::Power::On) {
-                lv_snprintf(out.text, sizeof(out.text), "wyłączone");
-                out.tone = Summary::Tone::Off;
-            } else if (z906.muted) {
-                lv_snprintf(out.text, sizeof(out.text), "wyciszone · %s", z906.source.c_str());
-            } else {
-                lv_snprintf(out.text, sizeof(out.text), "głośność %d · %s",
-                            static_cast<int>(z906.volume_percent), z906.source.c_str());
-            }
-            return;
-        }
-        default: {
-            const domain::ClimateState& climate = snapshot.climate;
-            if (!climate.is_on()) {
-                lv_snprintf(out.text, sizeof(out.text), "klima wyłączona");
-                out.tone = Summary::Tone::Off;
-            } else if (climate.uses_target()) {
-                char temp[16];
-                widgets::format_tenths(temp, sizeof(temp), climate.target_tenths);
-                lv_snprintf(out.text, sizeof(out.text), "klima %s° · %s", temp,
-                            climate_mode_name(climate.hvac_mode.c_str()));
-            } else {
-                lv_snprintf(out.text, sizeof(out.text), "klima · %s",
-                            climate_mode_name(climate.hvac_mode.c_str()));
-            }
-            return;
-        }
-    }
 }
 
 // Pogoda z pamięci źródła: pokazana od razu po wybudzeniu, bez synchronizacji (ADR 0011).
@@ -560,7 +504,7 @@ void build_weather_side(StartScreen& screen, lv_obj_t* head) {
     screen.indoor_note = widgets::make_text(screen.indoor, theme::font_r13(), theme::dim());
 }
 
-// Kafelek urządzenia: ikona na środku wolnego miejsca, nazwa i stan z kropką.
+// Kafelek urządzenia: ikona na środku, przycisk zasilania w lewym górnym rogu.
 void build_tile(Context& context, lv_obj_t* grid, std::size_t i, int32_t tile_w, int32_t tile_h) {
     StartScreen& screen = context.start;
     StartScreen::Tile& tile = screen.tiles[i];
@@ -568,38 +512,19 @@ void build_tile(Context& context, lv_obj_t* grid, std::size_t i, int32_t tile_w,
     lv_obj_add_style(tile.root, &theme::styles().tile, LV_PART_MAIN);
     lv_obj_set_size(tile.root, tile_w, tile_h);
     lv_obj_set_style_radius(tile.root, theme::kR4, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(tile.root, theme::kS5, LV_PART_MAIN);
-    theme::make_column(tile.root, 0);
-    lv_obj_set_flex_align(tile.root, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_START,
-                          LV_FLEX_ALIGN_START);
-
-    // Ikona na środku wolnego miejsca nad nazwą (2026-11-07: w rogu wyglądała krzywo).
-    lv_obj_t* well = widgets::make_box(tile.root);
-    lv_obj_set_width(well, LV_PCT(100));
-    lv_obj_set_flex_grow(well, 1);
-    theme::make_row(well, 0);
-    lv_obj_set_flex_align(well, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
+    lv_obj_set_style_pad_all(tile.root, theme::kS4, LV_PART_MAIN);
+    theme::make_row(tile.root, 0);
+    lv_obj_set_flex_align(tile.root, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
                           LV_FLEX_ALIGN_CENTER);
-    lv_obj_t* icon = lv_image_create(well);
-    lv_image_set_src(icon, kTiles[i].icon);
 
-    lv_obj_t* texts = widgets::make_box(tile.root);
-    lv_obj_set_size(texts, LV_PCT(100), LV_SIZE_CONTENT);
-    theme::make_column(texts, 6);
-    lv_obj_t* name = widgets::make_text(texts, theme::font_b26(), theme::text());
-    lv_label_set_text(name, kTiles[i].name);
+    lv_obj_t* icon = lv_image_create(tile.root);
+    lv_image_set_src(icon, theme::landscape() ? kTiles[i].icon : kTiles[i].icon_xl);
 
-    lv_obj_t* row = widgets::make_box(texts);
-    lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
-    theme::make_row(row, 6);
-    tile.dot = widgets::make_dot(row, theme::surface3());
-    tile.state = widgets::make_text(row, theme::font_r13(), theme::faint());
-    lv_obj_set_flex_grow(tile.state, 1);
-    lv_label_set_long_mode(tile.state, LV_LABEL_LONG_DOT);
-    // Górny rząd: nazwa i stan u góry, ikona pod spodem — środek siatki zostaje wolny na
-    // przycisk Pilota (ADR 0020) i nic nie ginie pod nim.
-    if (i < 2) {
-        lv_obj_move_to_index(texts, 0);
+    if (kTiles[i].power != domain::ControlId::None) {
+        g_power_bindings[i] = {&context, i};
+        tile.power = widgets::make_power_button(tile.root, &on_tile_power, &g_power_bindings[i]);
+        lv_obj_add_flag(tile.power, LV_OBJ_FLAG_FLOATING);
+        lv_obj_align(tile.power, LV_ALIGN_TOP_LEFT, 0, 0);
     }
 
     // Kafelki są pierwszymi dziećmi siatki, więc ich kolejność to indeks w `kTiles`.
@@ -795,24 +720,15 @@ void render_start(Context& context) {
     render_status(context);
 
     const domain::AppState& state = context.controller->state();
-    Summary summary{};
     for (std::size_t i = 0; i < 4; ++i) {
-        summarize(state, kTiles[i].screen, summary);
-        const StartScreen::Tile& tile = screen.tiles[i];
-        lv_label_set_text(tile.state, summary.text);
-        lv_color_t dot_color = theme::surface3();
-        lv_color_t text_color = theme::faint();
-        switch (summary.tone) {
-            case Summary::Tone::On:
-                dot_color = theme::accent();
-                text_color = theme::dim();
-                break;
-            case Summary::Tone::Wait: dot_color = theme::faint(); break;
-            case Summary::Tone::Stale: dot_color = theme::danger(); break;
-            case Summary::Tone::Off: break;
+        const domain::ControlId control = kTiles[i].power;
+        lv_obj_t* power = screen.tiles[i].power;
+        if (power == nullptr) {
+            continue;
         }
-        lv_obj_set_style_bg_color(tile.dot, dot_color, LV_PART_MAIN);
-        lv_obj_set_style_text_color(tile.state, text_color, LV_PART_MAIN);
+        // Przed świeżym snapshotem przycisk jest przygaszony i nieaktywny (ADR 0005).
+        widgets::set_power_state(power, power_on(state.snapshot(), control), power_fresh(state, control));
+        widgets::set_status_outline(power, state.status_of(control));
     }
 
     const domain::LinkPhase phase = state.phase();

@@ -6,6 +6,8 @@
 - **Status:** accepted
 - **Extends:** [ADR 0010](0010-start-screen-after-wake.en.md), [ADR 0013](0013-landscape-orientation.en.md), [ADR 0016](0016-android-app.en.md)
 
+> Upper row of start tiles has no text since [ADR 0022](0022-start-tiles-power.en.md).
+
 ## Problem
 
 The device is first of all a remote for the TV, Apple TV and speakers, yet everyday control was

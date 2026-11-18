@@ -99,6 +99,11 @@ adb shell am start -n app.couchpad.pilot/.MainActivity
   sieci i bateria ≤ 15% czerwień, ładowanie zieleń. Odczyt tylko, gdy Start jest widoczny.
   Płytka: RSSI odświeżane co 10 s w zadaniu Wi-Fi tylko przy widocznym Starcie; baterii
   jeszcze nie ma, więc „USB” z wtyczką (rysowanie baterii gotowe w `screen_start.cpp`).
+- Kafelki startu (2026-11-18, 1:1 z płytką, [ADR 0022](../../docs/architecture/adr/0022-start-tiles-power.md),
+  makieta `docs/ux/mockup-tile-power`): bez nazw i stanów, sama ikona (pion 120 dp, poziom 96),
+  w lewym górnym rogu TV / Apple TV / Głośników `PowerButton` (40 dp, `Solid`) z tym samym
+  poleceniem co nagłówek. TV jak w nagłówku: tylko stan, bez polecenia (WoL, ADR 0008).
+  Przed świeżym stanem przycisk przygaszony i nieaktywny. Nazwa kafelka jako opis TalkBacka.
 
 ### Następne kroki
 

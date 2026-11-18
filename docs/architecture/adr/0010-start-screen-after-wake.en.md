@@ -6,6 +6,8 @@
 - **Status:** accepted
 - **Supplements:** [ADR 0005](0005-fresh-state-after-wake.en.md)
 
+> Changed by [ADR 0022](0022-start-tiles-power.en.md): tiles without a state line, with a power button.
+
 ## Problem
 
 ADR 0005 requires that after wake only new, confirmed state is shown. Until now that meant
